@@ -1,5 +1,4 @@
 import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded"
-import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded"
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded"

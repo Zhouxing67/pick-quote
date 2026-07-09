@@ -35,7 +35,7 @@ import { deleteItem, exportItems, searchItems } from "./database"
 import { toZip, toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
-import type { Item, SearchQuery } from "./types"
+import type { Item, ItemType, SearchQuery } from "./types"
 import "./options.css"
 
 const DRAWER_WIDTH = 280
@@ -77,14 +77,14 @@ export default function OptionsPage() {
     const sites = Array.from(
       new Set(allItems.map((it) => it.sourceSite).filter(Boolean))
     ) as string[]
-    setAvailableSites(sites.sort())
+    setAvailableSites([...sites].sort())
   }, [allItems])
 
   const onSearch = async (sites?: string[]) => {
     const activeSites = sites ?? selectedSites
     const q: SearchQuery = {
       keyword,
-      type: (type || undefined) as any,
+      type: type ? (type as ItemType) : undefined,
       sites: activeSites.length > 0 ? activeSites : undefined
     }
     const list = await searchItems(q)
@@ -104,6 +104,7 @@ export default function OptionsPage() {
   }
 
   const onDelete = async (id: string) => {
+    if (!window.confirm("确定要删除这条收藏吗？")) return
     await deleteItem(id)
     onSearch()
   }
