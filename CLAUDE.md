@@ -42,7 +42,10 @@ src/
 ├── export/              # 导出功能模块
 │   ├── index.ts        # 统一导出接口
 │   ├── imageExport.ts  # 图片卡片导出
-│   └── zipExport.ts    # ZIP 打包导出
+│   └── zipExport.ts    # ZIP 打包导出（Markdown + JSON）
+├── import/              # 导入功能模块
+│   ├── index.ts        # 统一导入接口
+│   └── jsonImport.ts   # JSON ZIP 导入（含格式校验）
 ├── theme/               # UI 主题配置
 │   └── index.ts        # Material-UI 主题定义
 ├── types/               # TypeScript 类型定义
@@ -78,8 +81,10 @@ src/
   → 内容脚本捕获上下文
   → 后台脚本接收消息
   → 条目保存到 IndexedDB（src/database/index.ts）
-  → 选项页面显示条目
+  → 选项页面显示条目（左侧筛选面板 + 瀑布流列表）
 ```
+
+右键菜单保存后后台脚本会通过 `chrome.tabs.sendMessage` 向页面发送 Toast 通知反馈保存结果。
 
 ### 核心数据模型
 
@@ -106,10 +111,10 @@ src/
 
 `src/export/` 目录包含两种导出机制：
 
-1. **ZIP 导出**（`zipExport.ts`）：将所有条目导出为 Markdown，并嵌入图片
+1. **ZIP 导出**（`zipExport.ts`）：支持两种格式导出
 
-   - 图片从 data URL 提取并保存到 `images/` 文件夹
-   - Markdown 文件使用相对路径引用图片
+   - **Markdown 导出**（`toZip`）：将所有条目导出为 Markdown，图片从 data URL 提取并保存到 `images/` 文件夹，Markdown 文件使用相对路径引用图片
+   - **JSON 导出**（`toJsonZip`）：将所有条目导出为完整 JSON，保留全部字段（id/type/content/context/source/createdAt/hash），图片同样保存到 `images/` 文件夹。此格式支持重新导入
 
 2. **图片卡片导出**（`imageExport.ts`）：使用 html2canvas 将单个条目导出为可分享的 PNG 卡片
 
