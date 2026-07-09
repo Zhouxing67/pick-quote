@@ -26,6 +26,11 @@ out/
 build/
 dist/
 
+# pnpm
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.npmrc
+
 # plasmo
 .plasmo
 
