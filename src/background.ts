@@ -4,6 +4,7 @@ import type { Item } from "./types"
 function notifyTab(tabId: number | undefined, text: string) {
   if (!tabId) return
   chrome.tabs.sendMessage(tabId, { kind: "toast", text }).catch(() => {})
+}
 
 // Create context menus
 chrome.runtime.onInstalled.addListener(() => {
