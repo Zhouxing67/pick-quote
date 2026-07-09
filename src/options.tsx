@@ -48,6 +48,8 @@ export default function OptionsPage() {
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
   const [hasMore, setHasMore] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectedSites, setSelectedSites] = useState<string[]>([])
   const [pendingSites, setPendingSites] = useState<string[]>([])
   const [availableSites, setAvailableSites] = useState<string[]>([])
@@ -136,6 +138,17 @@ export default function OptionsPage() {
       }
     }
   }, [loadMore, hasMore])
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.length === 0) return
+    if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 条收藏吗？`)) return
+    for (const id of selectedIds) {
+      await deleteItem(id)
+    }
+    setSelectMode(false)
+    setSelectedIds([])
+    onSearch()
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
@@ -388,6 +401,24 @@ export default function OptionsPage() {
                   }}>
                   灵感一闪，即可拾取
                 </Typography>
+                <Box sx={{ flexGrow: 1 }} />
+                <Button
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
+                    fontSize: "0.75rem",
+                    px: 1.5,
+                    minWidth: 0,
+                    color: selectMode ? "error.main" : "text.secondary"
+                  }}
+                  onClick={() => {
+                    if (selectMode) {
+                      setSelectedIds([])
+                    }
+                    setSelectMode((prev) => !prev)
+                  }}>
+                  {selectMode ? "取消" : "选择"}
+                </Button>
               </Stack>
             </Box>
 
@@ -443,11 +474,45 @@ export default function OptionsPage() {
               className="masonry-grid"
               columnClassName="masonry-grid-column">
               {displayedItems.map((it) => (
-                <Box key={it.id}>
+                <Box key={it.id} sx={{ position: "relative" }}>
+                  {selectMode && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        left: 8,
+                        zIndex: 10
+                      }}
+                      onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.includes(it.id)}
+                        onChange={() =>
+                          setSelectedIds((prev) =>
+                            prev.includes(it.id)
+                              ? prev.filter((i) => i !== it.id)
+                              : [...prev, it.id]
+                          )
+                        }
+                        sx={{
+                          bgcolor: "background.paper",
+                          borderRadius: 1,
+                          "&:hover": { bgcolor: "action.hover" }
+                        }}
+                      />
+                    </Box>
+                  )}
                   <ItemCard
                     item={it}
                     onDelete={onDelete}
-                    onClick={() => setDialogItem(it)}
+                    onClick={() =>
+                      selectMode
+                        ? setSelectedIds((prev) =>
+                            prev.includes(it.id)
+                              ? prev.filter((i) => i !== it.id)
+                              : [...prev, it.id]
+                          )
+                        : setDialogItem(it)
+                    }
                   />
                 </Box>
               ))}
@@ -464,6 +529,49 @@ export default function OptionsPage() {
                 <Typography variant="body2" color="text.secondary">
                   加载中...
                 </Typography>
+              </Box>
+            )}
+
+            {selectMode && (
+              <Box
+                sx={{
+                  position: "sticky",
+                  bottom: 0,
+                  zIndex: 1100,
+                  bgcolor: "background.paper",
+                  borderTop: "1px solid",
+                  borderColor: "divider",
+                  py: 1.5,
+                  px: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  mb: 2
+                }}>
+                <Typography variant="body2" color="text.secondary">
+                  已选 {selectedIds.length} 条
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    size="small"
+                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
+                    onClick={() =>
+                      setSelectedIds(allItems.map((i) => i.id))
+                    }>
+                    全选
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="error"
+                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
+                    disabled={selectedIds.length === 0}
+                    onClick={handleBatchDelete}>
+                    删除选中
+                  </Button>
+                </Stack>
               </Box>
             )}
 
