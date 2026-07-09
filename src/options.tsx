@@ -8,6 +8,11 @@ import {
   Chip,
   Container,
   CssBaseline,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Drawer,
   FormControl,
@@ -50,6 +55,7 @@ export default function OptionsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [selectedSites, setSelectedSites] = useState<string[]>([])
   const [pendingSites, setPendingSites] = useState<string[]>([])
   const [availableSites, setAvailableSites] = useState<string[]>([])
@@ -105,9 +111,14 @@ export default function OptionsPage() {
     setDrawerOpen((prev) => !prev)
   }
 
-  const onDelete = async (id: string) => {
-    if (!window.confirm("确定要删除这条收藏吗？")) return
-    await deleteItem(id)
+  const onDelete = (id: string) => {
+    setConfirmDeleteId(id)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return
+    await deleteItem(confirmDeleteId)
+    setConfirmDeleteId(null)
     onSearch()
   }
 
@@ -580,6 +591,34 @@ export default function OptionsPage() {
               open={Boolean(dialogItem)}
               onClose={() => setDialogItem(null)}
             />
+
+            <Dialog
+              open={Boolean(confirmDeleteId)}
+              onClose={() => setConfirmDeleteId(null)}
+              slotProps={{
+                paper: { sx: { borderRadius: 3 } }
+              }}>
+              <DialogTitle sx={{ pb: 1 }}>确认删除</DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  确定要删除这条收藏吗？此操作不可撤销。
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button
+                  onClick={() => setConfirmDeleteId(null)}
+                  sx={{ borderRadius: 2 }}>
+                  取消
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleConfirmDelete}
+                  sx={{ borderRadius: 2 }}>
+                  删除
+                </Button>
+              </DialogActions>
+            </Dialog>
 
             <Box
               component="footer"
