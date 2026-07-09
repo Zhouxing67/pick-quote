@@ -79,6 +79,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     )
     return true
   }
+  if (msg?.kind === "toast" && msg?.text) {
+    showToast(msg.text)
+  }
   // 长截图暂未实现
 })
 

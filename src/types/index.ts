@@ -29,6 +29,7 @@ export interface Item {
 export interface SearchQuery {
   keyword?: string
   site?: string
+  sites?: string[]
   type?: ItemType
   from?: number
   to?: number

@@ -125,6 +125,7 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
         if (
           (!q.type || item.type === q.type) &&
           (!q.site || item.sourceSite === q.site) &&
+          (!q.sites || q.sites.length === 0 || q.sites.includes(item.sourceSite)) &&
           (!q.from || item.createdAt >= q.from) &&
           (!q.to || item.createdAt <= q.to) &&
           (!q.categoryId || item.categoryId === q.categoryId) &&

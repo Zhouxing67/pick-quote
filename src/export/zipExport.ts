@@ -40,3 +40,25 @@ export async function toZip(items: Item[]): Promise<Blob> {
   const blob = await zip.generateAsync({ type: "blob" })
   return blob
 }
+
+export async function toJsonZip(items: Item[]): Promise<Blob> {
+  const zip = new JSZip()
+
+  for (const it of items) {
+    if (
+      (it.type === "image" || it.type === "snapshot") &&
+      typeof it.content === "string" &&
+      it.content.startsWith("data:image")
+    ) {
+      const filename = `images/${it.hash || `${Date.now()}-${Math.random().toString(16).slice(2)}`}.png`
+      const blob = dataUrlToBlob(it.content)
+      zip.file(filename, blob)
+    }
+  }
+
+  const json = JSON.stringify(items, null, 2)
+  zip.file("export.json", json)
+
+  const blob = await zip.generateAsync({ type: "blob" })
+  return blob
+}

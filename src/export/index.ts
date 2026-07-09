@@ -1,2 +1,2 @@
-export { toZip } from "./zipExport"
+export { toZip, toJsonZip } from "./zipExport"
 export { exportToImage, elementToDataUrl } from "./imageExport"

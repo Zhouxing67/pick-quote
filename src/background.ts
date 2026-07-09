@@ -1,6 +1,10 @@
 import { addItem } from "./database"
 import type { Item } from "./types"
 
+function notifyTab(tabId: number | undefined, text: string) {
+  if (!tabId) return
+  chrome.tabs.sendMessage(tabId, { kind: "toast", text }).catch(() => {})
+
 // Create context menus
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -47,6 +51,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       createdAt: base.createdAt
     }
     await addItem(item)
+    notifyTab(tab?.id, "已保存到拾句")
   }
 
   if (info.menuItemId === "pickquote-image" && info.srcUrl) {
@@ -58,6 +63,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       createdAt: base.createdAt
     }
     await addItem(item)
+    notifyTab(tab?.id, "已保存到拾句")
   }
 
   if (info.menuItemId === "pickquote-link" && info.linkUrl) {
@@ -69,6 +75,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       createdAt: base.createdAt
     }
     await addItem(item)
+    notifyTab(tab?.id, "已保存到拾句")
   }
 
   if (info.menuItemId === "pickquote-snapshot-image") {
@@ -92,6 +99,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           createdAt: base.createdAt
         }
         await addItem(item)
+        notifyTab(tab?.id, "已保存页面截图")
       }
     )
   }

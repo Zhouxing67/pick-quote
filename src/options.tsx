@@ -1,12 +1,20 @@
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import GitHubIcon from "@mui/icons-material/GitHub"
 import {
   Box,
   Button,
+  Checkbox,
+  Chip,
   Container,
   CssBaseline,
+  Divider,
+  Drawer,
   FormControl,
   InputLabel,
+  ListItemText,
   MenuItem,
+  OutlinedInput,
   Select,
   Stack,
   TextField,
@@ -24,10 +32,13 @@ import iconPng from "./assets/icon.png"
 import ItemCard from "./components/ItemCard"
 import ItemDialog from "./components/ItemDialog"
 import { deleteItem, exportItems, searchItems } from "./database"
-import { toZip } from "./export"
+import { toZip, toJsonZip } from "./export"
+import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
 import type { Item, SearchQuery } from "./types"
 import "./options.css"
+
+const DRAWER_WIDTH = 280
 
 export default function OptionsPage() {
   const [allItems, setAllItems] = useState<Item[]>([])
@@ -35,16 +46,17 @@ export default function OptionsPage() {
   const [keyword, setKeyword] = useState("")
   const [type, setType] = useState<string>("")
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
-  const [compactHeader, setCompactHeader] = useState(false)
   const [hasMore, setHasMore] = useState(true)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedSites, setSelectedSites] = useState<string[]>([])
+  const [pendingSites, setPendingSites] = useState<string[]>([])
+  const [availableSites, setAvailableSites] = useState<string[]>([])
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
 
-  // 检测浏览器的暗色模式偏好
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)")
 
-  // 根据系统偏好创建主题
   const theme = useMemo(
     () => createAppTheme(prefersDarkMode ? "dark" : "light"),
     [prefersDarkMode]
@@ -53,6 +65,7 @@ export default function OptionsPage() {
   useEffect(() => {
     onSearch()
   }, [])
+
   useEffect(() => {
     const t = setTimeout(() => {
       onSearch()
@@ -60,13 +73,34 @@ export default function OptionsPage() {
     return () => clearTimeout(t)
   }, [keyword, type])
 
-  const onSearch = async () => {
-    const q: SearchQuery = { keyword, type: (type || undefined) as any }
+  useEffect(() => {
+    const sites = Array.from(
+      new Set(allItems.map((it) => it.sourceSite).filter(Boolean))
+    ) as string[]
+    setAvailableSites(sites.sort())
+  }, [allItems])
+
+  const onSearch = async (sites?: string[]) => {
+    const activeSites = sites ?? selectedSites
+    const q: SearchQuery = {
+      keyword,
+      type: (type || undefined) as any,
+      sites: activeSites.length > 0 ? activeSites : undefined
+    }
     const list = await searchItems(q)
     setAllItems(list)
-    // 初始加载第一页
     setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
     setHasMore(list.length > ITEMS_PER_PAGE)
+  }
+
+  const handleToggleDrawer = () => {
+    if (drawerOpen) {
+      setSelectedSites(pendingSites)
+      onSearch(pendingSites)
+    } else {
+      setPendingSites(selectedSites)
+    }
+    setDrawerOpen((prev) => !prev)
   }
 
   const onDelete = async (id: string) => {
@@ -74,17 +108,14 @@ export default function OptionsPage() {
     onSearch()
   }
 
-  // 加载更多数据
   const loadMore = useCallback(() => {
     if (!hasMore) return
-
     const currentLength = displayedItems.length
     const nextItems = allItems.slice(0, currentLength + ITEMS_PER_PAGE)
     setDisplayedItems(nextItems)
     setHasMore(nextItems.length < allItems.length)
   }, [allItems, displayedItems.length, hasMore, ITEMS_PER_PAGE])
 
-  // IntersectionObserver 实现懒加载
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -94,12 +125,10 @@ export default function OptionsPage() {
       },
       { threshold: 0.1 }
     )
-
     const currentRef = loadMoreRef.current
     if (currentRef) {
       observer.observe(currentRef)
     }
-
     return () => {
       if (currentRef) {
         observer.unobserve(currentRef)
@@ -107,230 +136,396 @@ export default function OptionsPage() {
     }
   }, [loadMore, hasMore])
 
-  useEffect(() => {
-    const COMPACT_THRESHOLD = 120
-    const EXPAND_THRESHOLD = 60
-    const onScroll = () => {
-      const y = window.scrollY
-      setCompactHeader((prev) => {
-        if (!prev && y >= COMPACT_THRESHOLD) return true
-        if (prev && y <= EXPAND_THRESHOLD) return false
-        return prev
-      })
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    try {
+      const result = await importFromZip(file)
+      const msg = `导入完成：成功 ${result.imported} 条`
+      const skipMsg = result.skipped > 0 ? `，跳过 ${result.skipped} 条` : ""
+      if (result.errors.length > 0) {
+        console.warn("导入跳过/失败的条目：", result.errors)
+      }
+      alert(msg + skipMsg)
+      onSearch()
+    } catch (err) {
+      alert(`导入失败：${err}`)
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
     }
-    window.addEventListener("scroll", onScroll, { passive: true })
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }
 
   const headerHeight = 52
+
+  const handleRemoveSite = (site: string) => {
+    const nextSites = selectedSites.filter((s) => s !== site)
+    setSelectedSites(nextSites)
+    setPendingSites((prev) => prev.filter((s) => s !== site))
+    onSearch(nextSites)
+  }
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box
-        sx={{
-          minHeight: "100vh",
-          bgcolor: "background.default"
-        }}>
-        <Container sx={{ py: 4 }} maxWidth="md">
-          <Box
-            sx={{
-              position: "sticky",
-              top: 0,
-              zIndex: 1100,
+      <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
+        <Drawer
+          variant="persistent"
+          anchor="left"
+          open={drawerOpen}
+          sx={{
+            width: drawerOpen ? DRAWER_WIDTH : 0,
+            transition: "width 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
               bgcolor: "background.default",
-              transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-              height: headerHeight,
-              display: "flex",
-              alignItems: "center"
-            }}>
-            <Stack
-              direction={compactHeader ? "row" : "column"}
-              spacing={compactHeader ? 1.5 : 0.5}
-              alignItems={compactHeader ? "center" : "flex-start"}
-              sx={{ width: "100%" }}>
+              borderRight: "1px solid",
+              borderColor: "divider",
+              overflowX: "hidden"
+            }
+          }}>
+          <Stack spacing={2.5} sx={{ p: 2.5, pt: 3 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography
-                variant="h5"
+                variant="h6"
                 sx={{
-                  transition: "all 300ms ease",
-                  fontSize: "1.75rem",
                   fontWeight: 400,
-                  letterSpacing: "0.08em"
+                  letterSpacing: "0.05em",
+                  fontSize: "1rem"
                 }}>
-                拾句
+                筛选
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                  transition: "all 300ms ease",
-                  whiteSpace: compactHeader ? "nowrap" : "normal",
-                  textOverflow: compactHeader ? "ellipsis" : "unset",
-                  fontSize: "0.75rem",
-                  maxWidth: compactHeader ? "none" : "80%"
-                }}>
-                灵感一闪，即可拾取，汇聚成属于你的知识与灵感片段集
-              </Typography>
+              <IconButton size="small" onClick={handleToggleDrawer}>
+                <CloseRoundedIcon fontSize="small" />
+              </IconButton>
             </Stack>
-          </Box>
-          <Box
-            sx={{
-              position: "sticky",
-              top: headerHeight,
-              zIndex: 1050,
-              py: 2,
-              bgcolor: "background.default",
-              transition: "top 300ms cubic-bezier(0.4, 0, 0.2, 1)"
-            }}>
-            <Stack direction="row" spacing={1.5}>
-              <TextField
-                placeholder="搜索关键词"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                size="small"
-                fullWidth
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.paper",
-                    borderRadius: 2,
-                    "&:hover fieldset": {
-                      borderColor: "primary.light"
-                    }
-                  }
-                }}
-              />
-              <FormControl
-                size="small"
-                sx={{
-                  minWidth: 120,
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "background.paper",
-                    borderRadius: 2
-                  }
-                }}>
-                <InputLabel id="type-label">类型</InputLabel>
-                <Select
-                  labelId="type-label"
-                  value={type}
-                  label="类型"
-                  onChange={(e) => setType(e.target.value)}>
-                  <MenuItem value="">全部</MenuItem>
-                  <MenuItem value="text">文本</MenuItem>
-                  <MenuItem value="image">图片</MenuItem>
-                  <MenuItem value="link">链接</MenuItem>
-                  <MenuItem value="snapshot">快照</MenuItem>
-                </Select>
-              </FormControl>
-              <Button
-                variant="outlined"
-                sx={{
-                  borderRadius: 2,
-                  px: 2.5,
-                  minWidth: 80
-                }}
-                onClick={async () => {
-                  const all = await exportItems()
-                  const blob = await toZip(all)
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement("a")
-                  a.href = url
-                  a.download = "pickquote-export.zip"
-                  a.click()
-                  URL.revokeObjectURL(url)
-                }}>
-                导出
-              </Button>
-            </Stack>
-          </Box>
-          <Masonry
-            breakpointCols={{
-              default: 3,
-              900: 2,
-              600: 1
-            }}
-            className="masonry-grid"
-            columnClassName="masonry-grid-column">
-            {displayedItems.map((it) => (
-              <Box key={it.id}>
-                <ItemCard
-                  item={it}
-                  onDelete={onDelete}
-                  onClick={() => setDialogItem(it)}
-                />
-              </Box>
-            ))}
-          </Masonry>
-          {hasMore && (
-            <Box
-              ref={loadMoreRef}
+
+            <TextField
+              placeholder="搜索关键词"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              size="small"
+              fullWidth
               sx={{
-                display: "flex",
-                justifyContent: "center",
-                py: 4
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "background.paper",
+                  borderRadius: 2
+                }
+              }}
+            />
+
+            <FormControl size="small" fullWidth>
+              <InputLabel id="type-label">类型</InputLabel>
+              <Select
+                labelId="type-label"
+                value={type}
+                label="类型"
+                onChange={(e) => setType(e.target.value)}
+                sx={{ borderRadius: 2 }}>
+                <MenuItem value="">全部</MenuItem>
+                <MenuItem value="text">文本</MenuItem>
+                <MenuItem value="image">图片</MenuItem>
+                <MenuItem value="link">链接</MenuItem>
+                <MenuItem value="snapshot">快照</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" fullWidth>
+              <InputLabel id="sites-label">来源网站</InputLabel>
+              <Select
+                labelId="sites-label"
+                multiple
+                value={pendingSites}
+                label="来源网站"
+                onChange={(e) => setPendingSites(e.target.value as string[])}
+                input={<OutlinedInput label="来源网站" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {(selected as string[]).map((v) => (
+                      <Chip key={v} label={v} size="small" />
+                    ))}
+                  </Box>
+                )}
+                sx={{ borderRadius: 2 }}>
+                {availableSites.map((site) => (
+                  <MenuItem key={site} value={site}>
+                    <Checkbox
+                      checked={pendingSites.indexOf(site) > -1}
+                      size="small"
+                    />
+                    <ListItemText primary={site} />
+                  </MenuItem>
+                ))}
+                {availableSites.length === 0 && (
+                  <MenuItem disabled>
+                    <ListItemText primary="暂无来源数据" />
+                  </MenuItem>
+                )}
+              </Select>
+            </FormControl>
+
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ borderRadius: 2, mt: 1 }}
+              onClick={() => {
+                setSelectedSites(pendingSites)
+                onSearch(pendingSites)
               }}>
-              <Typography variant="body2" color="text.secondary">
-                加载中...
-              </Typography>
-            </Box>
-          )}
-          <ItemDialog
-            item={dialogItem}
-            open={Boolean(dialogItem)}
-            onClose={() => setDialogItem(null)}
-          />
-          <Box
-            component="footer"
-            sx={{
-              mt: 6,
-              py: 3,
-              color: "text.secondary",
-              borderTop: "1px solid",
-              borderColor: "divider"
-            }}>
-            <Stack
-              direction="row"
-              spacing={1.5}
-              alignItems="center"
-              sx={{ mb: 1 }}>
-              <Avatar
-                src={iconPng}
-                alt="拾句"
-                sx={{
-                  width: 28,
-                  height: 28,
-                  boxShadow: 1,
-                  opacity: 0.9
-                }}
+              应用
+            </Button>
+
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ borderRadius: 2 }}
+              onClick={async () => {
+                const all = await exportItems()
+                const blob = await toZip(all)
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.download = "pickquote-export.zip"
+                a.click()
+                URL.revokeObjectURL(url)
+              }}>
+              导出 Markdown
+            </Button>
+
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ borderRadius: 2 }}
+              onClick={async () => {
+                const all = await exportItems()
+                const blob = await toJsonZip(all)
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.download = "pickquote-export.json.zip"
+                a.click()
+                URL.revokeObjectURL(url)
+              }}>
+              导出 JSON
+            </Button>
+
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ borderRadius: 2 }}
+              component="label"
+              disabled={importing}>
+              {importing ? "导入中..." : "导入 ZIP"}
+              <input
+                ref={fileInputRef}
+                type="file"
+                hidden
+                accept=".zip"
+                onChange={handleImport}
               />
-              <Typography
-                variant="caption"
+            </Button>
+          </Stack>
+        </Drawer>
+
+        <Box
+          sx={{
+            flexGrow: 1,
+            minWidth: 0
+          }}>
+          <Container sx={{ py: 4 }} maxWidth="xl">
+            <Box
+              sx={{
+                position: "sticky",
+                top: 0,
+                zIndex: 1100,
+                bgcolor: "background.default",
+                transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                height: headerHeight,
+                display: "flex",
+                alignItems: "center"
+              }}>
+              <Stack
+                direction="row"
+                spacing={1.5}
+                alignItems="center"
+                sx={{ width: "100%" }}>
+                <Tooltip title={drawerOpen ? "关闭筛选面板" : "打开筛选面板"}>
+                  <IconButton
+                    size="small"
+                    onClick={handleToggleDrawer}
+                    sx={{
+                      color: drawerOpen ? "primary.main" : "text.secondary",
+                      transition: "color 0.2s",
+                      "&:hover": { color: "primary.main" }
+                    }}>
+                    <FilterListRoundedIcon />
+                  </IconButton>
+                </Tooltip>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontSize: "1.75rem",
+                    fontWeight: 400,
+                    letterSpacing: "0.08em",
+                    lineHeight: 1
+                  }}>
+                  拾句
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                    display: { xs: "none", sm: "block" }
+                  }}>
+                  灵感一闪，即可拾取
+                </Typography>
+              </Stack>
+            </Box>
+
+            {(keyword || type || selectedSites.length > 0) && (
+              <Box
                 sx={{
-                  fontStyle: "italic",
-                  fontSize: "0.8rem",
-                  letterSpacing: "0.03em"
+                  position: "sticky",
+                  top: headerHeight,
+                  zIndex: 1050,
+                  py: 1.5
                 }}>
-                拾句 · 灵感库 — 数据仅存本地 IndexedDB · v0.1
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Typography variant="caption" sx={{ fontSize: "0.75rem" }}>
-                开源地址：
-              </Typography>
-              <Tooltip title="GitHub: minorcell/pick-quote">
-                <IconButton
-                  size="small"
-                  component="a"
-                  href="https://github.com/minorcell/pick-quote"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="GitHub repository"
-                  sx={{ ml: 0.5 }}>
-                  <GitHubIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          </Box>
-        </Container>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  flexWrap="wrap"
+                  useFlexGap
+                  sx={{ bgcolor: "background.default" }}>
+                  {keyword && (
+                    <Chip
+                      label={`搜索: ${keyword}`}
+                      size="small"
+                      onDelete={() => setKeyword("")}
+                      sx={{ borderRadius: 1.5 }}
+                    />
+                  )}
+                  {type && (
+                    <Chip
+                      label={`类型: ${type}`}
+                      size="small"
+                      onDelete={() => setType("")}
+                      sx={{ borderRadius: 1.5 }}
+                    />
+                  )}
+                  {selectedSites.map((site) => (
+                    <Chip
+                      key={site}
+                      label={site}
+                      size="small"
+                      onDelete={() => handleRemoveSite(site)}
+                      sx={{ borderRadius: 1.5 }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            <Masonry
+              breakpointCols={{
+                default: 3,
+                900: 2,
+                600: 1
+              }}
+              className="masonry-grid"
+              columnClassName="masonry-grid-column">
+              {displayedItems.map((it) => (
+                <Box key={it.id}>
+                  <ItemCard
+                    item={it}
+                    onDelete={onDelete}
+                    onClick={() => setDialogItem(it)}
+                  />
+                </Box>
+              ))}
+            </Masonry>
+
+            {hasMore && (
+              <Box
+                ref={loadMoreRef}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  py: 4
+                }}>
+                <Typography variant="body2" color="text.secondary">
+                  加载中...
+                </Typography>
+              </Box>
+            )}
+
+            <ItemDialog
+              item={dialogItem}
+              open={Boolean(dialogItem)}
+              onClose={() => setDialogItem(null)}
+            />
+
+            <Box
+              component="footer"
+              sx={{
+                mt: 6,
+                py: 3,
+                color: "text.secondary",
+                borderTop: "1px solid",
+                borderColor: "divider"
+              }}>
+              <Stack
+                direction="row"
+                spacing={1.5}
+                alignItems="center"
+                sx={{ mb: 1 }}>
+                <Avatar
+                  src={iconPng}
+                  alt="拾句"
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    boxShadow: 1,
+                    opacity: 0.9
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontStyle: "italic",
+                    fontSize: "0.8rem",
+                    letterSpacing: "0.03em"
+                  }}>
+                  拾句 · 灵感库 — 数据仅存本地 IndexedDB · v0.1
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography variant="caption" sx={{ fontSize: "0.75rem" }}>
+                  开源地址：
+                </Typography>
+                <Tooltip title="GitHub: minorcell/pick-quote">
+                  <IconButton
+                    size="small"
+                    component="a"
+                    href="https://github.com/minorcell/pick-quote"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="GitHub repository"
+                    sx={{ ml: 0.5 }}>
+                    <GitHubIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Box>
+          </Container>
+        </Box>
       </Box>
     </ThemeProvider>
   )
