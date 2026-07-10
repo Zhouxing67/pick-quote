@@ -360,40 +360,6 @@ export default function OptionsPage() {
               variant="outlined"
               fullWidth
               sx={{ borderRadius: 2 }}
-              onClick={async () => {
-                const all = await exportItems()
-                const blob = await toZip(all)
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement("a")
-                a.href = url
-                a.download = "pickquote-export.zip"
-                a.click()
-                URL.revokeObjectURL(url)
-              }}>
-              导出 Markdown
-            </Button>
-
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ borderRadius: 2 }}
-              onClick={async () => {
-                const all = await exportItems()
-                const blob = await toJsonZip(all)
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement("a")
-                a.href = url
-                a.download = "pickquote-export.json.zip"
-                a.click()
-                URL.revokeObjectURL(url)
-              }}>
-              导出 JSON
-            </Button>
-
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ borderRadius: 2 }}
               component="label"
               disabled={importing}>
               {importing ? "导入中..." : "导入 ZIP"}
@@ -634,6 +600,40 @@ export default function OptionsPage() {
                     }>
                     全选
                   </Button>
+                  <Divider orientation="vertical" flexItem />
+                  <Button
+                    size="small"
+                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
+                    disabled={selectedIds.length === 0}
+                    onClick={async () => {
+                      const items = allItems.filter((i) => selectedIds.includes(i.id))
+                      const blob = await toZip(items)
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement("a")
+                      a.href = url
+                      a.download = "pickquote-export.zip"
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}>
+                    导出 MD
+                  </Button>
+                  <Button
+                    size="small"
+                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
+                    disabled={selectedIds.length === 0}
+                    onClick={async () => {
+                      const items = allItems.filter((i) => selectedIds.includes(i.id))
+                      const blob = await toJsonZip(items)
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement("a")
+                      a.href = url
+                      a.download = "pickquote-export.json.zip"
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}>
+                    导出 JSON
+                  </Button>
+                  <Divider orientation="vertical" flexItem />
                   <Button
                     size="small"
                     variant="contained"
