@@ -28,7 +28,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 })
 
 function showToast(text: string) {
-
   const toast = document.createElement("div")
   toast.textContent = text
   Object.assign(toast.style, {
@@ -38,59 +37,4 @@ function showToast(text: string) {
   })
   document.body.appendChild(toast)
   setTimeout(() => toast.remove(), 2000)
-}
-
-function deriveContext() {
-  const selection = document.getSelection()
-  if (!selection || selection.rangeCount === 0) return undefined
-  const range = selection.getRangeAt(0)
-  const paragraph = range?.commonAncestorContainer?.textContent || ""
-  const text = selection.toString()
-  const idx = paragraph.indexOf(text)
-
-  if (idx === -1) {
-    return { paragraph }
-  }
-
-  const beforeStart = Math.max(0, idx - 10)
-  const before = paragraph.slice(beforeStart, idx)
-  const afterEnd = Math.min(paragraph.length, idx + text.length + 10)
-  const after = paragraph.slice(idx + text.length, afterEnd)
-  return { before, after, paragraph }
-}
-
-function deriveAnchor() {
-  const selection = document.getSelection()
-  if (!selection || selection.rangeCount === 0) return undefined
-  const node = selection.anchorNode as Element | null
-  const el =
-    node?.nodeType === Node.ELEMENT_NODE
-      ? (node as Element)
-      : node?.parentElement
-  if (!el) return undefined
-  return getCssSelector(el)
-}
-
-function getCssSelector(el: Element): string {
-  if (el.id) return `#${el.id}`
-  const parts: string[] = []
-  let cur: Element | null = el
-  while (cur && cur.nodeType === Node.ELEMENT_NODE && parts.length < 5) {
-    const tag = cur.tagName.toLowerCase()
-    const cls = (cur.className || "")
-      .toString()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((c) => `.${c}`)
-      .join("")
-    let nth = 1
-    let sib = cur
-    while ((sib = sib.previousElementSibling as Element | null)) {
-      if (sib.tagName === cur.tagName) nth++
-    }
-    parts.unshift(`${tag}${cls}:nth-of-type(${nth})`)
-    cur = cur.parentElement
-  }
-  return parts.join(" > ")
 }
