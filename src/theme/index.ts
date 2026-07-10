@@ -6,36 +6,26 @@ const palettes: Record<PresetName, {
   primary: { main: string; light: string; dark: string }
   secondary: { main: string; light: string; dark: string }
   error: { main: string; light: string }
-  groupHeaderBg: string
-  groupHeaderBorder: string
 }> = {
   classic: {
     primary: { main: "#6b7785", light: "#8a96a3", dark: "#4a5563" },
     secondary: { main: "#9c8b7a", light: "#b5a598", dark: "#7d6f61" },
-    error: { main: "#c9786e", light: "#d89a91" },
-    groupHeaderBg: "rgba(220, 237, 200, 0.4)",
-    groupHeaderBorder: "rgba(220, 237, 200, 0.7)"
+    error: { main: "#c9786e", light: "#d89a91" }
   },
   "indigo-crimson": {
     primary: { main: "#4f46e5", light: "#818cf8", dark: "#3730a3" },
     secondary: { main: "#dc2626", light: "#fca5a5", dark: "#991b1b" },
-    error: { main: "#dc2626", light: "#fca5a5" },
-    groupHeaderBg: "rgba(190, 18, 60, 0.06)",
-    groupHeaderBorder: "rgba(190, 18, 60, 0.15)"
+    error: { main: "#dc2626", light: "#fca5a5" }
   },
   forest: {
     primary: { main: "#2d6a4f", light: "#52b788", dark: "#1b4332" },
     secondary: { main: "#52b788", light: "#74c69d", dark: "#2d6a4f" },
-    error: { main: "#dc2626", light: "#fca5a5" },
-    groupHeaderBg: "rgba(45, 106, 79, 0.08)",
-    groupHeaderBorder: "rgba(45, 106, 79, 0.2)"
+    error: { main: "#dc2626", light: "#fca5a5" }
   },
   terracotta: {
     primary: { main: "#c2410c", light: "#ea580c", dark: "#9a3412" },
     secondary: { main: "#a16207", light: "#ca8a04", dark: "#713f12" },
-    error: { main: "#dc2626", light: "#fca5a5" },
-    groupHeaderBg: "rgba(194, 65, 12, 0.06)",
-    groupHeaderBorder: "rgba(194, 65, 12, 0.15)"
+    error: { main: "#dc2626", light: "#fca5a5" }
   }
 }
 

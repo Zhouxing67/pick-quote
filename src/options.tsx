@@ -1117,8 +1117,8 @@ export default function OptionsPage() {
               open={Boolean(paletteAnchor)}
               anchorEl={paletteAnchor}
               onClose={() => setPaletteAnchor(null)}
-              anchorOrigin={{ vertical: "top", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
               slotProps={{ paper: { sx: { borderRadius: 1, p: 1.5, mt: 0.5 } } }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", display: "block", mb: 1 }}>
                 配色
