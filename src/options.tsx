@@ -172,10 +172,23 @@ export default function OptionsPage() {
     setHasMore(nextItems.length < allItems.length)
   }, [allItems, displayedItems.length, hasMore, ITEMS_PER_PAGE])
 
+  function normalizeUrl(url: string): string {
+    try {
+      const u = new URL(url)
+      u.hash = ""
+      let normalized = u.href
+      if (normalized.endsWith("/"))
+        normalized = normalized.slice(0, -1)
+      return normalized
+    } catch {
+      return url
+    }
+  }
+
   const groupedItems = useMemo(() => {
     const map = new Map<string, Item[]>()
     for (const item of displayedItems) {
-      const key = item.source.url
+      const key = normalizeUrl(item.source.url)
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(item)
     }
