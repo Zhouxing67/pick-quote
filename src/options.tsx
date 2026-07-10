@@ -650,7 +650,7 @@ export default function OptionsPage() {
                   <IconButton
                     size="small"
                     onClick={(e) => setPaletteAnchor(e.currentTarget)}
-                    sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}>
+                    sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
                     <PaletteRoundedIcon sx={{ fontSize: 20 }} />
                   </IconButton>
                 </Tooltip>
@@ -1117,8 +1117,8 @@ export default function OptionsPage() {
               open={Boolean(paletteAnchor)}
               anchorEl={paletteAnchor}
               onClose={() => setPaletteAnchor(null)}
-              anchorOrigin={{ vertical: "top", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
               slotProps={{ paper: { sx: { borderRadius: 1, p: 1.5, mt: 0.5 } } }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", display: "block", mb: 1 }}>
                 配色
@@ -1135,7 +1135,8 @@ export default function OptionsPage() {
                         cursor: "pointer",
                         transition: "all 0.2s",
                         "&:hover": { transform: "scale(1.2)" },
-                        ...(preset === name ? { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 } : {}),
+                        border: "2px solid",
+                        borderColor: preset === name ? "primary.main" : "transparent",
                         bgcolor: name === "classic" ? "#6b7785"
                           : name === "indigo-crimson" ? "#4f46e5"
                           : name === "forest" ? "#2d6a4f"
