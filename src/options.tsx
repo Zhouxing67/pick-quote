@@ -17,9 +17,7 @@ import {
   Drawer,
   FormControl,
   InputLabel,
-  ListItemText,
   MenuItem,
-  OutlinedInput,
   Select,
   Stack,
   TextField,
@@ -201,6 +199,14 @@ export default function OptionsPage() {
     onSearch(nextSites)
   }
 
+  const clearAllFilters = () => {
+    setKeyword("")
+    setType("")
+    setSelectedSites([])
+    setPendingSites([])
+    onSearch([])
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -267,39 +273,77 @@ export default function OptionsPage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" fullWidth>
-              <InputLabel id="sites-label">来源网站</InputLabel>
-              <Select
-                labelId="sites-label"
-                multiple
-                value={pendingSites}
-                label="来源网站"
-                onChange={(e) => setPendingSites(e.target.value as string[])}
-                input={<OutlinedInput label="来源网站" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {(selected as string[]).map((v) => (
-                      <Chip key={v} label={v} size="small" />
-                    ))}
-                  </Box>
-                )}
-                sx={{ borderRadius: 2 }}>
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block", mb: 1 }}>
+                来源网站
+              </Typography>
+              <Box
+                sx={{
+                  maxHeight: 240,
+                  overflowY: "auto",
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider"
+                }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "action.hover" },
+                    bgcolor: pendingSites.length === 0 ? "action.selected" : "transparent"
+                  }}
+                  onClick={() => setPendingSites([])}>
+                  <Checkbox checked={pendingSites.length === 0} size="small" sx={{ py: 0 }} />
+                  <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
+                    全部
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    ({allItems.length})
+                  </Typography>
+                </Stack>
                 {availableSites.map((site) => (
-                  <MenuItem key={site} value={site}>
-                    <Checkbox
-                      checked={pendingSites.indexOf(site) > -1}
-                      size="small"
-                    />
-                    <ListItemText primary={site} />
-                  </MenuItem>
+                  <Stack
+                    key={site}
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    sx={{
+                      px: 1.5,
+                      py: 0.75,
+                      cursor: "pointer",
+                      "&:hover": { bgcolor: "action.hover" },
+                      bgcolor: pendingSites.includes(site) ? "action.selected" : "transparent"
+                    }}
+                    onClick={() =>
+                      setPendingSites((prev) =>
+                        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
+                      )
+                    }>
+                    <Checkbox checked={pendingSites.includes(site)} size="small" sx={{ py: 0 }} />
+                    <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
+                      {site}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      ({allItems.filter((it) => it.sourceSite === site).length})
+                    </Typography>
+                  </Stack>
                 ))}
                 {availableSites.length === 0 && (
-                  <MenuItem disabled>
-                    <ListItemText primary="暂无来源数据" />
-                  </MenuItem>
+                  <Box sx={{ px: 1.5, py: 1 }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      暂无来源数据
+                    </Typography>
+                  </Box>
                 )}
-              </Select>
-            </FormControl>
+              </Box>
+            </Box>
 
             <Button
               variant="contained"
@@ -477,6 +521,18 @@ export default function OptionsPage() {
                       sx={{ borderRadius: 1.5 }}
                     />
                   ))}
+                  <Chip
+                    label="清除筛选"
+                    size="small"
+                    variant="outlined"
+                    onClick={clearAllFilters}
+                    sx={{
+                      borderRadius: 1.5,
+                      color: "text.secondary",
+                      borderColor: "divider",
+                      "&:hover": { borderColor: "error.main", color: "error.main" }
+                    }}
+                  />
                 </Stack>
               </Box>
             )}
