@@ -1,6 +1,11 @@
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import CodeRoundedIcon from "@mui/icons-material/CodeRounded"
+import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded"
+import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded"
+import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import GitHubIcon from "@mui/icons-material/GitHub"
+import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import {
   Box,
   Button,
@@ -424,6 +429,7 @@ export default function OptionsPage() {
                     minWidth: 0,
                     color: "text.secondary"
                   }}>
+                  <UnarchiveRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                   导入 ZIP
                   <input
                     ref={fileInputRef}
@@ -532,6 +538,7 @@ export default function OptionsPage() {
                     onClick={() =>
                       setSelectedIds(allItems.map((i) => i.id))
                     }>
+                    <DoneAllRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                     全选
                   </Button>
                   <Divider orientation="vertical" flexItem />
@@ -549,6 +556,7 @@ export default function OptionsPage() {
                       a.click()
                       URL.revokeObjectURL(url)
                     }}>
+                    <DescriptionRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                     导出 MD
                   </Button>
                   <Button
@@ -565,6 +573,7 @@ export default function OptionsPage() {
                       a.click()
                       URL.revokeObjectURL(url)
                     }}>
+                    <CodeRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                     导出 JSON
                   </Button>
                   <Divider orientation="vertical" flexItem />
@@ -575,6 +584,7 @@ export default function OptionsPage() {
                     sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
                     disabled={selectedIds.length === 0}
                     onClick={handleBatchDelete}>
+<DeleteSweepRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                     删除选中
                   </Button>
                 </Stack>
