@@ -18,7 +18,7 @@ const palettes: Record<PresetName, {
   },
   "indigo-crimson": {
     primary: { main: "#4f46e5", light: "#818cf8", dark: "#3730a3" },
-    secondary: { main: "#be123c", light: "#e11d48", dark: "#881337" },
+    secondary: { main: "#dc2626", light: "#fca5a5", dark: "#991b1b" },
     error: { main: "#dc2626", light: "#fca5a5" },
     groupHeaderBg: "rgba(190, 18, 60, 0.06)",
     groupHeaderBorder: "rgba(190, 18, 60, 0.15)"

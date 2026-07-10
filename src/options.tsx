@@ -20,6 +20,7 @@ import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
 import CenterFocusStrongRoundedIcon from "@mui/icons-material/CenterFocusStrongRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
+import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded"
 import VerticalAlignTopRoundedIcon from "@mui/icons-material/VerticalAlignTopRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
@@ -42,6 +43,7 @@ import {
   InputLabel,
   MenuItem,
   Paper,
+  Popover,
   Select,
   Stack,
   TextField,
@@ -91,6 +93,7 @@ export default function OptionsPage() {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [focusedUrl, setFocusedUrl] = useState<string | null>(null)
   const [preset, setPreset] = useState<PresetName>("classic")
+  const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -594,35 +597,6 @@ export default function OptionsPage() {
               应用
             </Button>
 
-            <Divider sx={{ my: 0.5 }} />
-
-            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", display: "block", mb: 0.5 }}>
-              配色
-            </Typography>
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              {(Object.keys(PRESET_LABELS) as PresetName[]).map((name) => (
-                <Tooltip key={name} title={PRESET_LABELS[name]}>
-                  <Box
-                    onClick={() => setPreset(name)}
-                    sx={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: "50%",
-                      cursor: "pointer",
-                      border: "2px solid",
-                      borderColor: preset === name ? "primary.main" : "transparent",
-                      transition: "all 0.2s",
-                      "&:hover": { transform: "scale(1.2)" },
-                      bgcolor: name === "classic" ? "#6b7785"
-                        : name === "indigo-crimson" ? "#4f46e5"
-                        : name === "forest" ? "#2d6a4f"
-                        : "#c2410c"
-                    }}
-                  />
-                </Tooltip>
-              ))}
-            </Stack>
-
           </Stack>
         </Drawer>
 
@@ -672,15 +646,14 @@ export default function OptionsPage() {
                   }}>
                   拾句
                 </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontSize: "0.75rem",
-                    display: { xs: "none", sm: "block" }
-                  }}>
-                  灵感一闪，即可拾取
-                </Typography>
+                <Tooltip title="配色">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => setPaletteAnchor(e.currentTarget)}
+                    sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}>
+                    <PaletteRoundedIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
                 <Box sx={{ flexGrow: 1 }} />
                 <Button
                   size="small"
@@ -1139,6 +1112,40 @@ export default function OptionsPage() {
                 </Button>
               </DialogActions>
             </Dialog>
+
+            <Popover
+              open={Boolean(paletteAnchor)}
+              anchorEl={paletteAnchor}
+              onClose={() => setPaletteAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{ paper: { sx: { borderRadius: 1, p: 1.5, mt: 0.5 } } }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", display: "block", mb: 1 }}>
+                配色
+              </Typography>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                {(Object.keys(PRESET_LABELS) as PresetName[]).map((name) => (
+                  <Tooltip key={name} title={PRESET_LABELS[name]}>
+                    <Box
+                      onClick={() => { setPreset(name); setPaletteAnchor(null) }}
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        "&:hover": { transform: "scale(1.2)" },
+                        ...(preset === name ? { border: "2px solid", borderColor: "primary.main", boxSizing: "border-box" } : {}),
+                        bgcolor: name === "classic" ? "#6b7785"
+                          : name === "indigo-crimson" ? "#4f46e5"
+                          : name === "forest" ? "#2d6a4f"
+                          : "#c2410c"
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Stack>
+            </Popover>
 
             <Box
               component="footer"
