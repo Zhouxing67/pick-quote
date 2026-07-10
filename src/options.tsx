@@ -9,6 +9,8 @@ import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
 import GitHubIcon from "@mui/icons-material/GitHub"
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
+import UnfoldLessRoundedIcon from "@mui/icons-material/UnfoldLessRounded"
+import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded"
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded"
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded"
 import KeyboardArrowUpRoundedIcon from "@mui/icons-material/KeyboardArrowUpRounded"
@@ -16,6 +18,7 @@ import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
 import CenterFocusStrongRoundedIcon from "@mui/icons-material/CenterFocusStrongRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
+import VerticalAlignTopRoundedIcon from "@mui/icons-material/VerticalAlignTopRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import {
@@ -777,9 +780,11 @@ export default function OptionsPage() {
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
               <Button size="small" sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }} onClick={expandAll}>
+                <UnfoldMoreRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                 展开全部
               </Button>
               <Button size="small" sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }} onClick={collapseAll}>
+                <UnfoldLessRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                 折叠全部
               </Button>
               <Box sx={{ flex: 1 }} />
@@ -787,6 +792,7 @@ export default function OptionsPage() {
                 <Button
                   size="small"
                   color="warning"
+                  startIcon={<CloseRoundedIcon />}
                   sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }}
                   onClick={() => setFocusedUrl(null)}>
                   退出聚焦
@@ -826,10 +832,10 @@ export default function OptionsPage() {
                   onDragEnd={dragHandlers.onDragEnd}>
                   <Box
                     sx={{ display: "flex", alignItems: "center", cursor: "grab", color: "text.disabled", "&:hover": { color: "text.secondary" } }}
-                    onMouseDown={(e) => e.stopPropagation()}>
+                    onClick={(e) => e.stopPropagation()}>
                     <DragIndicatorRoundedIcon sx={{ fontSize: 18 }} />
                   </Box>
-                  <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 1 }} onClick={() => toggleCollapse(group.url)}>
+                  <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 0.75 }} onClick={() => toggleCollapse(group.url)}>
                     {collapsedUrls.has(group.url) ? (
                       <KeyboardArrowRightRoundedIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
                     ) : (
@@ -838,14 +844,18 @@ export default function OptionsPage() {
                     <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {group.title}
                     </Typography>
+                    <LinkRoundedIcon
+                      sx={{ fontSize: 14, color: "text.disabled", flexShrink: 0, cursor: "pointer", "&:hover": { color: "primary.main" } }}
+                      onClick={(e) => { e.stopPropagation(); window.open(group.url, "_blank") }}
+                    />
                     <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", flexShrink: 0 }}>
                       {group.items.length} 条
                     </Typography>
                   </Box>
-                  <Stack direction="row" spacing={0.5} className="group-actions" sx={{ flexShrink: 0 }}>
+                  <Stack direction="row" spacing={0.5} className="group-actions" sx={{ flexShrink: 0 }} onMouseDown={(e) => e.stopPropagation()}>
                     <Tooltip title="置顶">
                       <IconButton size="small" sx={{ p: 0.25 }} onClick={(e) => { e.stopPropagation(); moveGroup(group.url, 0) }}>
-                        <KeyboardArrowUpRoundedIcon sx={{ fontSize: 16 }} />
+                        <VerticalAlignTopRoundedIcon sx={{ fontSize: 16 }} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="上移">
