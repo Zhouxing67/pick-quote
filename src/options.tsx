@@ -11,8 +11,10 @@ import GitHubIcon from "@mui/icons-material/GitHub"
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded"
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded"
+import KeyboardArrowUpRoundedIcon from "@mui/icons-material/KeyboardArrowUpRounded"
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
+import CenterFocusStrongRoundedIcon from "@mui/icons-material/CenterFocusStrongRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
@@ -79,6 +81,7 @@ export default function OptionsPage() {
   const [collapsedUrls, setCollapsedUrls] = useState<Set<string>>(new Set())
   const [groupOrder, setGroupOrder] = useState<string[] | null>(null)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [focusedUrl, setFocusedUrl] = useState<string | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -334,6 +337,29 @@ export default function OptionsPage() {
       const next = new Set(prev)
       if (next.has(url)) next.delete(url)
       else next.add(url)
+      return next
+    })
+  }
+
+  const moveGroup = (url: string, targetIdx: number) => {
+    const order = groupOrder ?? sortedGroups.map((g) => g.url)
+    const from = order.indexOf(url)
+    if (from === -1 || targetIdx < 0 || targetIdx >= order.length) return
+    const next = [...order]
+    const [moved] = next.splice(from, 1)
+    next.splice(targetIdx, 0, moved)
+    setGroupOrder(next)
+  }
+
+  const expandAll = () => setCollapsedUrls(new Set())
+  const collapseAll = () => setCollapsedUrls(new Set(sortedGroups.map((g) => g.url)))
+
+  const focusGroup = (url: string) => {
+    collapseAll()
+    setFocusedUrl(url)
+    setCollapsedUrls((prev) => {
+      const next = new Set(prev)
+      next.delete(url)
       return next
     })
   }
@@ -749,8 +775,31 @@ export default function OptionsPage() {
               </Box>
             )}
 
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+              <Button size="small" sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }} onClick={expandAll}>
+                展开全部
+              </Button>
+              <Button size="small" sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }} onClick={collapseAll}>
+                折叠全部
+              </Button>
+              <Box sx={{ flex: 1 }} />
+              {focusedUrl && (
+                <Button
+                  size="small"
+                  color="warning"
+                  sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }}
+                  onClick={() => setFocusedUrl(null)}>
+                  退出聚焦
+                </Button>
+              )}
+            </Box>
+
             {sortedGroups.map((group, idx) => (
-              <Box key={group.url} sx={{ mb: 2, opacity: dragIndex === idx ? 0.4 : 1, transition: "opacity 0.15s" }}>
+              <Box key={group.url} sx={{
+                mb: 2,
+                opacity: dragIndex === idx ? 0.4 : focusedUrl && focusedUrl !== group.url ? 0.25 : 1,
+                transition: "opacity 0.3s"
+              }}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -759,15 +808,17 @@ export default function OptionsPage() {
                     mb: collapsedUrls.has(group.url) ? 0 : 1.5,
                     borderRadius: 2,
                     bgcolor: collapsedUrls.has(group.url) ? "transparent" : "rgba(220, 237, 200, 0.4)",
-                    border: "1px solid",
-                    borderColor: collapsedUrls.has(group.url) ? "transparent" : (theme) =>
+                    border: focusedUrl === group.url ? "2px solid" : "1px solid",
+                    borderColor: focusedUrl === group.url ? "primary.main" : collapsedUrls.has(group.url) ? "transparent" : (theme) =>
                       theme.palette.mode === "dark" ? "rgba(220, 237, 200, 0.2)" : "rgba(220, 237, 200, 0.7)",
                     display: "flex",
                     alignItems: "center",
                     gap: 0.5,
                     cursor: "pointer",
                     transition: "all 0.2s",
-                    "&:hover": { bgcolor: collapsedUrls.has(group.url) ? "action.hover" : "rgba(220, 237, 200, 0.6)" }
+                    "&:hover": { bgcolor: collapsedUrls.has(group.url) ? "action.hover" : "rgba(220, 237, 200, 0.6)" },
+                    "& .group-actions": { visibility: "hidden" },
+                    "&:hover .group-actions": { visibility: "visible" }
                   }}
                   draggable
                   onDragStart={(e) => dragHandlers.onDragStart(e, idx)}
@@ -791,6 +842,28 @@ export default function OptionsPage() {
                       {group.items.length} 条
                     </Typography>
                   </Box>
+                  <Stack direction="row" spacing={0.5} className="group-actions" sx={{ flexShrink: 0 }}>
+                    <Tooltip title="置顶">
+                      <IconButton size="small" sx={{ p: 0.25 }} onClick={(e) => { e.stopPropagation(); moveGroup(group.url, 0) }}>
+                        <KeyboardArrowUpRoundedIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="上移">
+                      <IconButton size="small" sx={{ p: 0.25 }} onClick={(e) => { e.stopPropagation(); moveGroup(group.url, idx - 1) }}>
+                        <KeyboardArrowUpRoundedIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="下移">
+                      <IconButton size="small" sx={{ p: 0.25 }} onClick={(e) => { e.stopPropagation(); moveGroup(group.url, idx + 1) }}>
+                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="聚焦">
+                      <IconButton size="small" sx={{ p: 0.25, color: focusedUrl === group.url ? "warning.main" : undefined }} onClick={(e) => { e.stopPropagation(); focusGroup(group.url) }}>
+                        <CenterFocusStrongRoundedIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
                 </Paper>
                 {!collapsedUrls.has(group.url) && (
                   <Box
