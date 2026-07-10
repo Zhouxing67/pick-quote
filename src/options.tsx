@@ -356,21 +356,6 @@ export default function OptionsPage() {
               应用
             </Button>
 
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ borderRadius: 2 }}
-              component="label"
-              disabled={importing}>
-              {importing ? "导入中..." : "导入 ZIP"}
-              <input
-                ref={fileInputRef}
-                type="file"
-                hidden
-                accept=".zip"
-                onChange={handleImport}
-              />
-            </Button>
           </Stack>
         </Drawer>
 
@@ -428,6 +413,26 @@ export default function OptionsPage() {
                   灵感一闪，即可拾取
                 </Typography>
                 <Box sx={{ flexGrow: 1 }} />
+                <Button
+                  size="small"
+                  component="label"
+                  disabled={importing}
+                  sx={{
+                    borderRadius: 2,
+                    fontSize: "0.75rem",
+                    px: 1.5,
+                    minWidth: 0,
+                    color: "text.secondary"
+                  }}>
+                  导入 ZIP
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    accept=".zip"
+                    onChange={handleImport}
+                  />
+                </Button>
                 <Button
                   size="small"
                   sx={{
@@ -503,6 +508,79 @@ export default function OptionsPage() {
               </Box>
             )}
 
+            {selectMode && (
+              <Box
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  mb: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider"
+                }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem" }}>
+                  ✅ 已选 {selectedIds.length} 条
+                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Button
+                    size="small"
+                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    onClick={() =>
+                      setSelectedIds(allItems.map((i) => i.id))
+                    }>
+                    全选
+                  </Button>
+                  <Divider orientation="vertical" flexItem />
+                  <Button
+                    size="small"
+                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    disabled={selectedIds.length === 0}
+                    onClick={async () => {
+                      const items = allItems.filter((i) => selectedIds.includes(i.id))
+                      const blob = await toZip(items)
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement("a")
+                      a.href = url
+                      a.download = "pickquote-export.zip"
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}>
+                    导出 MD
+                  </Button>
+                  <Button
+                    size="small"
+                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    disabled={selectedIds.length === 0}
+                    onClick={async () => {
+                      const items = allItems.filter((i) => selectedIds.includes(i.id))
+                      const blob = await toJsonZip(items)
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement("a")
+                      a.href = url
+                      a.download = "pickquote-export.json.zip"
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}>
+                    导出 JSON
+                  </Button>
+                  <Divider orientation="vertical" flexItem />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="error"
+                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    disabled={selectedIds.length === 0}
+                    onClick={handleBatchDelete}>
+                    删除选中
+                  </Button>
+                </Stack>
+              </Box>
+            )}
+
             <Masonry
               breakpointCols={{
                 default: 3,
@@ -570,82 +648,6 @@ export default function OptionsPage() {
               </Box>
             )}
 
-            {selectMode && (
-              <Box
-                sx={{
-                  position: "sticky",
-                  bottom: 0,
-                  zIndex: 1100,
-                  bgcolor: "background.paper",
-                  borderTop: "1px solid",
-                  borderColor: "divider",
-                  py: 1.5,
-                  px: 3,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 2,
-                  boxShadow: 3,
-                  mb: 2
-                }}>
-                <Typography variant="body2" color="text.secondary">
-                  已选 {selectedIds.length} 条
-                </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    size="small"
-                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
-                    onClick={() =>
-                      setSelectedIds(allItems.map((i) => i.id))
-                    }>
-                    全选
-                  </Button>
-                  <Divider orientation="vertical" flexItem />
-                  <Button
-                    size="small"
-                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
-                    disabled={selectedIds.length === 0}
-                    onClick={async () => {
-                      const items = allItems.filter((i) => selectedIds.includes(i.id))
-                      const blob = await toZip(items)
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement("a")
-                      a.href = url
-                      a.download = "pickquote-export.zip"
-                      a.click()
-                      URL.revokeObjectURL(url)
-                    }}>
-                    导出 MD
-                  </Button>
-                  <Button
-                    size="small"
-                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
-                    disabled={selectedIds.length === 0}
-                    onClick={async () => {
-                      const items = allItems.filter((i) => selectedIds.includes(i.id))
-                      const blob = await toJsonZip(items)
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement("a")
-                      a.href = url
-                      a.download = "pickquote-export.json.zip"
-                      a.click()
-                      URL.revokeObjectURL(url)
-                    }}>
-                    导出 JSON
-                  </Button>
-                  <Divider orientation="vertical" flexItem />
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="error"
-                    sx={{ borderRadius: 2, fontSize: "0.8rem" }}
-                    disabled={selectedIds.length === 0}
-                    onClick={handleBatchDelete}>
-                    删除选中
-                  </Button>
-                </Stack>
-              </Box>
-            )}
 
             <ItemDialog
               item={dialogItem}
