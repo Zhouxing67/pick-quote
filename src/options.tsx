@@ -1,10 +1,16 @@
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import AllInclusiveRoundedIcon from "@mui/icons-material/AllInclusiveRounded"
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded"
 import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded"
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
+import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
 import GitHubIcon from "@mui/icons-material/GitHub"
+import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
+import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
+import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import {
   Box,
@@ -21,6 +27,7 @@ import {
   Divider,
   Drawer,
   FormControl,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -232,14 +239,14 @@ export default function OptionsPage() {
               overflowX: "hidden"
             }
           }}>
-          <Stack spacing={2.5} sx={{ p: 2.5, pt: 3 }}>
+          <Stack spacing={2} sx={{ p: 2, pt: 2.5 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography
                 variant="h6"
                 sx={{
                   fontWeight: 400,
                   letterSpacing: "0.05em",
-                  fontSize: "1rem"
+                  fontSize: "0.9rem"
                 }}>
                 筛选
               </Typography>
@@ -254,27 +261,52 @@ export default function OptionsPage() {
               onChange={(e) => setKeyword(e.target.value)}
               size="small"
               fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                    </InputAdornment>
+                  )
+                }
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: "background.paper",
-                  borderRadius: 2
+                  borderRadius: 2,
+                  fontSize: "0.8rem"
                 }
               }}
             />
 
             <FormControl size="small" fullWidth>
-              <InputLabel id="type-label">类型</InputLabel>
+              <InputLabel id="type-label" sx={{ fontSize: "0.8rem" }}>类型</InputLabel>
               <Select
                 labelId="type-label"
                 value={type}
                 label="类型"
                 onChange={(e) => setType(e.target.value)}
-                sx={{ borderRadius: 2 }}>
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="text">文本</MenuItem>
-                <MenuItem value="image">图片</MenuItem>
-                <MenuItem value="link">链接</MenuItem>
-                <MenuItem value="snapshot">快照</MenuItem>
+                sx={{ borderRadius: 2, fontSize: "0.8rem" }}>
+                <MenuItem value="" sx={{ fontSize: "0.8rem", gap: 1 }}>
+                  <AllInclusiveRoundedIcon sx={{ fontSize: 18 }} />
+                  全部
+                </MenuItem>
+                <MenuItem value="text" sx={{ fontSize: "0.8rem", gap: 1 }}>
+                  <FormatQuoteRoundedIcon sx={{ fontSize: 18 }} />
+                  文本
+                </MenuItem>
+                <MenuItem value="image" sx={{ fontSize: "0.8rem", gap: 1 }}>
+                  <ImageRoundedIcon sx={{ fontSize: 18 }} />
+                  图片
+                </MenuItem>
+                <MenuItem value="link" sx={{ fontSize: "0.8rem", gap: 1 }}>
+                  <LinkRoundedIcon sx={{ fontSize: 18 }} />
+                  链接
+                </MenuItem>
+                <MenuItem value="snapshot" sx={{ fontSize: "0.8rem", gap: 1 }}>
+                  <PhotoCameraRoundedIcon sx={{ fontSize: 18 }} />
+                  快照
+                </MenuItem>
               </Select>
             </FormControl>
 
