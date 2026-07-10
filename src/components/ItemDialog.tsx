@@ -129,13 +129,6 @@ export default function ItemDialog({
               <ImageOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="打开来源">
-            <IconButton
-              size="small"
-              onClick={() => window.open(item.source.url, "_blank")}>
-              <LinkRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
         </Stack>
         <Menu
           anchorEl={anchorEl}

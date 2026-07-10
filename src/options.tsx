@@ -8,6 +8,8 @@ import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
 import GitHubIcon from "@mui/icons-material/GitHub"
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded"
+import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded"
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
@@ -73,6 +75,7 @@ export default function OptionsPage() {
   const [availableSites, setAvailableSites] = useState<string[]>([])
   const [siteGroups, setSiteGroups] = useState<Record<string, string>>({})
   const [renameTarget, setRenameTarget] = useState<{ domain: string; name: string } | null>(null)
+  const [collapsedUrls, setCollapsedUrls] = useState<Set<string>>(new Set())
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -279,6 +282,15 @@ export default function OptionsPage() {
     onSearch([])
   }
 
+  const toggleCollapse = (url: string) => {
+    setCollapsedUrls((prev) => {
+      const next = new Set(prev)
+      if (next.has(url)) next.delete(url)
+      else next.add(url)
+      return next
+    })
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -406,51 +418,38 @@ export default function OptionsPage() {
                   </Typography>
                 </Stack>
                 {availableSites.map((site) => (
-                  <Tooltip
+                  <Stack
                     key={site}
-                    title={
-                      <Box>
-                        {getPageTitles(site).map((t, i) => (
-                          <Typography key={i} variant="caption" sx={{ display: "block", fontSize: "0.75rem" }}>
-                            {t}
-                          </Typography>
-                        ))}
-                      </Box>
-                    }
-                    arrow
-                    placement="right">
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      spacing={1}
-                      sx={{
-                        px: 1.5,
-                        py: 0.75,
-                        cursor: "pointer",
-                        "&:hover": { bgcolor: "action.hover" },
-                        bgcolor: pendingSites.includes(site) ? "action.selected" : "transparent"
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    sx={{
+                      px: 1.5,
+                      py: 0.75,
+                      cursor: "pointer",
+                      "&:hover": { bgcolor: "action.hover" },
+                      bgcolor: pendingSites.includes(site) ? "action.selected" : "transparent"
+                    }}
+                    onClick={() =>
+                      setPendingSites((prev) =>
+                        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
+                      )
+                    }>
+                    <Checkbox checked={pendingSites.includes(site)} size="small" sx={{ py: 0 }} />
+                    <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
+                      {getDisplayName(site)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      ({allItems.filter((it) => it.sourceSite === site).length})
+                    </Typography>
+                    <EditRoundedIcon
+                      sx={{ fontSize: 14, color: "text.disabled", cursor: "pointer", "&:hover": { color: "text.secondary" } }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setRenameTarget({ domain: site, name: getDisplayName(site) })
                       }}
-                      onClick={() =>
-                        setPendingSites((prev) =>
-                          prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
-                        )
-                      }>
-                      <Checkbox checked={pendingSites.includes(site)} size="small" sx={{ py: 0 }} />
-                      <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
-                        {getDisplayName(site)}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        ({allItems.filter((it) => it.sourceSite === site).length})
-                      </Typography>
-                      <EditRoundedIcon
-                        sx={{ fontSize: 14, color: "text.disabled", cursor: "pointer", "&:hover": { color: "text.secondary" } }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setRenameTarget({ domain: site, name: getDisplayName(site) })
-                        }}
-                      />
-                    </Stack>
-                  </Tooltip>
+                    />
+                  </Stack>
                 ))}
                 {availableSites.length === 0 && (
                   <Box sx={{ px: 1.5, py: 1 }}>
@@ -704,53 +703,48 @@ export default function OptionsPage() {
             )}
 
             {groupedItems.map((group) => (
-              <Box key={group.url} sx={{ mb: 3 }}>
+              <Box key={group.url} sx={{ mb: 2 }}>
                 <Paper
                   elevation={0}
                   sx={{
-                    px: 2,
-                    py: 1.5,
-                    mb: 1.5,
+                    px: 1.5,
+                    py: 1,
+                    mb: collapsedUrls.has(group.url) ? 0 : 1.5,
                     borderRadius: 2,
-                    bgcolor: "background.paper",
+                    bgcolor: collapsedUrls.has(group.url) ? "transparent" : "rgba(220, 237, 200, 0.4)",
                     border: "1px solid",
-                    borderColor: "divider",
+                    borderColor: collapsedUrls.has(group.url) ? "transparent" : (theme) =>
+                      theme.palette.mode === "dark" ? "rgba(220, 237, 200, 0.2)" : "rgba(220, 237, 200, 0.7)",
                     display: "flex",
                     alignItems: "center",
-                    gap: 1.5
-                  }}>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500, mb: 0.25 }}>
+                    gap: 1,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    "&:hover": { bgcolor: collapsedUrls.has(group.url) ? "action.hover" : "rgba(220, 237, 200, 0.6)" }
+                  }}
+                  onClick={() => toggleCollapse(group.url)}>
+                  <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 1 }}>
+                    {collapsedUrls.has(group.url) ? (
+                      <KeyboardArrowRightRoundedIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
+                    ) : (
+                      <KeyboardArrowDownRoundedIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
+                    )}
+                    <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {group.title}
                     </Typography>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
-                        {prettyUrl(group.url)}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.65rem" }}>
-                        ·
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
-                        {group.items.length} 条
-                      </Typography>
-                    </Stack>
+                    <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem", flexShrink: 0 }}>
+                      {group.items.length} 条
+                    </Typography>
                   </Box>
-                  <Tooltip title="打开来源">
-                    <IconButton
-                      size="small"
-                      onClick={() => window.open(group.url, "_blank")}
-                      sx={{ flexShrink: 0 }}>
-                      <LinkRoundedIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                  </Tooltip>
                 </Paper>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    ml: -1.5
-                  }}>
-                  {group.items.map((it) => (
+                {!collapsedUrls.has(group.url) && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      ml: -1.5
+                    }}>
+                    {group.items.map((it) => (
                     <Box
                       key={it.id}
                       sx={{
@@ -805,6 +799,7 @@ export default function OptionsPage() {
                     </Box>
                   ))}
                 </Box>
+              )}
               </Box>
             ))}
 

@@ -135,17 +135,6 @@ export default function ItemCard({
               <ImageOutlinedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="打开来源">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation()
-                window.open(item.source.url, "_blank")
-              }}
-              sx={{ p: 0.75 }}>
-              <LinkRoundedIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
           <Tooltip title="删除">
             <IconButton
               size="small"
