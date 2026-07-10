@@ -56,6 +56,7 @@ export default function OptionsPage() {
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmBatchDelete, setConfirmBatchDelete] = useState(false)
   const [selectedSites, setSelectedSites] = useState<string[]>([])
   const [pendingSites, setPendingSites] = useState<string[]>([])
   const [availableSites, setAvailableSites] = useState<string[]>([])
@@ -150,14 +151,18 @@ export default function OptionsPage() {
     }
   }, [loadMore, hasMore])
 
-  const handleBatchDelete = async () => {
+  const handleBatchDelete = () => {
     if (selectedIds.length === 0) return
-    if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 条收藏吗？`)) return
+    setConfirmBatchDelete(true)
+  }
+
+  const handleConfirmBatchDelete = async () => {
     for (const id of selectedIds) {
       await deleteItem(id)
     }
     setSelectMode(false)
     setSelectedIds([])
+    setConfirmBatchDelete(false)
     onSearch()
   }
 
@@ -593,27 +598,37 @@ export default function OptionsPage() {
             />
 
             <Dialog
-              open={Boolean(confirmDeleteId)}
-              onClose={() => setConfirmDeleteId(null)}
+              open={Boolean(confirmDeleteId) || confirmBatchDelete}
+              onClose={() => {
+                setConfirmDeleteId(null)
+                setConfirmBatchDelete(false)
+              }}
               slotProps={{
                 paper: { sx: { borderRadius: 3 } }
               }}>
-              <DialogTitle sx={{ pb: 1 }}>确认删除</DialogTitle>
+              <DialogTitle sx={{ pb: 1 }}>
+                {confirmBatchDelete ? "批量删除" : "确认删除"}
+              </DialogTitle>
               <DialogContent>
                 <DialogContentText>
-                  确定要删除这条收藏吗？此操作不可撤销。
+                  {confirmBatchDelete
+                    ? `确定要删除选中的 ${selectedIds.length} 条收藏吗？此操作不可撤销。`
+                    : "确定要删除这条收藏吗？此操作不可撤销。"}
                 </DialogContentText>
               </DialogContent>
               <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button
-                  onClick={() => setConfirmDeleteId(null)}
+                  onClick={() => {
+                    setConfirmDeleteId(null)
+                    setConfirmBatchDelete(false)
+                  }}
                   sx={{ borderRadius: 2 }}>
                   取消
                 </Button>
                 <Button
                   variant="contained"
                   color="error"
-                  onClick={handleConfirmDelete}
+                  onClick={confirmBatchDelete ? handleConfirmBatchDelete : handleConfirmDelete}
                   sx={{ borderRadius: 2 }}>
                   删除
                 </Button>
