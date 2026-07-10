@@ -4,6 +4,7 @@ import CodeRoundedIcon from "@mui/icons-material/CodeRounded"
 import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded"
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
+import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
 import GitHubIcon from "@mui/icons-material/GitHub"
@@ -76,6 +77,8 @@ export default function OptionsPage() {
   const [siteGroups, setSiteGroups] = useState<Record<string, string>>({})
   const [renameTarget, setRenameTarget] = useState<{ domain: string; name: string } | null>(null)
   const [collapsedUrls, setCollapsedUrls] = useState<Set<string>>(new Set())
+  const [groupOrder, setGroupOrder] = useState<string[] | null>(null)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -108,6 +111,9 @@ export default function OptionsPage() {
   useEffect(() => {
     chrome.storage.sync.get("siteGroups", (data) => {
       if (data.siteGroups) setSiteGroups(data.siteGroups as Record<string, string>)
+    })
+    chrome.storage.sync.get("groupOrder", (data) => {
+      if (data.groupOrder) setGroupOrder(data.groupOrder as string[])
     })
   }, [])
 
@@ -203,6 +209,47 @@ export default function OptionsPage() {
       }))
       .sort((a, b) => b.items[0].createdAt - a.items[0].createdAt)
   }, [displayedItems])
+
+  const sortedGroups = useMemo(() => {
+    if (!groupOrder) return groupedItems
+    const map = new Map(groupedItems.map((g) => [g.url, g]))
+    const sorted: typeof groupedItems = []
+    for (const url of groupOrder) {
+      const group = map.get(url)
+      if (group) sorted.push(group)
+    }
+    for (const group of groupedItems) {
+      if (!groupOrder.includes(group.url)) sorted.push(group)
+    }
+    return sorted
+  }, [groupedItems, groupOrder])
+
+  useEffect(() => {
+    if (groupOrder === null) return
+    const t = setTimeout(() => {
+      chrome.storage.sync.set({ groupOrder })
+    }, 500)
+    return () => clearTimeout(t)
+  }, [groupOrder])
+
+  const dragHandlers = {
+    onDragStart: (e: React.DragEvent, idx: number) => {
+      e.dataTransfer.effectAllowed = "move"
+      setDragIndex(idx)
+    },
+    onDragOver: (e: React.DragEvent, idx: number) => {
+      e.preventDefault()
+      if (dragIndex === null || dragIndex === idx) return
+      const next = [...(groupOrder ?? groupedItems.map((g) => g.url))]
+      const [moved] = next.splice(dragIndex, 1)
+      next.splice(idx, 0, moved)
+      setGroupOrder(next)
+      setDragIndex(idx)
+    },
+    onDragEnd: () => {
+      setDragIndex(null)
+    }
+  }
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -702,8 +749,8 @@ export default function OptionsPage() {
               </Box>
             )}
 
-            {groupedItems.map((group) => (
-              <Box key={group.url} sx={{ mb: 2 }}>
+            {sortedGroups.map((group, idx) => (
+              <Box key={group.url} sx={{ mb: 2, opacity: dragIndex === idx ? 0.4 : 1, transition: "opacity 0.15s" }}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -717,13 +764,21 @@ export default function OptionsPage() {
                       theme.palette.mode === "dark" ? "rgba(220, 237, 200, 0.2)" : "rgba(220, 237, 200, 0.7)",
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
+                    gap: 0.5,
                     cursor: "pointer",
                     transition: "all 0.2s",
                     "&:hover": { bgcolor: collapsedUrls.has(group.url) ? "action.hover" : "rgba(220, 237, 200, 0.6)" }
                   }}
-                  onClick={() => toggleCollapse(group.url)}>
-                  <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 1 }}>
+                  draggable
+                  onDragStart={(e) => dragHandlers.onDragStart(e, idx)}
+                  onDragOver={(e) => dragHandlers.onDragOver(e, idx)}
+                  onDragEnd={dragHandlers.onDragEnd}>
+                  <Box
+                    sx={{ display: "flex", alignItems: "center", cursor: "grab", color: "text.disabled", "&:hover": { color: "text.secondary" } }}
+                    onMouseDown={(e) => e.stopPropagation()}>
+                    <DragIndicatorRoundedIcon sx={{ fontSize: 18 }} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 1 }} onClick={() => toggleCollapse(group.url)}>
                     {collapsedUrls.has(group.url) ? (
                       <KeyboardArrowRightRoundedIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
                     ) : (
