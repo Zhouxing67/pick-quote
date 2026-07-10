@@ -5,85 +5,40 @@ export const config: PlasmoCSConfig = {
   all_frames: true
 }
 
-// Simple selection feedback: show a small toast when saved
-function showToast(text: string) {
-  const toast = document.createElement("div")
-  toast.textContent = text
-  toast.style.position = "fixed"
-  toast.style.zIndex = "2147483647"
-  toast.style.bottom = "24px"
-  toast.style.right = "24px"
-  toast.style.background = "rgba(0,0,0,0.8)"
-  toast.style.color = "#fff"
-  toast.style.padding = "8px 12px"
-  toast.style.borderRadius = "8px"
-  toast.style.fontSize = "12px"
-  document.body.appendChild(toast)
-  setTimeout(() => toast.remove(), 2000)
-}
-
-// Keyboard shortcut handler (fallback if commands not available)
-document.addEventListener("keydown", (e) => {
-  const isSave = e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s"
-  if (!isSave) return
-  const sel = window.getSelection()?.toString().trim()
-  if (!sel) return
-  chrome.runtime.sendMessage(
-    {
-      kind: "capture",
-      payload: {
-        type: "text",
-        content: sel,
-        context: deriveContext(),
-        anchor: deriveAnchor(),
-        source: {
-          title: document.title,
-          url: location.href,
-          site: location.hostname
-        }
-      }
-    },
-    (res) => {
-      if (res?.ok) showToast("已保存到拾句")
-    }
-  )
-})
-
-// Listen for background command to request selection
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === "request-selection") {
     const sel = window.getSelection()?.toString().trim()
     if (!sel) {
-      sendResponse({ ok: false })
-      return
+      sendResponse({ ok: false, reason: "no-selection" })
+      return true // 即使是失败，也要返回 true 并调用 sendResponse
     }
-    chrome.runtime.sendMessage(
-      {
-        kind: "capture",
-        payload: {
-          type: "text",
-          content: sel,
-          context: deriveContext(),
-          anchor: deriveAnchor(),
-          source: {
-            title: document.title,
-            url: location.href,
-            site: location.hostname
-          }
-        }
-      },
-      (res) => {
-        if (res?.ok) showToast("已保存到拾句")
-        sendResponse({ ok: true })
+    sendResponse({
+      ok: true,
+      data: {
+        content: sel,
+        source: { title: document.title, url: location.href, site: location.hostname }
       }
-    )
-    return true
+    })
+    return true // 必须返回 true，因为 sendResponse 可能被异步调用（虽然这里同步了，但保持好习惯）
   }
+
   if (msg?.kind === "toast" && msg?.text) {
     showToast(msg.text)
   }
-  // 长截图暂未实现
 })
+
+function showToast(text: string) {
+
+  const toast = document.createElement("div")
+  toast.textContent = text
+  Object.assign(toast.style, {
+    position: "fixed", zIndex: "2147483647", bottom: "24px", right: "24px",
+    background: "rgba(0,0,0,0.8)", color: "#fff", padding: "8px 12px",
+    borderRadius: "8px", fontSize: "12px"
+  })
+  document.body.appendChild(toast)
+  setTimeout(() => toast.remove(), 2000)
+}
 
 function deriveContext() {
   const selection = document.getSelection()
