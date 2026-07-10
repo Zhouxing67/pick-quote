@@ -11,7 +11,7 @@ const palettes: Record<PresetName, {
 }> = {
   classic: {
     primary: { main: "#6b7785", light: "#8a96a3", dark: "#4a5563" },
-    secondary: { main: " #9c8b7a", light: "#b5a598", dark: "#7d6f61" },
+    secondary: { main: "#9c8b7a", light: "#b5a598", dark: "#7d6f61" },
     error: { main: "#c9786e", light: "#d89a91" },
     groupHeaderBg: "rgba(220, 237, 200, 0.4)",
     groupHeaderBorder: "rgba(220, 237, 200, 0.7)"
