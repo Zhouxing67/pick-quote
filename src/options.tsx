@@ -31,6 +31,7 @@ import {
   InputAdornment,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   Stack,
   TextField,
@@ -42,7 +43,6 @@ import IconButton from "@mui/material/IconButton"
 import { ThemeProvider } from "@mui/material/styles"
 import Tooltip from "@mui/material/Tooltip"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import Masonry from "react-masonry-css"
 
 import iconPng from "./assets/icon.png"
 import ItemCard from "./components/ItemCard"
@@ -52,7 +52,7 @@ import { toZip, toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
 import type { Item, ItemType, SearchQuery } from "./types"
-import "./options.css"
+import { prettyUrl } from "./utils"
 
 const DRAWER_WIDTH = 280
 
@@ -171,6 +171,22 @@ export default function OptionsPage() {
     setDisplayedItems(nextItems)
     setHasMore(nextItems.length < allItems.length)
   }, [allItems, displayedItems.length, hasMore, ITEMS_PER_PAGE])
+
+  const groupedItems = useMemo(() => {
+    const map = new Map<string, Item[]>()
+    for (const item of displayedItems) {
+      const key = item.source.url
+      if (!map.has(key)) map.set(key, [])
+      map.get(key)!.push(item)
+    }
+    return Array.from(map.entries())
+      .map(([url, items]) => ({
+        url,
+        title: items[0]?.source.title || prettyUrl(url),
+        items
+      }))
+      .sort((a, b) => b.items[0].createdAt - a.items[0].createdAt)
+  }, [displayedItems])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -674,58 +690,110 @@ export default function OptionsPage() {
               </Box>
             )}
 
-            <Masonry
-              breakpointCols={{
-                default: 3,
-                900: 2,
-                600: 1
-              }}
-              className="masonry-grid"
-              columnClassName="masonry-grid-column">
-              {displayedItems.map((it) => (
-                <Box key={it.id} sx={{ position: "relative" }}>
-                  {selectMode && (
+            {groupedItems.map((group) => (
+              <Box key={group.url} sx={{ mb: 3 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    mb: 1.5,
+                    borderRadius: 2,
+                    bgcolor: "background.paper",
+                    border: "1px solid",
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5
+                  }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500, mb: 0.25 }}>
+                      {group.title}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                        {prettyUrl(group.url)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.65rem" }}>
+                        ·
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                        {group.items.length} 条
+                      </Typography>
+                    </Stack>
+                  </Box>
+                  <Tooltip title="打开来源">
+                    <IconButton
+                      size="small"
+                      onClick={() => window.open(group.url, "_blank")}
+                      sx={{ flexShrink: 0 }}>
+                      <LinkRoundedIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Paper>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    ml: -1.5
+                  }}>
+                  {group.items.map((it) => (
                     <Box
+                      key={it.id}
                       sx={{
-                        position: "absolute",
-                        top: 8,
-                        left: 8,
-                        zIndex: 10
-                      }}
-                      onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selectedIds.includes(it.id)}
-                        onChange={() =>
-                          setSelectedIds((prev) =>
-                            prev.includes(it.id)
-                              ? prev.filter((i) => i !== it.id)
-                              : [...prev, it.id]
-                          )
+                        width: {
+                          xs: "100%",
+                          sm: "50%",
+                          md: "33.333%"
+                        },
+                        pl: 1.5,
+                        mb: 1.5,
+                        position: "relative"
+                      }}>
+                      {selectMode && (
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 8,
+                            left: `calc(1.5 * 8px + 1.5)`,
+                            zIndex: 10
+                          }}
+                          onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.includes(it.id)}
+                            onChange={() =>
+                              setSelectedIds((prev) =>
+                                prev.includes(it.id)
+                                  ? prev.filter((i) => i !== it.id)
+                                  : [...prev, it.id]
+                              )
+                            }
+                            sx={{
+                              bgcolor: "background.paper",
+                              borderRadius: 1,
+                              "&:hover": { bgcolor: "action.hover" }
+                            }}
+                          />
+                        </Box>
+                      )}
+                      <ItemCard
+                        item={it}
+                        onDelete={onDelete}
+                        onClick={() =>
+                          selectMode
+                            ? setSelectedIds((prev) =>
+                                prev.includes(it.id)
+                                  ? prev.filter((i) => i !== it.id)
+                                  : [...prev, it.id]
+                              )
+                            : setDialogItem(it)
                         }
-                        sx={{
-                          bgcolor: "background.paper",
-                          borderRadius: 1,
-                          "&:hover": { bgcolor: "action.hover" }
-                        }}
                       />
                     </Box>
-                  )}
-                  <ItemCard
-                    item={it}
-                    onDelete={onDelete}
-                    onClick={() =>
-                      selectMode
-                        ? setSelectedIds((prev) =>
-                            prev.includes(it.id)
-                              ? prev.filter((i) => i !== it.id)
-                              : [...prev, it.id]
-                          )
-                        : setDialogItem(it)
-                    }
-                  />
+                  ))}
                 </Box>
-              ))}
-            </Masonry>
+              </Box>
+            ))}
 
             {hasMore && (
               <Box
