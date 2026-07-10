@@ -10,6 +10,7 @@ import GitHubIcon from "@mui/icons-material/GitHub"
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
+import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import {
@@ -70,6 +71,8 @@ export default function OptionsPage() {
   const [selectedSites, setSelectedSites] = useState<string[]>([])
   const [pendingSites, setPendingSites] = useState<string[]>([])
   const [availableSites, setAvailableSites] = useState<string[]>([])
+  const [siteGroups, setSiteGroups] = useState<Record<string, string>>({})
+  const [renameTarget, setRenameTarget] = useState<{ domain: string; name: string } | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -98,6 +101,34 @@ export default function OptionsPage() {
     ) as string[]
     setAvailableSites([...sites].sort())
   }, [allItems])
+
+  useEffect(() => {
+    chrome.storage.sync.get("siteGroups", (data) => {
+      if (data.siteGroups) setSiteGroups(data.siteGroups as Record<string, string>)
+    })
+  }, [])
+
+  const getDisplayName = (domain: string) => siteGroups[domain] || domain
+
+  const getPageTitles = (domain: string) => {
+    const titles = new Set(
+      allItems
+        .filter((it) => it.sourceSite === domain && it.source.title)
+        .map((it) => it.source.title)
+    )
+    return [...titles].slice(0, 8)
+  }
+
+  const saveSiteGroup = (domain: string, name: string) => {
+    const next = { ...siteGroups }
+    if (name.trim() && name.trim() !== domain) {
+      next[domain] = name.trim()
+    } else {
+      delete next[domain]
+    }
+    setSiteGroups(next)
+    chrome.storage.sync.set({ siteGroups: next })
+  }
 
   const onSearch = async (sites?: string[]) => {
     const activeSites = sites ?? selectedSites
@@ -346,31 +377,51 @@ export default function OptionsPage() {
                   </Typography>
                 </Stack>
                 {availableSites.map((site) => (
-                  <Stack
+                  <Tooltip
                     key={site}
-                    direction="row"
-                    alignItems="center"
-                    spacing={1}
-                    sx={{
-                      px: 1.5,
-                      py: 0.75,
-                      cursor: "pointer",
-                      "&:hover": { bgcolor: "action.hover" },
-                      bgcolor: pendingSites.includes(site) ? "action.selected" : "transparent"
-                    }}
-                    onClick={() =>
-                      setPendingSites((prev) =>
-                        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
-                      )
-                    }>
-                    <Checkbox checked={pendingSites.includes(site)} size="small" sx={{ py: 0 }} />
-                    <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
-                      {site}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      ({allItems.filter((it) => it.sourceSite === site).length})
-                    </Typography>
-                  </Stack>
+                    title={
+                      <Box>
+                        {getPageTitles(site).map((t, i) => (
+                          <Typography key={i} variant="caption" sx={{ display: "block", fontSize: "0.75rem" }}>
+                            {t}
+                          </Typography>
+                        ))}
+                      </Box>
+                    }
+                    arrow
+                    placement="right">
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      sx={{
+                        px: 1.5,
+                        py: 0.75,
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: "action.hover" },
+                        bgcolor: pendingSites.includes(site) ? "action.selected" : "transparent"
+                      }}
+                      onClick={() =>
+                        setPendingSites((prev) =>
+                          prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
+                        )
+                      }>
+                      <Checkbox checked={pendingSites.includes(site)} size="small" sx={{ py: 0 }} />
+                      <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
+                        {getDisplayName(site)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        ({allItems.filter((it) => it.sourceSite === site).length})
+                      </Typography>
+                      <EditRoundedIcon
+                        sx={{ fontSize: 14, color: "text.disabled", cursor: "pointer", "&:hover": { color: "text.secondary" } }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setRenameTarget({ domain: site, name: getDisplayName(site) })
+                        }}
+                      />
+                    </Stack>
+                  </Tooltip>
                 ))}
                 {availableSites.length === 0 && (
                   <Box sx={{ px: 1.5, py: 1 }}>
@@ -731,6 +782,62 @@ export default function OptionsPage() {
                   onClick={confirmBatchDelete ? handleConfirmBatchDelete : handleConfirmDelete}
                   sx={{ borderRadius: 2 }}>
                   删除
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Dialog
+              open={Boolean(renameTarget)}
+              onClose={() => setRenameTarget(null)}
+              slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+              <DialogTitle sx={{ pb: 1 }}>重命名分组</DialogTitle>
+              <DialogContent>
+                <TextField
+                  autoFocus
+                  fullWidth
+                  size="small"
+                  value={renameTarget?.name ?? ""}
+                  onChange={(e) =>
+                    setRenameTarget((prev) => (prev ? { ...prev, name: e.target.value } : null))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && renameTarget) {
+                      saveSiteGroup(renameTarget.domain, renameTarget.name)
+                      setRenameTarget(null)
+                    }
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "0.85rem" },
+                    mt: 1
+                  }}
+                />
+              </DialogContent>
+              <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button
+                  onClick={() => {
+                    if (renameTarget) {
+                      saveSiteGroup(renameTarget.domain, renameTarget.domain)
+                      setRenameTarget(null)
+                    }
+                  }}
+                  sx={{ borderRadius: 2 }}>
+                  重置为域名
+                </Button>
+                <Button
+                  onClick={() => setRenameTarget(null)}
+                  sx={{ borderRadius: 2 }}>
+                  取消
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    if (renameTarget) {
+                      saveSiteGroup(renameTarget.domain, renameTarget.name)
+                      setRenameTarget(null)
+                    }
+                  }}
+                  sx={{ borderRadius: 2 }}>
+                  确认
                 </Button>
               </DialogActions>
             </Dialog>
