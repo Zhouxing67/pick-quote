@@ -1117,7 +1117,7 @@ export default function OptionsPage() {
               open={Boolean(paletteAnchor)}
               anchorEl={paletteAnchor}
               onClose={() => setPaletteAnchor(null)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              anchorOrigin={{ vertical: "top", horizontal: "left" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
               slotProps={{ paper: { sx: { borderRadius: 1, p: 1.5, mt: 0.5 } } }}>
               <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", display: "block", mb: 1 }}>
@@ -1135,7 +1135,7 @@ export default function OptionsPage() {
                         cursor: "pointer",
                         transition: "all 0.2s",
                         "&:hover": { transform: "scale(1.2)" },
-                        ...(preset === name ? { border: "2px solid", borderColor: "primary.main", boxSizing: "border-box" } : {}),
+                        ...(preset === name ? { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 } : {}),
                         bgcolor: name === "classic" ? "#6b7785"
                           : name === "indigo-crimson" ? "#4f46e5"
                           : name === "forest" ? "#2d6a4f"
