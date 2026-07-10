@@ -61,7 +61,8 @@ import { deleteItem, exportItems, searchItems } from "./database"
 import { toZip, toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
-import type { Item, ItemType, SearchQuery } from "./types"
+import type { Item, ItemType, PresetName, SearchQuery } from "./types"
+import { PRESET_LABELS } from "./types"
 import { prettyUrl } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
@@ -89,6 +90,7 @@ export default function OptionsPage() {
   const [groupOrder, setGroupOrder] = useState<string[] | null>(null)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [focusedUrl, setFocusedUrl] = useState<string | null>(null)
+  const [preset, setPreset] = useState<PresetName>("classic")
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -96,9 +98,19 @@ export default function OptionsPage() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)")
 
   const theme = useMemo(
-    () => createAppTheme(prefersDarkMode ? "dark" : "light"),
-    [prefersDarkMode]
+    () => createAppTheme(prefersDarkMode ? "dark" : "light", preset),
+    [prefersDarkMode, preset]
   )
+
+  useEffect(() => {
+    chrome.storage.sync.get("preset", (data) => {
+      if (data.preset) setPreset(data.preset as PresetName)
+    })
+  }, [])
+
+  useEffect(() => {
+    chrome.storage.sync.set({ preset })
+  }, [preset])
 
   useEffect(() => {
     onSearch()
@@ -582,6 +594,35 @@ export default function OptionsPage() {
               应用
             </Button>
 
+            <Divider sx={{ my: 0.5 }} />
+
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", display: "block", mb: 0.5 }}>
+              配色
+            </Typography>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              {(Object.keys(PRESET_LABELS) as PresetName[]).map((name) => (
+                <Tooltip key={name} title={PRESET_LABELS[name]}>
+                  <Box
+                    onClick={() => setPreset(name)}
+                    sx={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      border: "2px solid",
+                      borderColor: preset === name ? "primary.main" : "transparent",
+                      transition: "all 0.2s",
+                      "&:hover": { transform: "scale(1.2)" },
+                      bgcolor: name === "classic" ? "#6b7785"
+                        : name === "indigo-crimson" ? "#4f46e5"
+                        : name === "forest" ? "#2d6a4f"
+                        : "#c2410c"
+                    }}
+                  />
+                </Tooltip>
+              ))}
+            </Stack>
+
           </Stack>
         </Drawer>
 
@@ -849,16 +890,18 @@ export default function OptionsPage() {
                     py: 1,
                     mb: collapsedUrls.has(group.url) ? 0 : 1.5,
                     borderRadius: 1,
-                    bgcolor: collapsedUrls.has(group.url) ? "transparent" : "rgba(220, 237, 200, 0.4)",
+                    bgcolor: collapsedUrls.has(group.url) ? "transparent" : (theme) =>
+                      `${theme.palette.secondary.main}14`,
                     border: focusedUrl === group.url ? "2px solid" : "1px solid",
                     borderColor: focusedUrl === group.url ? "primary.main" : collapsedUrls.has(group.url) ? "transparent" : (theme) =>
-                      theme.palette.mode === "dark" ? "rgba(220, 237, 200, 0.2)" : "rgba(220, 237, 200, 0.7)",
+                      `${theme.palette.secondary.main}30`,
                     display: "flex",
                     alignItems: "center",
                     gap: 0.5,
                     cursor: "pointer",
                     transition: "all 0.2s",
-                    "&:hover": { bgcolor: collapsedUrls.has(group.url) ? "action.hover" : "rgba(220, 237, 200, 0.6)" },
+                    "&:hover": { bgcolor: collapsedUrls.has(group.url) ? "action.hover" : (theme) =>
+                      `${theme.palette.secondary.main}20` },
                     "& .group-actions": { visibility: "hidden" },
                     "&:hover .group-actions": { visibility: "visible" }
                   }}

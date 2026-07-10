@@ -1,82 +1,85 @@
 import { createTheme, type PaletteMode } from "@mui/material/styles"
 
-export const createAppTheme = (mode: PaletteMode) =>
-  createTheme({
+import type { PresetName } from "../types"
+
+const palettes: Record<PresetName, {
+  primary: { main: string; light: string; dark: string }
+  secondary: { main: string; light: string; dark: string }
+  error: { main: string; light: string }
+  groupHeaderBg: string
+  groupHeaderBorder: string
+}> = {
+  classic: {
+    primary: { main: "#6b7785", light: "#8a96a3", dark: "#4a5563" },
+    secondary: { main: " #9c8b7a", light: "#b5a598", dark: "#7d6f61" },
+    error: { main: "#c9786e", light: "#d89a91" },
+    groupHeaderBg: "rgba(220, 237, 200, 0.4)",
+    groupHeaderBorder: "rgba(220, 237, 200, 0.7)"
+  },
+  "indigo-crimson": {
+    primary: { main: "#4f46e5", light: "#818cf8", dark: "#3730a3" },
+    secondary: { main: "#be123c", light: "#e11d48", dark: "#881337" },
+    error: { main: "#dc2626", light: "#fca5a5" },
+    groupHeaderBg: "rgba(190, 18, 60, 0.06)",
+    groupHeaderBorder: "rgba(190, 18, 60, 0.15)"
+  },
+  forest: {
+    primary: { main: "#2d6a4f", light: "#52b788", dark: "#1b4332" },
+    secondary: { main: "#52b788", light: "#74c69d", dark: "#2d6a4f" },
+    error: { main: "#dc2626", light: "#fca5a5" },
+    groupHeaderBg: "rgba(45, 106, 79, 0.08)",
+    groupHeaderBorder: "rgba(45, 106, 79, 0.2)"
+  },
+  terracotta: {
+    primary: { main: "#c2410c", light: "#ea580c", dark: "#9a3412" },
+    secondary: { main: "#a16207", light: "#ca8a04", dark: "#713f12" },
+    error: { main: "#dc2626", light: "#fca5a5" },
+    groupHeaderBg: "rgba(194, 65, 12, 0.06)",
+    groupHeaderBorder: "rgba(194, 65, 12, 0.15)"
+  }
+}
+
+export const createAppTheme = (mode: PaletteMode, preset: PresetName = "classic") => {
+  const p = palettes[preset]
+
+  return createTheme({
     palette: {
       mode,
       background:
         mode === "light"
-          ? {
-              default: "#faf9f7", // 温暖的米白色背景
-              paper: "#ffffff"
-            }
-          : {
-              default: "#1a1a1a", // 深色背景
-              paper: "#252525"
-            },
-      primary: {
-        main: "#6b7785", // 柔和的蓝灰色
-        light: "#8a96a3",
-        dark: "#4a5563"
-      },
-      secondary: {
-        main: "#9c8b7a", // 雅致的棕灰色
-        light: "#b5a598",
-        dark: "#7d6f61"
-      },
+          ? { default: "#faf9f7", paper: "#ffffff" }
+          : { default: "#1a1a1a", paper: "#252525" },
+      primary: p.primary,
+      secondary: p.secondary,
       text:
         mode === "light"
           ? {
-              primary: "#2d3436", // 深灰色主文本
-              secondary: "rgba(45, 52, 54, 0.65)", // 次要文本
+              primary: "#2d3436",
+              secondary: "rgba(45, 52, 54, 0.65)",
               disabled: "rgba(45, 52, 54, 0.38)"
             }
           : {
-              primary: "#e8e6e3", // 浅色主文本
-              secondary: "rgba(232, 230, 227, 0.65)", // 次要文本
+              primary: "#e8e6e3",
+              secondary: "rgba(232, 230, 227, 0.65)",
               disabled: "rgba(232, 230, 227, 0.38)"
             },
       divider:
         mode === "light"
           ? "rgba(45, 52, 54, 0.08)"
-          : "rgba(232, 230, 227, 0.12)", // 分割线
-      error: {
-        main: "#c9786e", // 柔和的错误色
-        light: "#d89a91"
-      }
+          : "rgba(232, 230, 227, 0.12)",
+      error: p.error
     },
-    shape: {
-      borderRadius: 12 // 更圆润的边角
-    },
+    shape: { borderRadius: 12 },
     typography: {
       fontFamily: [
-        "'Noto Serif SC'",
-        "'Songti SC'",
-        "'STSong'",
-        "Georgia",
-        "serif",
-        "-apple-system",
-        "BlinkMacSystemFont"
+        "'Noto Serif SC'", "'Songti SC'", "'STSong'",
+        "Georgia", "serif", "-apple-system", "BlinkMacSystemFont"
       ].join(","),
-      h5: {
-        fontWeight: 400,
-        letterSpacing: "0.02em"
-      },
-      h6: {
-        fontWeight: 400,
-        letterSpacing: "0.02em"
-      },
-      body1: {
-        lineHeight: 1.8,
-        letterSpacing: "0.02em"
-      },
-      body2: {
-        lineHeight: 1.7,
-        letterSpacing: "0.02em"
-      },
-      caption: {
-        letterSpacing: "0.03em"
-      }
+      h5: { fontWeight: 400, letterSpacing: "0.02em" },
+      h6: { fontWeight: 400, letterSpacing: "0.02em" },
+      body1: { lineHeight: 1.8, letterSpacing: "0.02em" },
+      body2: { lineHeight: 1.7, letterSpacing: "0.02em" },
+      caption: { letterSpacing: "0.03em" }
     },
     shadows:
       mode === "light"
@@ -137,39 +140,24 @@ export const createAppTheme = (mode: PaletteMode) =>
     components: {
       MuiButton: {
         styleOverrides: {
-          root: {
-            textTransform: "none",
-            fontWeight: 400,
-            letterSpacing: "0.03em"
-          },
+          root: { textTransform: "none", fontWeight: 400, letterSpacing: "0.03em" },
           outlined:
             mode === "light"
               ? {
                   borderColor: "rgba(45, 52, 54, 0.15)",
-                  "&:hover": {
-                    borderColor: "rgba(45, 52, 54, 0.3)",
-                    backgroundColor: "rgba(45, 52, 54, 0.02)"
-                  }
+                  "&:hover": { borderColor: "rgba(45, 52, 54, 0.3)", backgroundColor: "rgba(45, 52, 54, 0.02)" }
                 }
               : {
                   borderColor: "rgba(232, 230, 227, 0.2)",
-                  "&:hover": {
-                    borderColor: "rgba(232, 230, 227, 0.4)",
-                    backgroundColor: "rgba(232, 230, 227, 0.08)"
-                  }
+                  "&:hover": { borderColor: "rgba(232, 230, 227, 0.4)", backgroundColor: "rgba(232, 230, 227, 0.08)" }
                 }
         }
       },
       MuiPaper: {
         styleOverrides: {
-          root: {
-            backgroundImage: "none"
-          },
+          root: { backgroundImage: "none" },
           outlined: {
-            borderColor:
-              mode === "light"
-                ? "rgba(45, 52, 54, 0.08)"
-                : "rgba(232, 230, 227, 0.12)"
+            borderColor: mode === "light" ? "rgba(45, 52, 54, 0.08)" : "rgba(232, 230, 227, 0.12)"
           }
         }
       },
@@ -177,13 +165,11 @@ export const createAppTheme = (mode: PaletteMode) =>
         styleOverrides: {
           root: {
             "&:hover": {
-              backgroundColor:
-                mode === "light"
-                  ? "rgba(45, 52, 54, 0.04)"
-                  : "rgba(232, 230, 227, 0.08)"
+              backgroundColor: mode === "light" ? "rgba(45, 52, 54, 0.04)" : "rgba(232, 230, 227, 0.08)"
             }
           }
         }
       }
     }
   })
+}
