@@ -14,6 +14,8 @@ import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded"
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded"
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded"
 import KeyboardArrowUpRoundedIcon from "@mui/icons-material/KeyboardArrowUpRounded"
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded"
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
 import CenterFocusStrongRoundedIcon from "@mui/icons-material/CenterFocusStrongRounded"
@@ -62,7 +64,8 @@ import { createAppTheme } from "./theme"
 import type { Item, ItemType, SearchQuery } from "./types"
 import { prettyUrl } from "./utils"
 
-const DRAWER_WIDTH = 280
+const MIN_DRAWER_WIDTH = 200
+const MAX_DRAWER_WIDTH = 500
 
 export default function OptionsPage() {
   const [allItems, setAllItems] = useState<Item[]>([])
@@ -72,6 +75,7 @@ export default function OptionsPage() {
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
   const [hasMore, setHasMore] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerWidth, setDrawerWidth] = useState(280)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -376,17 +380,47 @@ export default function OptionsPage() {
           anchor="left"
           open={drawerOpen}
           sx={{
-            width: drawerOpen ? DRAWER_WIDTH : 0,
-            transition: "width 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+            width: drawerOpen ? drawerWidth : 0,
+            transition: "none",
+            position: "relative",
             "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
+              width: drawerWidth,
               boxSizing: "border-box",
               bgcolor: "background.default",
-              borderRight: "1px solid",
-              borderColor: "divider",
+              borderRight: "2px solid",
+              borderColor: "primary.main",
               overflowX: "hidden"
             }
           }}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: 4,
+              cursor: "col-resize",
+              zIndex: 1200,
+              "&:hover": { bgcolor: "primary.main", opacity: 0.5 },
+              bgcolor: "transparent",
+              transition: "background-color 0.15s"
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              const startX = e.clientX
+              const startW = drawerWidth
+              const onMove = (ev: MouseEvent) => {
+                const w = startW + ev.clientX - startX
+                setDrawerWidth(Math.max(MIN_DRAWER_WIDTH, Math.min(MAX_DRAWER_WIDTH, w)))
+              }
+              const onUp = () => {
+                document.removeEventListener("mousemove", onMove)
+                document.removeEventListener("mouseup", onUp)
+              }
+              document.addEventListener("mousemove", onMove)
+              document.addEventListener("mouseup", onUp)
+            }}
+          />
           <Stack spacing={2} sx={{ p: 2, pt: 2.5 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
               <Typography
@@ -421,7 +455,7 @@ export default function OptionsPage() {
               sx={{
                 "& .MuiOutlinedInput-root": {
                   bgcolor: "background.paper",
-                  borderRadius: 2,
+                  borderRadius: 1,
                   fontSize: "0.8rem"
                 }
               }}
@@ -434,7 +468,7 @@ export default function OptionsPage() {
                 value={type}
                 label="类型"
                 onChange={(e) => setType(e.target.value)}
-                sx={{ borderRadius: 2, fontSize: "0.8rem" }}>
+                sx={{ borderRadius: 1, fontSize: "0.8rem" }}>
                 <MenuItem value="" sx={{ fontSize: "0.8rem", gap: 1 }}>
                   <AllInclusiveRoundedIcon sx={{ fontSize: 18 }} />
                   全部
@@ -469,7 +503,7 @@ export default function OptionsPage() {
                   maxHeight: 240,
                   overflowY: "auto",
                   bgcolor: "background.paper",
-                  borderRadius: 2,
+                  borderRadius: 1,
                   border: "1px solid",
                   borderColor: "divider"
                 }}>
@@ -540,7 +574,7 @@ export default function OptionsPage() {
             <Button
               variant="contained"
               fullWidth
-              sx={{ borderRadius: 2, mt: 1 }}
+              sx={{ borderRadius: 1, mt: 1 }}
               onClick={() => {
                 setSelectedSites(pendingSites)
                 onSearch(pendingSites)
@@ -554,7 +588,9 @@ export default function OptionsPage() {
         <Box
           sx={{
             flexGrow: 1,
-            minWidth: 0
+            minWidth: 0,
+            borderLeft: "2px solid",
+            borderColor: "primary.main"
           }}>
           <Container sx={{ py: 4 }} maxWidth="xl">
             <Box
@@ -610,7 +646,7 @@ export default function OptionsPage() {
                   component="label"
                   disabled={importing}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 1,
                     fontSize: "0.75rem",
                     px: 1.5,
                     minWidth: 0,
@@ -629,7 +665,7 @@ export default function OptionsPage() {
                 <Button
                   size="small"
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 1,
                     fontSize: "0.75rem",
                     px: 1.5,
                     minWidth: 0,
@@ -711,7 +747,7 @@ export default function OptionsPage() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   bgcolor: "background.paper",
-                  borderRadius: 2,
+                  borderRadius: 1,
                   border: "1px solid",
                   borderColor: "divider"
                 }}>
@@ -721,7 +757,7 @@ export default function OptionsPage() {
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Button
                     size="small"
-                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
                     onClick={() =>
                       setSelectedIds(allItems.map((i) => i.id))
                     }>
@@ -731,7 +767,7 @@ export default function OptionsPage() {
                   <Divider orientation="vertical" flexItem />
                   <Button
                     size="small"
-                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
                     disabled={selectedIds.length === 0}
                     onClick={async () => {
                       const items = allItems.filter((i) => selectedIds.includes(i.id))
@@ -748,7 +784,7 @@ export default function OptionsPage() {
                   </Button>
                   <Button
                     size="small"
-                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
                     disabled={selectedIds.length === 0}
                     onClick={async () => {
                       const items = allItems.filter((i) => selectedIds.includes(i.id))
@@ -768,7 +804,7 @@ export default function OptionsPage() {
                     size="small"
                     variant="contained"
                     color="error"
-                    sx={{ borderRadius: 2, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+                    sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
                     disabled={selectedIds.length === 0}
                     onClick={handleBatchDelete}>
 <DeleteSweepRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
@@ -779,11 +815,11 @@ export default function OptionsPage() {
             )}
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-              <Button size="small" sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }} onClick={expandAll}>
+              <Button size="small" sx={{ borderRadius: 1, fontSize: "0.75rem", minWidth: 0 }} onClick={expandAll}>
                 <UnfoldMoreRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                 展开全部
               </Button>
-              <Button size="small" sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }} onClick={collapseAll}>
+              <Button size="small" sx={{ borderRadius: 1, fontSize: "0.75rem", minWidth: 0 }} onClick={collapseAll}>
                 <UnfoldLessRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
                 折叠全部
               </Button>
@@ -793,7 +829,7 @@ export default function OptionsPage() {
                   size="small"
                   color="warning"
                   startIcon={<CloseRoundedIcon />}
-                  sx={{ borderRadius: 2, fontSize: "0.75rem", minWidth: 0 }}
+                  sx={{ borderRadius: 1, fontSize: "0.75rem", minWidth: 0 }}
                   onClick={() => setFocusedUrl(null)}>
                   退出聚焦
                 </Button>
@@ -812,7 +848,7 @@ export default function OptionsPage() {
                     px: 1.5,
                     py: 1,
                     mb: collapsedUrls.has(group.url) ? 0 : 1.5,
-                    borderRadius: 2,
+                    borderRadius: 1,
                     bgcolor: collapsedUrls.has(group.url) ? "transparent" : "rgba(220, 237, 200, 0.4)",
                     border: focusedUrl === group.url ? "2px solid" : "1px solid",
                     borderColor: focusedUrl === group.url ? "primary.main" : collapsedUrls.has(group.url) ? "transparent" : (theme) =>
@@ -836,11 +872,6 @@ export default function OptionsPage() {
                     <DragIndicatorRoundedIcon sx={{ fontSize: 18 }} />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 0.75 }} onClick={() => toggleCollapse(group.url)}>
-                    {collapsedUrls.has(group.url) ? (
-                      <KeyboardArrowRightRoundedIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
-                    ) : (
-                      <KeyboardArrowDownRoundedIcon sx={{ fontSize: 18, color: "text.secondary", flexShrink: 0 }} />
-                    )}
                     <Typography variant="body2" sx={{ fontSize: "0.85rem", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {group.title}
                     </Typography>
@@ -871,6 +902,16 @@ export default function OptionsPage() {
                     <Tooltip title="聚焦">
                       <IconButton size="small" sx={{ p: 0.25, color: focusedUrl === group.url ? "warning.main" : undefined }} onClick={(e) => { e.stopPropagation(); focusGroup(group.url) }}>
                         <CenterFocusStrongRoundedIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Box sx={{ width: 4 }} />
+                    <Tooltip title={collapsedUrls.has(group.url) ? "展开" : "折叠"}>
+                      <IconButton size="small" sx={{ p: 0.25 }} onClick={(e) => { e.stopPropagation(); toggleCollapse(group.url) }}>
+                        {collapsedUrls.has(group.url) ? (
+                          <ChevronRightRoundedIcon sx={{ fontSize: 16 }} />
+                        ) : (
+                          <ExpandMoreRoundedIcon sx={{ fontSize: 16 }} />
+                        )}
                       </IconButton>
                     </Tooltip>
                   </Stack>
@@ -987,14 +1028,14 @@ export default function OptionsPage() {
                     setConfirmDeleteId(null)
                     setConfirmBatchDelete(false)
                   }}
-                  sx={{ borderRadius: 2 }}>
+                  sx={{ borderRadius: 1 }}>
                   取消
                 </Button>
                 <Button
                   variant="contained"
                   color="error"
                   onClick={confirmBatchDelete ? handleConfirmBatchDelete : handleConfirmDelete}
-                  sx={{ borderRadius: 2 }}>
+                  sx={{ borderRadius: 1 }}>
                   删除
                 </Button>
               </DialogActions>
@@ -1021,7 +1062,7 @@ export default function OptionsPage() {
                     }
                   }}
                   sx={{
-                    "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "0.85rem" },
+                    "& .MuiOutlinedInput-root": { borderRadius: 1, fontSize: "0.85rem" },
                     mt: 1
                   }}
                 />
@@ -1034,12 +1075,12 @@ export default function OptionsPage() {
                       setRenameTarget(null)
                     }
                   }}
-                  sx={{ borderRadius: 2 }}>
+                  sx={{ borderRadius: 1 }}>
                   重置为域名
                 </Button>
                 <Button
                   onClick={() => setRenameTarget(null)}
-                  sx={{ borderRadius: 2 }}>
+                  sx={{ borderRadius: 1 }}>
                   取消
                 </Button>
                 <Button
@@ -1050,7 +1091,7 @@ export default function OptionsPage() {
                       setRenameTarget(null)
                     }
                   }}
-                  sx={{ borderRadius: 2 }}>
+                  sx={{ borderRadius: 1 }}>
                   确认
                 </Button>
               </DialogActions>
