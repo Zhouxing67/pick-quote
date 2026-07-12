@@ -18,11 +18,10 @@ import {
   Tooltip,
   Typography
 } from "@mui/material"
-import { useRef, useState } from "react"
 
-import { exportToImage } from "../export"
 import type { Item } from "../types"
 import { prettyUrl } from "../utils"
+import { useExportImage } from "../utils/useExportImage"
 import ShareCard from "./ShareCard"
 
 export default function ItemDialog({
@@ -34,12 +33,19 @@ export default function ItemDialog({
   open: boolean
   onClose: () => void
 }) {
-  const shareCardRef = useRef<HTMLDivElement>(null)
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [selectedTheme, setSelectedTheme] = useState<"dark" | "light">("dark")
-  const [isExporting, setIsExporting] = useState(false)
-
   if (!item) return null
+
+  const {
+    shareCardRef,
+    isExporting,
+    selectedTheme,
+    anchorEl,
+    menuOpen,
+    handleExportClick,
+    handleCloseMenu,
+    handleExportImage
+  } = useExportImage(item)
+
   const icon =
     item.type === "text" ? (
       <FormatQuoteRoundedIcon fontSize="small" />
@@ -51,34 +57,6 @@ export default function ItemDialog({
       <ArticleRoundedIcon fontSize="small" />
     )
 
-  const handleExportClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null)
-  }
-
-  const handleExportImage = async (theme: typeof selectedTheme) => {
-    setSelectedTheme(theme)
-    handleCloseMenu()
-
-    // 等待主题应用
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
-    if (shareCardRef.current) {
-      setIsExporting(true)
-      try {
-        const filename = `pickquote-${item.id.slice(0, 8)}-${Date.now()}`
-        await exportToImage(shareCardRef.current, filename)
-      } catch (error) {
-        console.error("导出图片失败:", error)
-        alert("导出图片失败，请重试")
-      } finally {
-        setIsExporting(false)
-      }
-    }
-  }
   return (
     <Dialog
       open={open}
@@ -132,7 +110,7 @@ export default function ItemDialog({
         </Stack>
         <Menu
           anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
+          open={menuOpen}
           onClose={handleCloseMenu}>
           <MenuItem onClick={() => handleExportImage("dark")}>
             深色主题
@@ -317,7 +295,6 @@ export default function ItemDialog({
         </Button>
       </DialogActions>
 
-      {/* 隐藏的分享卡片，用于导出 */}
       <Box
         sx={{
           position: "fixed",

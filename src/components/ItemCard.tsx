@@ -15,11 +15,10 @@ import {
   Tooltip,
   Typography
 } from "@mui/material"
-import { useRef, useState } from "react"
 
-import { exportToImage } from "../export"
 import type { Item } from "../types"
 import { prettyUrl } from "../utils"
+import { useExportImage } from "../utils/useExportImage"
 import ShareCard from "./ShareCard"
 
 export default function ItemCard({
@@ -31,10 +30,21 @@ export default function ItemCard({
   onDelete: (id: string) => void
   onClick?: () => void
 }) {
-  const shareCardRef = useRef<HTMLDivElement>(null)
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [selectedTheme, setSelectedTheme] = useState<"dark" | "light">("dark")
-  const [isExporting, setIsExporting] = useState(false)
+  const {
+    shareCardRef,
+    isExporting,
+    selectedTheme,
+    anchorEl,
+    menuOpen,
+    handleExportClick: rawExportClick,
+    handleCloseMenu,
+    handleExportImage
+  } = useExportImage(item)
+
+  const handleExportClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+    rawExportClick(e)
+  }
 
   const icon =
     item.type === "text" ? (
@@ -46,36 +56,6 @@ export default function ItemCard({
     ) : (
       <ArticleRoundedIcon fontSize="small" />
     )
-
-  const handleExportClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation()
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null)
-  }
-
-  const handleExportImage = async (theme: typeof selectedTheme) => {
-    setSelectedTheme(theme)
-    handleCloseMenu()
-
-    // 等待主题应用
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
-    if (shareCardRef.current) {
-      setIsExporting(true)
-      try {
-        const filename = `pickquote-${item.id.slice(0, 8)}-${Date.now()}`
-        await exportToImage(shareCardRef.current, filename)
-      } catch (error) {
-        console.error("导出图片失败:", error)
-        alert("导出图片失败，请重试")
-      } finally {
-        setIsExporting(false)
-      }
-    }
-  }
 
   return (
     <Paper
@@ -150,7 +130,7 @@ export default function ItemCard({
         </Stack>
         <Menu
           anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
+          open={menuOpen}
           onClose={handleCloseMenu}
           onClick={(e) => e.stopPropagation()}>
           <MenuItem onClick={() => handleExportImage("dark")}>
@@ -243,7 +223,6 @@ export default function ItemCard({
           ))}
       </Box>
 
-      {/* 隐藏的分享卡片，用于导出 */}
       <Box
         sx={{
           position: "fixed",

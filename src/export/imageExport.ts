@@ -41,25 +41,3 @@ export async function exportToImage(
     throw error
   }
 }
-
-/**
- * 将DOM元素转换为图片数据URL
- * @param element - 要转换的DOM元素
- * @returns 图片的data URL
- */
-export async function elementToDataUrl(element: HTMLElement): Promise<string> {
-  try {
-    const canvas = await html2canvas(element, {
-      backgroundColor: null,
-      scale: 2,
-      logging: false,
-      useCORS: true,
-      allowTaint: false
-    })
-
-    return canvas.toDataURL("image/png")
-  } catch (error) {
-    console.error("Error converting element to data URL:", error)
-    throw error
-  }
-}

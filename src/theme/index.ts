@@ -2,7 +2,7 @@ import { createTheme, type PaletteMode } from "@mui/material/styles"
 
 import type { PresetName } from "../types"
 
-const palettes: Record<PresetName, {
+export const palettes: Record<PresetName, {
   primary: { main: string; light: string; dark: string }
   secondary: { main: string; light: string; dark: string }
   error: { main: string; light: string }

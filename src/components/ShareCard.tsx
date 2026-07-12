@@ -2,7 +2,7 @@ import { Box, Stack, Typography } from "@mui/material"
 import { forwardRef } from "react"
 
 import type { Item } from "../types"
-import { prettyUrl } from "../utils"
+import { prettyUrl, truncateText } from "../utils"
 
 interface ShareCardProps {
   item: Item
@@ -32,13 +32,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
     }
 
     const currentTheme = themes[theme]
-    const maxLength = 280 // 最大文本长度
-
-    // 截断长文本
-    const truncateText = (text: string, max: number) => {
-      if (text.length <= max) return text
-      return text.slice(0, max) + "..."
-    }
+    const maxLength = 280
 
     return (
       <Box
