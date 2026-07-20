@@ -1,7 +1,7 @@
 {
-  "name": "pick-quote",
-  "displayName": "Pick quote",
-  "version": "0.0.1",
+  "name": "lime",
+  "displayName": "lime",
+  "version": "0.2.0",
   "description": "一款轻巧的浏览器摘录插件，让你在浏览网页时随手收藏精彩句子、图片或链接。",
   "author": "minorcell",
   "scripts": {
@@ -60,7 +60,7 @@
       "open_in_tab": true
     },
     "action": {
-      "default_title": "拾句"
+      "default_title": "lime"
     }
   }
 }

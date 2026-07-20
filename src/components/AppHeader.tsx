@@ -1,10 +1,13 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
+import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded"
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
-import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material"
+import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
 import type { MutableRefObject } from "react"
+
+import type { Project } from "../types"
 
 interface AppHeaderProps {
   drawerOpen: boolean
@@ -13,6 +16,8 @@ interface AppHeaderProps {
   importing: boolean
   headerHeight: number
   hasActiveProject: boolean
+  activeProject: Project | null
+  onClearProject: () => void
   onToggleDrawer: () => void
   onPaletteClick: (e: React.MouseEvent<HTMLElement>) => void
   fileInputRef: MutableRefObject<HTMLInputElement | null>
@@ -29,6 +34,8 @@ export default function AppHeader({
   importing,
   headerHeight,
   hasActiveProject,
+  activeProject,
+  onClearProject,
   onToggleDrawer,
   onPaletteClick,
   fileInputRef,
@@ -39,16 +46,23 @@ export default function AppHeader({
 }: AppHeaderProps) {
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         position: "sticky",
         top: 0,
         zIndex: 1100,
-        bgcolor: "background.default",
+        bgcolor:
+          theme.palette.mode === "dark"
+            ? "rgba(18, 18, 18, 0.85)"
+            : "rgba(255, 255, 255, 0.85)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        borderBottom: "1px solid",
+        borderColor: "divider",
         transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
         height: headerHeight,
         display: "flex",
         alignItems: "center"
-      }}>
+      })}>
       <Stack
         direction="row"
         spacing={1.5}
@@ -66,16 +80,26 @@ export default function AppHeader({
             <FilterListRoundedIcon />
           </IconButton>
         </Tooltip>
-        <Typography
-          variant="h5"
-          sx={{
-            fontSize: "1.75rem",
-            fontWeight: 400,
-            letterSpacing: "0.08em",
-            lineHeight: 1
-          }}>
-          拾句
-        </Typography>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Typography
+            sx={{
+              fontSize: "1.25rem",
+              fontWeight: 500,
+              letterSpacing: "0.04em",
+              lineHeight: 1
+            }}>
+            lime
+          </Typography>
+          {activeProject && (
+            <Chip
+              label={activeProject.name}
+              size="small"
+              color="primary"
+              onDelete={onClearProject}
+              sx={{ borderRadius: 1.5, ml: 0.5, height: 24 }}
+            />
+          )}
+        </Stack>
         <Tooltip title="配色">
           <IconButton
             size="small"
@@ -85,40 +109,30 @@ export default function AppHeader({
           </IconButton>
         </Tooltip>
         <Box sx={{ flexGrow: 1 }} />
-        <Button
-          size="small"
-          component="label"
-          disabled={importing}
-          sx={{
-            borderRadius: 1,
-            fontSize: "0.75rem",
-            px: 1.5,
-            minWidth: 0,
-            color: "text.secondary"
-          }}>
-          <UnarchiveRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-          导入 ZIP
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            accept=".zip"
-            onChange={onImport}
-          />
-        </Button>
-        <Button
-          size="small"
-          sx={{
-            borderRadius: 1,
-            fontSize: "0.75rem",
-            px: 1.5,
-            minWidth: 0,
-            color: swapMode ? "primary.main" : "text.secondary"
-          }}
-          onClick={onToggleSwapMode}>
-          <SwapHorizRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-          {swapMode ? "退出交换" : "交换"}
-        </Button>
+        <Tooltip title="导入 ZIP">
+          <IconButton
+            size="small"
+            component="label"
+            disabled={importing}
+            sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+            <UnarchiveRoundedIcon sx={{ fontSize: 20 }} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              accept=".zip"
+              onChange={onImport}
+            />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={swapMode ? "退出交换" : "交换卡片"}>
+          <IconButton
+            size="small"
+            onClick={onToggleSwapMode}
+            sx={{ color: swapMode ? "primary.main" : "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+            <SwapHorizRoundedIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Tooltip>
         {hasActiveProject && (
           <Tooltip title="新建卡片">
             <IconButton
@@ -129,18 +143,14 @@ export default function AppHeader({
             </IconButton>
           </Tooltip>
         )}
-        <Button
-          size="small"
-          sx={{
-            borderRadius: 1,
-            fontSize: "0.75rem",
-            px: 1.5,
-            minWidth: 0,
-            color: selectMode ? "error.main" : "text.secondary"
-          }}
-          onClick={onToggleSelectMode}>
-          {selectMode ? "取消" : "选择"}
-        </Button>
+        <Tooltip title={selectMode ? "取消选择" : "选择卡片"}>
+          <IconButton
+            size="small"
+            onClick={onToggleSelectMode}
+            sx={{ color: selectMode ? "error.main" : "text.secondary", "&:hover": { color: "error.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+            <DoneAllRoundedIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Tooltip>
       </Stack>
     </Box>
   )

@@ -1,5 +1,9 @@
 import { addItem, listProjects } from "./database"
-import { createMenus, rebuildProjectMenus } from "./background/menus"
+import {
+  createMenus,
+  ensureMenusReady,
+  rebuildProjectMenus
+} from "./background/menus"
 import type { Item } from "./types"
 
 function notifyTab(tabId: number | undefined, text: string) {
@@ -26,15 +30,17 @@ function notifySystem(text: string) {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  createMenus()
+  createMenus().catch((e) => console.warn("onInstalled createMenus failed:", e))
 })
 
 chrome.runtime.onStartup.addListener(() => {
-  createMenus()
+  createMenus().catch((e) => console.warn("onStartup createMenus failed:", e))
 })
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   try {
+    console.debug("contextMenus.onClicked:", info.menuItemId)
+    await ensureMenusReady()
     const { menuItemId } = info
 
     const url = info.pageUrl ?? tab?.url ?? ""
@@ -180,7 +186,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === "rebuild-menus") {
-    rebuildProjectMenus()
+    rebuildProjectMenus().catch((e) =>
+      console.warn("rebuild-menus failed:", e)
+    )
     return
   }
   if (msg?.kind === "capture" && msg?.payload) {

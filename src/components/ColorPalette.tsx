@@ -24,8 +24,8 @@ export default function ColorPalette({
       open={open}
       anchorEl={anchorEl}
       onClose={onClose}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      transformOrigin={{ vertical: "top", horizontal: "right" }}
+      anchorOrigin={{ vertical: "center", horizontal: "right" }}
+      transformOrigin={{ vertical: "center", horizontal: "left" }}
       slotProps={{ paper: { sx: { borderRadius: 1, p: 1.5, mt: 0.5 } } }}>
       <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.65rem", display: "block", mb: 1 }}>
         配色

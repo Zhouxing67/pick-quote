@@ -6,9 +6,10 @@ const DB_VERSION = 4
 
 type TableNames = "items" | "projects" | "categories" | "sources"
 
-function openDb(): Promise<IDBDatabase> {
+function openDb(version?: number): Promise<IDBDatabase> {
+  const v = version ?? DB_VERSION
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION)
+    const req = indexedDB.open(DB_NAME, v)
     req.onupgradeneeded = () => {
       const db = req.result
       if (!db.objectStoreNames.contains("items")) {
@@ -61,19 +62,36 @@ function openDb(): Promise<IDBDatabase> {
 async function withStore<T>(
   name: TableNames,
   mode: IDBTransactionMode,
-  fn: (store: IDBObjectStore) => Promise<T> | T
+  fn: (store: IDBObjectStore) => Promise<T> | T,
+  _retry = true
 ): Promise<T> {
-  const db = await openDb()
-  const tx = db.transaction(name, mode)
-  const store = tx.objectStore(name)
-  const result = await fn(store)
-  await new Promise<void>((resolve, reject) => {
-    tx.oncomplete = () => resolve()
-    tx.onerror = () => reject(tx.error)
-    tx.onabort = () => reject(tx.error)
-  })
-  db.close()
-  return result
+  let db: IDBDatabase | null = null
+  try {
+    db = await openDb()
+    const tx = db.transaction(name, mode)
+    const store = tx.objectStore(name)
+    const result = await fn(store)
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+      tx.onabort = () => reject(tx.error)
+    })
+    return result
+  } catch (err) {
+    // If the store doesn't exist, force a version upgrade to create it
+    if (
+      _retry &&
+      err instanceof DOMException &&
+      err.name === "NotFoundError"
+    ) {
+      const upDb = await openDb(DB_VERSION + 1)
+      upDb.close()
+      return withStore(name, mode, fn, false)
+    }
+    throw err
+  } finally {
+    db?.close()
+  }
 }
 
 export async function addItem(item: Item): Promise<void> {

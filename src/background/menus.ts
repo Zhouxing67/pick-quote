@@ -40,6 +40,13 @@ async function rebuildProjectMenus() {
 }
 
 let menusBuilding = false
+let menusReady = false
+
+export async function ensureMenusReady() {
+  if (!menusReady) {
+    await createMenus()
+  }
+}
 
 export async function createMenus() {
   if (menusBuilding) return
@@ -66,6 +73,10 @@ export async function createMenus() {
       contexts: ["selection", "image", "link", "page"]
     })
     await rebuildProjectMenus()
+    menusReady = true
+  } catch (e) {
+    menusReady = false
+    throw e
   } finally {
     menusBuilding = false
   }

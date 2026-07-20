@@ -1,7 +1,11 @@
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import InboxRoundedIcon from "@mui/icons-material/InboxRounded"
+import NoteAddRoundedIcon from "@mui/icons-material/NoteAddRounded"
+import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded"
 import {
   Box,
   Button,
+  CircularProgress,
   Container,
   CssBaseline,
   Dialog,
@@ -248,11 +252,6 @@ export default function OptionsPage() {
     else setType("")
   }
 
-  const clearAllFilters = () => {
-    setKeyword("")
-    setType("")
-  }
-
   // ---- Card swap within project (checkbox mode) ----
   const [swapMode, setSwapMode] = useState(false)
 
@@ -293,6 +292,14 @@ export default function OptionsPage() {
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
 
+  const itemCounts = useMemo(() => {
+    const m: Record<string, number> = {}
+    for (const item of allItems) {
+      if (item.projectId) m[item.projectId] = (m[item.projectId] ?? 0) + 1
+    }
+    return m
+  }, [allItems])
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -304,6 +311,7 @@ export default function OptionsPage() {
           activeProjectId={activeProjectId}
           newProjectName={newProjectName}
           projectError={projectError}
+          itemCounts={itemCounts}
           onClose={handleToggleDrawer}
           onNewProjectNameChange={(v) => {
             setNewProjectName(v)
@@ -345,20 +353,19 @@ export default function OptionsPage() {
                 setSwapMode((prev) => !prev)
               }}
               onNewCard={handleNewCard}
+              activeProject={activeProject}
+              onClearProject={() => {
+                setActiveProjectId(null)
+                onSearch(null)
+              }}
             />
 
             <FilterChips
               keyword={keyword}
               type={type}
-              activeProject={activeProject}
               headerHeight={headerHeight}
               onClearKeyword={() => handleRemoveFilter("keyword")}
               onClearType={() => handleRemoveFilter("type")}
-              onClearProject={() => {
-                setActiveProjectId(null)
-                onSearch(null)
-              }}
-              onClearAll={clearAllFilters}
             />
 
             {(selectMode || swapMode) && (
@@ -401,12 +408,16 @@ export default function OptionsPage() {
                   alignItems: "center",
                   justifyContent: "center",
                   py: 12,
-                  color: "text.secondary"
+                  color: "text.secondary",
+                  userSelect: "none"
                 }}>
+                <InboxRoundedIcon
+                  sx={{ fontSize: 96, opacity: 0.12, mb: 3 }}
+                />
                 <Typography variant="h6" sx={{ fontWeight: 400, mb: 1 }}>
-                  请选择一个项目
+                  选择一个项目
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="body2" sx={{ opacity: 0.7 }}>
                   从左侧项目面板新建或打开项目，开始整理你的灵感卡片
                 </Typography>
               </Box>
@@ -428,6 +439,45 @@ export default function OptionsPage() {
               />
             )}
 
+            {activeProject && !hasMore && allItems.length === 0 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 10,
+                  color: "text.secondary",
+                  userSelect: "none"
+                }}>
+                {keyword || type ? (
+                  <>
+                    <SearchOffRoundedIcon
+                      sx={{ fontSize: 80, opacity: 0.12, mb: 3 }}
+                    />
+                    <Typography variant="body1" sx={{ opacity: 0.7 }}>
+                      没有找到匹配的卡片
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.5, mt: 0.5 }}>
+                      试试其他关键词或清除筛选条件
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <NoteAddRoundedIcon
+                      sx={{ fontSize: 80, opacity: 0.12, mb: 3 }}
+                    />
+                    <Typography variant="body1" sx={{ opacity: 0.7 }}>
+                      此项目暂无卡片
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.5, mt: 0.5 }}>
+                      点击顶部 ＋ 按钮新建一张卡片
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            )}
+
             {hasMore && activeProject && (
               <Box
                 ref={loadMoreRef}
@@ -436,9 +486,7 @@ export default function OptionsPage() {
                   justifyContent: "center",
                   py: 4
                 }}>
-                <Typography variant="body2" color="text.secondary">
-                  加载中...
-                </Typography>
+                <CircularProgress size={24} />
               </Box>
             )}
 

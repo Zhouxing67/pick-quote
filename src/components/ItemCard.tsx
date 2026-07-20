@@ -1,11 +1,8 @@
-import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
-import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
-import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
-import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import {
   Box,
+  Chip,
   IconButton,
   Link,
   Menu,
@@ -56,17 +53,6 @@ export default function ItemCard({
     rawExportClick(e)
   }
 
-  const icon =
-    item.type === "text" ? (
-      <FormatQuoteRoundedIcon fontSize="small" />
-    ) : item.type === "image" ? (
-      <ImageRoundedIcon fontSize="small" />
-    ) : item.type === "link" ? (
-      <LinkRoundedIcon fontSize="small" />
-    ) : (
-      <ArticleRoundedIcon fontSize="small" />
-    )
-
   return (
     <Paper
       elevation={0}
@@ -97,7 +83,17 @@ export default function ItemCard({
         justifyContent="space-between"
         sx={{ mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Box sx={{ color: "text.secondary", opacity: 0.7 }}>{icon}</Box>
+          <Chip
+            label={item.type === "text" ? "文本" : item.type === "image" ? "图片" : item.type === "link" ? "链接" : "快照"}
+            size="small"
+            variant="outlined"
+            sx={{
+              height: 20,
+              fontSize: "0.65rem",
+              fontWeight: 500,
+              letterSpacing: "0.04em"
+            }}
+          />
           <Typography
             variant="caption"
             sx={{
@@ -105,7 +101,6 @@ export default function ItemCard({
               fontSize: "0.7rem",
               letterSpacing: "0.05em"
             }}>
-            {item.type.toUpperCase()} ·{" "}
             {new Date(item.createdAt).toLocaleDateString("zh-CN", {
               month: "long",
               day: "numeric"

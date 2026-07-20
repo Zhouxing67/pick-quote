@@ -31,6 +31,7 @@ interface SidebarFiltersProps {
   activeProjectId: string | null
   newProjectName: string
   projectError: string | null
+  itemCounts: Record<string, number>
   onClose: () => void
   onNewProjectNameChange: (v: string) => void
   onCreateProject: () => void
@@ -48,6 +49,7 @@ export default function SidebarFilters({
   activeProjectId,
   newProjectName,
   projectError,
+  itemCounts,
   onClose,
   onNewProjectNameChange,
   onCreateProject,
@@ -177,6 +179,7 @@ export default function SidebarFilters({
                 key={p.id}
                 project={p}
                 active={activeProjectId === p.id}
+                count={itemCounts[p.id] ?? 0}
                 onOpen={() => onOpenProject(p.id)}
                 onRename={(name) => onRenameProject(p.id, name)}
                 onUpdateNote={(note) => onUpdateNote(p.id, note)}
@@ -200,6 +203,7 @@ export default function SidebarFilters({
 interface ProjectRowProps {
   project: Project
   active: boolean
+  count: number
   onOpen: () => void
   onRename: (name: string) => void
   onUpdateNote: (note: string) => void
@@ -209,6 +213,7 @@ interface ProjectRowProps {
 function ProjectRow({
   project,
   active,
+  count,
   onOpen,
   onRename,
   onUpdateNote,
@@ -330,6 +335,15 @@ function ProjectRow({
             fontWeight: active ? 500 : 400
           }}>
           {project.name}
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.disabled",
+            fontSize: "0.7rem",
+            mt: 0.25
+          }}>
+          {count} 张卡片
         </Typography>
         {project.note && (
           <Typography
