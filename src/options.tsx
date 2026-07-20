@@ -24,9 +24,9 @@ import ColorPalette from "./components/ColorPalette"
 import FilterChips from "./components/FilterChips"
 import ItemDialog from "./components/ItemDialog"
 import SidebarFilters from "./components/SidebarFilters"
+import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
 import {
-  addItem,
   deleteItem,
   searchItems,
   updateItem
@@ -46,8 +46,6 @@ export default function OptionsPage() {
   const [keyword, setKeyword] = useState("")
   const [type, setType] = useState<string>("")
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
-  const [newCardOpen, setNewCardOpen] = useState(false)
-  const [newCardContent, setNewCardContent] = useState("")
 
   // Navigate prev/next within the currently displayed list
   const handleNavigate = useCallback(
@@ -153,29 +151,14 @@ export default function OptionsPage() {
     onSearch(id)
   }
 
-  // ---- 项目内新建卡片 ----
-  const handleNewCard = () => {
-    if (!activeProjectId) return
-    setNewCardContent("")
-    setNewCardOpen(true)
-  }
-
-  const handleSaveNewCard = async () => {
-    const content = newCardContent.trim()
-    if (!content || !activeProjectId) return
-    const item: Item = {
-      id: crypto.randomUUID(),
-      type: "text",
-      content,
-      createdAt: Date.now(),
-      projectId: activeProjectId
-      // 无 source —— 新建卡片不显示溯源
-    }
-    await addItem(item)
-    setNewCardOpen(false)
-    setNewCardContent("")
-    onSearch(activeProjectId)
-  }
+  const {
+    newCardOpen,
+    newCardContent,
+    setNewCardContent,
+    setNewCardOpen,
+    handleNewCard,
+    handleSaveNewCard
+  } = useNewCard({ activeProjectId, onSearch })
 
   const onDelete = (id: string) => {
     setConfirmDeleteId(id)
