@@ -1,15 +1,10 @@
-import AllInclusiveRoundedIcon from "@mui/icons-material/AllInclusiveRounded"
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
-import EditRoundedIcon from "@mui/icons-material/EditRounded"
-import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
-import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
-import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
-import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded"
+import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import {
   Box,
   Button,
-  Checkbox,
   Drawer,
   FormControl,
   InputAdornment,
@@ -21,43 +16,34 @@ import {
   Typography,
   IconButton
 } from "@mui/material"
-import type { Item } from "../types"
+
+import type { Project } from "../types"
 
 interface SidebarFiltersProps {
   open: boolean
   width: number
-  keyword: string
-  type: string
-  pendingSites: string[]
-  availableSites: string[]
-  allItems: Item[]
-  renameTarget: { domain: string; name: string } | null
-  getDisplayName: (domain: string) => string
+  projects: Project[]
+  activeProjectId: string | null
+  newProjectName: string
+  projectError: string | null
   onClose: () => void
-  onKeywordChange: (v: string) => void
-  onTypeChange: (v: string) => void
-  setPendingSites: React.Dispatch<React.SetStateAction<string[]>>
-  onApply: () => void
-  setRenameTarget: (v: { domain: string; name: string } | null) => void
+  onNewProjectNameChange: (v: string) => void
+  onCreateProject: () => void
+  onOpenProject: (id: string) => void
   onWidthChange: (w: number) => void
 }
 
 export default function SidebarFilters({
   open,
   width,
-  keyword,
-  type,
-  pendingSites,
-  availableSites,
-  allItems,
-  renameTarget,
-  getDisplayName,
+  projects,
+  activeProjectId,
+  newProjectName,
+  projectError,
   onClose,
-  onKeywordChange,
-  onTypeChange,
-  setPendingSites,
-  onApply,
-  setRenameTarget,
+  onNewProjectNameChange,
+  onCreateProject,
+  onOpenProject,
   onWidthChange
 }: SidebarFiltersProps) {
   return (
@@ -116,7 +102,7 @@ export default function SidebarFilters({
               letterSpacing: "0.05em",
               fontSize: "0.9rem"
             }}>
-            筛选
+            项目
           </Typography>
           <IconButton size="small" onClick={onClose}>
             <CloseRoundedIcon fontSize="small" />
@@ -124,16 +110,21 @@ export default function SidebarFilters({
         </Stack>
 
         <TextField
-          placeholder="搜索关键词"
-          value={keyword}
-          onChange={(e) => onKeywordChange(e.target.value)}
+          placeholder="新建项目名称"
+          value={newProjectName}
+          onChange={(e) => onNewProjectNameChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onCreateProject()
+          }}
+          error={Boolean(projectError)}
+          helperText={projectError}
           size="small"
           fullWidth
           slotProps={{
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                  <AddRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
                 </InputAdornment>
               )
             }
@@ -146,124 +137,70 @@ export default function SidebarFilters({
             }
           }}
         />
-
-        <FormControl size="small" fullWidth>
-          <InputLabel id="type-label" sx={{ fontSize: "0.8rem" }}>类型</InputLabel>
-          <Select
-            labelId="type-label"
-            value={type}
-            label="类型"
-            onChange={(e) => onTypeChange(e.target.value)}
-            sx={{ borderRadius: 1, fontSize: "0.8rem" }}>
-            <MenuItem value="" sx={{ fontSize: "0.8rem", gap: 1 }}>
-              <AllInclusiveRoundedIcon sx={{ fontSize: 18 }} />
-              全部
-            </MenuItem>
-            <MenuItem value="text" sx={{ fontSize: "0.8rem", gap: 1 }}>
-              <FormatQuoteRoundedIcon sx={{ fontSize: 18 }} />
-              文本
-            </MenuItem>
-            <MenuItem value="image" sx={{ fontSize: "0.8rem", gap: 1 }}>
-              <ImageRoundedIcon sx={{ fontSize: 18 }} />
-              图片
-            </MenuItem>
-            <MenuItem value="link" sx={{ fontSize: "0.8rem", gap: 1 }}>
-              <LinkRoundedIcon sx={{ fontSize: 18 }} />
-              链接
-            </MenuItem>
-            <MenuItem value="snapshot" sx={{ fontSize: "0.8rem", gap: 1 }}>
-              <PhotoCameraRoundedIcon sx={{ fontSize: 18 }} />
-              快照
-            </MenuItem>
-          </Select>
-        </FormControl>
+        <Button
+          variant="contained"
+          fullWidth
+          sx={{ borderRadius: 1 }}
+          onClick={onCreateProject}>
+          新建项目
+        </Button>
 
         <Box>
           <Typography
             variant="caption"
             sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block", mb: 1 }}>
-            来源网站
+            我的项目
           </Typography>
           <Box
             sx={{
-              maxHeight: 240,
+              maxHeight: 360,
               overflowY: "auto",
               bgcolor: "background.paper",
               borderRadius: 1,
               border: "1px solid",
               borderColor: "divider"
             }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{
-                px: 1.5,
-                py: 0.75,
-                cursor: "pointer",
-                "&:hover": { bgcolor: "action.hover" },
-                bgcolor: pendingSites.length === 0 ? "action.selected" : "transparent"
-              }}
-              onClick={() => setPendingSites([])}>
-              <Checkbox checked={pendingSites.length === 0} size="small" sx={{ py: 0 }} />
-              <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
-                全部
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                ({allItems.length})
-              </Typography>
-            </Stack>
-            {availableSites.map((site) => (
+            {projects.map((p) => (
               <Stack
-                key={site}
+                key={p.id}
                 direction="row"
                 alignItems="center"
                 spacing={1}
                 sx={{
                   px: 1.5,
-                  py: 0.75,
+                  py: 1,
                   cursor: "pointer",
                   "&:hover": { bgcolor: "action.hover" },
-                  bgcolor: pendingSites.includes(site) ? "action.selected" : "transparent"
+                  bgcolor:
+                    activeProjectId === p.id ? "action.selected" : "transparent"
                 }}
-                onClick={() =>
-                  setPendingSites((prev) =>
-                    prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
-                  )
-                }>
-                <Checkbox checked={pendingSites.includes(site)} size="small" sx={{ py: 0 }} />
-                <Typography variant="body2" sx={{ flex: 1, fontSize: "0.85rem" }}>
-                  {getDisplayName(site)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  ({allItems.filter((it) => it.sourceSite === site).length})
-                </Typography>
-                <EditRoundedIcon
-                  sx={{ fontSize: 14, color: "text.disabled", cursor: "pointer", "&:hover": { color: "text.secondary" } }}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setRenameTarget({ domain: site, name: getDisplayName(site) })
+                onClick={() => onOpenProject(p.id)}>
+                <FolderOpenRoundedIcon
+                  sx={{
+                    fontSize: 18,
+                    color: activeProjectId === p.id ? "primary.main" : "text.secondary"
                   }}
                 />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    flex: 1,
+                    fontSize: "0.85rem",
+                    fontWeight: activeProjectId === p.id ? 500 : 400
+                  }}>
+                  {p.name}
+                </Typography>
               </Stack>
             ))}
-            {availableSites.length === 0 && (
+            {projects.length === 0 && (
               <Box sx={{ px: 1.5, py: 1 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  暂无来源数据
+                  暂无项目，先新建一个吧
                 </Typography>
               </Box>
             )}
           </Box>
         </Box>
-
-        <Button
-          variant="contained"
-          fullWidth
-          sx={{ borderRadius: 1, mt: 1 }}
-          onClick={onApply}>
-          应用
-        </Button>
       </Stack>
     </Drawer>
   )

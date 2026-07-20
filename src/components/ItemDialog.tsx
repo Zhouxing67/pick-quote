@@ -1,4 +1,7 @@
 import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded"
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
 import ImageRoundedIcon from "@mui/icons-material/ImageRounded"
@@ -15,9 +18,11 @@ import {
   Menu,
   MenuItem,
   Stack,
+  TextField,
   Tooltip,
   Typography
 } from "@mui/material"
+import { useEffect, useState } from "react"
 
 import type { Item } from "../types"
 import { prettyUrl } from "../utils"
@@ -27,13 +32,47 @@ import ShareCard from "./ShareCard"
 export default function ItemDialog({
   item,
   open,
-  onClose
+  onClose,
+  onSave
 }: {
   item: Item | null
   open: boolean
   onClose: () => void
+  onSave?: (updated: Item) => void | Promise<void>
 }) {
   if (!item) return null
+
+  return (
+    <ItemDialogInner
+      item={item}
+      open={open}
+      onClose={onClose}
+      onSave={onSave}
+    />
+  )
+}
+
+function ItemDialogInner({
+  item,
+  open,
+  onClose,
+  onSave
+}: {
+  item: Item
+  open: boolean
+  onClose: () => void
+  onSave?: (updated: Item) => void | Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draftContent, setDraftContent] = useState(item.content)
+  const [draftNote, setDraftNote] = useState(item.note ?? "")
+
+  // reset draft when item changes
+  useEffect(() => {
+    setEditing(false)
+    setDraftContent(item.content)
+    setDraftNote(item.note ?? "")
+  }, [item.id])
 
   const {
     shareCardRef,
@@ -56,6 +95,22 @@ export default function ItemDialog({
     ) : (
       <ArticleRoundedIcon fontSize="small" />
     )
+
+  const handleSave = async () => {
+    const updated: Item = {
+      ...item,
+      content: draftContent,
+      note: draftNote.trim() ? draftNote.trim() : undefined
+    }
+    if (onSave) await onSave(updated)
+    setEditing(false)
+  }
+
+  const handleCancel = () => {
+    setDraftContent(item.content)
+    setDraftNote(item.note ?? "")
+    setEditing(false)
+  }
 
   return (
     <Dialog
@@ -99,6 +154,26 @@ export default function ItemDialog({
           </Typography>
         </Stack>
         <Stack direction="row" spacing={0.5} alignItems="center">
+          {editing ? (
+            <>
+              <Tooltip title="保存">
+                <IconButton size="small" onClick={handleSave} color="primary">
+                  <CheckRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="取消">
+                <IconButton size="small" onClick={handleCancel}>
+                  <CloseRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          ) : (
+            <Tooltip title="编辑">
+              <IconButton size="small" onClick={() => setEditing(true)}>
+                <EditRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip title="导出为图片">
             <IconButton
               size="small"
@@ -159,65 +234,85 @@ export default function ItemDialog({
             flexDirection: "column",
             justifyContent: "center"
           }}>
-          {item.type === "text" && (
-            <Typography
-              variant="body1"
+          {editing ? (
+            <TextField
+              multiline
+              minRows={4}
+              fullWidth
+              value={draftContent}
+              onChange={(e) => setDraftContent(e.target.value)}
               sx={{
-                whiteSpace: "pre-wrap",
-                lineHeight: 2,
-                textIndent: "2em",
-                fontSize: "1.05rem",
-                color: "text.primary",
-                textAlign: "justify"
-              }}>
-              {item.content}
-            </Typography>
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1,
+                  fontSize: "1rem",
+                  bgcolor: "background.paper"
+                }
+              }}
+            />
+          ) : (
+            <>
+              {item.type === "text" && (
+                <Typography
+                  variant="body1"
+                  sx={{
+                    whiteSpace: "pre-wrap",
+                    lineHeight: 2,
+                    textIndent: "2em",
+                    fontSize: "1.05rem",
+                    color: "text.primary",
+                    textAlign: "justify"
+                  }}>
+                  {item.content}
+                </Typography>
+              )}
+              {item.type === "image" && (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <img
+                    src={item.content}
+                    alt={item.source.title || prettyUrl(item.source.url)}
+                    style={{
+                      maxWidth: "100%",
+                      borderRadius: 12
+                    }}
+                  />
+                </Box>
+              )}
+              {item.type === "link" && (
+                <Typography variant="body1" sx={{ fontSize: "1rem" }}>
+                  <Link
+                    href={item.content}
+                    target="_blank"
+                    rel="noreferrer"
+                    underline="hover"
+                    sx={{ color: "primary.main" }}>
+                    {prettyUrl(item.content)}
+                  </Link>
+                </Typography>
+              )}
+              {item.type === "snapshot" &&
+                (typeof item.content === "string" &&
+                item.content.startsWith("data:image") ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                    <img
+                      src={item.content}
+                      alt={item.source.title || prettyUrl(item.source.url)}
+                      style={{
+                        maxWidth: "100%",
+                        borderRadius: 12
+                      }}
+                    />
+                  </Box>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", fontSize: "0.95rem" }}>
+                    长截图（合成）已保存
+                  </Typography>
+                ))}
+            </>
           )}
-          {item.type === "image" && (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-              <img
-                src={item.content}
-                alt={item.source.title || prettyUrl(item.source.url)}
-                style={{
-                  maxWidth: "100%",
-                  borderRadius: 12
-                }}
-              />
-            </Box>
-          )}
-          {item.type === "link" && (
-            <Typography variant="body1" sx={{ fontSize: "1rem" }}>
-              <Link
-                href={item.content}
-                target="_blank"
-                rel="noreferrer"
-                underline="hover"
-                sx={{ color: "primary.main" }}>
-                {prettyUrl(item.content)}
-              </Link>
-            </Typography>
-          )}
-          {item.type === "snapshot" &&
-            (typeof item.content === "string" &&
-            item.content.startsWith("data:image") ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-                <img
-                  src={item.content}
-                  alt={item.source.title || prettyUrl(item.source.url)}
-                  style={{
-                    maxWidth: "100%",
-                    borderRadius: 12
-                  }}
-                />
-              </Box>
-            ) : (
-              <Typography
-                variant="body2"
-                sx={{ color: "text.secondary", fontSize: "0.95rem" }}>
-                长截图（合成）已保存
-              </Typography>
-            ))}
-          {item.context?.paragraph && (
+
+          {item.context?.paragraph && !editing && (
             <Box
               sx={{
                 mt: 4,
@@ -248,6 +343,52 @@ export default function ItemDialog({
               </Typography>
             </Box>
           )}
+
+          <Box sx={{ mt: 4, pt: 3, borderTop: "1px solid", borderColor: "divider" }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.75rem",
+                letterSpacing: "0.05em",
+                mb: 1.5,
+                display: "block"
+              }}>
+              备注
+            </Typography>
+            {editing ? (
+              <TextField
+                multiline
+                minRows={2}
+                fullWidth
+                placeholder="添加备注…"
+                value={draftNote}
+                onChange={(e) => setDraftNote(e.target.value)}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1,
+                    fontSize: "0.9rem",
+                    bgcolor: "background.paper"
+                  }
+                }}
+              />
+            ) : item.note ? (
+              <Typography
+                variant="body2"
+                sx={{
+                  whiteSpace: "pre-wrap",
+                  lineHeight: 1.9,
+                  color: "text.secondary",
+                  fontSize: "0.9rem"
+                }}>
+                {item.note}
+              </Typography>
+            ) : (
+              <Typography variant="body2" sx={{ color: "text.disabled", fontSize: "0.85rem" }}>
+                暂无备注
+              </Typography>
+            )}
+          </Box>
         </Box>
       </DialogContent>
       <DialogActions

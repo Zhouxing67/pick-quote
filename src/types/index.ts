@@ -19,11 +19,13 @@ export interface Item {
   }
   source: SourceMeta
   createdAt: number
-  categoryId?: string
+  projectId?: string
   note?: string
   hash?: string
   /** Derived field for indexing */
   sourceSite?: string
+  /** Manual ordering within a project (lower = earlier) */
+  order?: number
 }
 
 export interface SearchQuery {
@@ -33,12 +35,14 @@ export interface SearchQuery {
   type?: ItemType
   from?: number
   to?: number
-  categoryId?: string
+  projectId?: string
 }
 
-export interface Category {
+export interface Project {
   id: string
   name: string
+  createdAt: number
+  note?: string
 }
 
 export type PresetName = "classic" | "indigo-crimson" | "forest" | "terracotta"

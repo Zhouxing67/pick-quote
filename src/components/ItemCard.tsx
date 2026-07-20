@@ -24,11 +24,21 @@ import ShareCard from "./ShareCard"
 export default function ItemCard({
   item,
   onDelete,
-  onClick
+  onClick,
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd
 }: {
   item: Item
   onDelete: (id: string) => void
   onClick?: () => void
+  draggable?: boolean
+  onDragStart?: (e: React.DragEvent) => void
+  onDragOver?: (e: React.DragEvent) => void
+  onDrop?: (e: React.DragEvent) => void
+  onDragEnd?: () => void
 }) {
   const {
     shareCardRef,
@@ -75,7 +85,12 @@ export default function ItemCard({
           borderColor: "primary.light"
         }
       }}
-      onClick={onClick}>
+      onClick={onClick}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}>
       <Stack
         direction="row"
         alignItems="center"
@@ -178,6 +193,7 @@ export default function ItemCard({
             <img
               src={item.content}
               alt={item.source.title || prettyUrl(item.source.url)}
+              draggable={false}
               style={{
                 maxWidth: "100%",
                 maxHeight: 200,
@@ -207,6 +223,7 @@ export default function ItemCard({
               <img
                 src={item.content}
                 alt={item.source.title || prettyUrl(item.source.url)}
+                draggable={false}
                 style={{
                   maxWidth: "100%",
                   maxHeight: 240,
@@ -221,6 +238,34 @@ export default function ItemCard({
               已保存长截图（合成）
             </Typography>
           ))}
+      </Box>
+
+      <Box
+        sx={{
+          mt: 1.5,
+          pt: 1.5,
+          borderTop: "1px solid",
+          borderColor: "divider",
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5
+        }}>
+        <Link
+          href={item.source.url}
+          target="_blank"
+          rel="noreferrer"
+          underline="hover"
+          onClick={(e) => e.stopPropagation()}
+          sx={{
+            color: "text.secondary",
+            fontSize: "0.72rem",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            maxWidth: "100%"
+          }}>
+          {item.source.title || prettyUrl(item.source.url)}
+        </Link>
       </Box>
 
       <Box

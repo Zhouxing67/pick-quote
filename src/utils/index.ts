@@ -30,16 +30,3 @@ export function truncateText(text: string, max: number): string {
   if (text.length <= max) return text
   return text.slice(0, max) + "..."
 }
-
-export function normalizeUrl(url: string): string {
-  try {
-    const u = new URL(url)
-    u.hash = ""
-    let normalized = u.href
-    if (normalized.endsWith("/"))
-      normalized = normalized.slice(0, -1)
-    return normalized
-  } catch {
-    return url
-  }
-}

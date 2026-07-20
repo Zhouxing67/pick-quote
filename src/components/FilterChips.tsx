@@ -1,27 +1,29 @@
 import { Box, Chip, Stack } from "@mui/material"
 
+import type { Project } from "../types"
+
 interface FilterChipsProps {
   keyword: string
   type: string
-  selectedSites: string[]
+  activeProject: Project | null
   headerHeight: number
   onClearKeyword: () => void
   onClearType: () => void
-  onRemoveSite: (site: string) => void
+  onClearProject: () => void
   onClearAll: () => void
 }
 
 export default function FilterChips({
   keyword,
   type,
-  selectedSites,
+  activeProject,
   headerHeight,
   onClearKeyword,
   onClearType,
-  onRemoveSite,
+  onClearProject,
   onClearAll
 }: FilterChipsProps) {
-  if (!keyword && !type && selectedSites.length === 0) return null
+  if (!keyword && !type && !activeProject) return null
 
   return (
     <Box
@@ -37,6 +39,15 @@ export default function FilterChips({
         flexWrap="wrap"
         useFlexGap
         sx={{ bgcolor: "background.default" }}>
+        {activeProject && (
+          <Chip
+            label={`项目: ${activeProject.name}`}
+            size="small"
+            color="primary"
+            onDelete={onClearProject}
+            sx={{ borderRadius: 1.5 }}
+          />
+        )}
         {keyword && (
           <Chip
             label={`搜索: ${keyword}`}
@@ -53,15 +64,6 @@ export default function FilterChips({
             sx={{ borderRadius: 1.5 }}
           />
         )}
-        {selectedSites.map((site) => (
-          <Chip
-            key={site}
-            label={site}
-            size="small"
-            onDelete={() => onRemoveSite(site)}
-            sx={{ borderRadius: 1.5 }}
-          />
-        ))}
         <Chip
           label="清除筛选"
           size="small"

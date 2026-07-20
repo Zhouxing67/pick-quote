@@ -1,38 +1,101 @@
-import { addItem } from "./database"
-import type { Item } from "./types"
+import { addItem, addProject, listProjects, getProjectByName } from "./database"
+import type { Item, Project } from "./types"
 
 function notifyTab(tabId: number | undefined, text: string) {
-  if (!tabId) return
-  chrome.tabs.sendMessage(tabId, { kind: "toast", text }).catch(() => {})
+  // Primary: in-page toast via content script
+  if (tabId) {
+    chrome.tabs
+      .sendMessage(tabId, { kind: "toast", text })
+      .catch(() => notifySystem(text))
+    return
+  }
+  // Fallback: system notification (e.g. no tab / content script not injected)
+  notifySystem(text)
 }
 
-// Create context menus
+function notifySystem(text: string) {
+  try {
+    chrome.notifications.create({
+      type: "basic",
+      iconUrl: "icon128.png",
+      title: "拾句",
+      message: text
+    })
+  } catch {
+    // notifications API unavailable — nothing else we can do
+  }
+}
+
+// Wrapper that resolves on the create callback so parent/child ordering
+// is guaranteed (Chrome processes contextMenus.create asynchronously).
+// Reads lastError inside the callback to swallow it (prevents the
+// "Unchecked runtime.lastError" warning from surfacing to the console).
+function createMenu(
+  props: chrome.contextMenus.CreateProperties
+): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.contextMenus.create(props, () => {
+      void chrome.runtime.lastError
+      resolve()
+    })
+  })
+}
+
+// Rebuild the "加入已有项目" submenu with current projects from DB.
+// Note: createMenus() calls removeAll() first, so the parent does not
+// need to be removed here (removing a non-existent id throws lastError).
+// Children are created only after the parent's create callback fires.
+async function rebuildProjectMenus() {
+  // Recreate the "加入已有项目" parent
+  await createMenu({
+    id: "pickquote-existing",
+    title: "加入已有项目",
+    parentId: "pickquote-root",
+    contexts: ["selection", "image", "link", "page"]
+  })
+
+  // Add dynamic project submenus (parent now exists)
+  const projects = await listProjects()
+  for (const proj of projects) {
+    await createMenu({
+      id: `pickquote-proj-${proj.id}`,
+      title: proj.name,
+      parentId: "pickquote-existing",
+      contexts: ["selection", "image", "link", "page"]
+    })
+  }
+}
+
+// Create full context menu structure (root + static children + dynamic projects)
+function createMenus() {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "pickquote-root",
+      title: "拾句",
+      contexts: ["selection", "image", "link", "page"]
+    })
+    chrome.contextMenus.create({
+      id: "pickquote-new-project",
+      title: "新建项目并加入",
+      parentId: "pickquote-root",
+      contexts: ["selection", "image", "link", "page"]
+    })
+    // rebuildProjectMenus creates "pickquote-existing" + project submenus
+    rebuildProjectMenus()
+  })
+}
+
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "pickquote-text",
-    title: "拾句 → 存入灵感库",
-    contexts: ["selection"]
-  })
-  chrome.contextMenus.create({
-    id: "pickquote-image",
-    title: "拾句 → 保存带来源图片",
-    contexts: ["image"]
-  })
-  chrome.contextMenus.create({
-    id: "pickquote-link",
-    title: "拾句 → 仅存链接",
-    contexts: ["link"]
-  })
-  chrome.contextMenus.create({
-    id: "pickquote-snapshot-image",
-    title: "拾句 → 页面截图（可视区域）",
-    contexts: ["page"]
-  })
-  // 长截图暂时移除
+  createMenus()
 })
 
-// Handle menu clicks
+chrome.runtime.onStartup.addListener(() => {
+  createMenus()
+})
+
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  const { menuItemId } = info
+
   const url = info.pageUrl ?? tab?.url ?? ""
   const title = tab?.title ?? ""
   const site = url ? new URL(url).hostname : undefined
@@ -42,67 +105,86 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     createdAt: Date.now()
   }
 
-  if (info.menuItemId === "pickquote-text" && info.selectionText) {
-    const content = info.selectionText
+  // Helper: build item with optional projectId, save, and notify
+  const saveAndNotify = async (
+    type: Item["type"],
+    content: string,
+    projectId?: string,
+    message: string = "已保存到拾句"
+  ) => {
     const item: Item = {
       id: crypto.randomUUID(),
-      type: "text",
+      type,
       content,
       source: base.source,
       createdAt: base.createdAt
     }
+    if (projectId) item.projectId = projectId
     await addItem(item)
-    notifyTab(tab?.id, "已保存到拾句")
+    notifyTab(tab?.id, message)
   }
 
-  if (info.menuItemId === "pickquote-image" && info.srcUrl) {
-    const item: Item = {
-      id: crypto.randomUUID(),
-      type: "image",
-      content: info.srcUrl,
-      source: base.source,
-      createdAt: base.createdAt
+  // Helper: dispatch capture by context type (text / image / link / page snapshot)
+  const captureAndSave = async (
+    projectId?: string,
+    projectName?: string
+  ): Promise<void> => {
+    const message = projectName ? `已加入项目：${projectName}` : "已保存到拾句"
+
+    if (info.selectionText) {
+      await saveAndNotify("text", info.selectionText, projectId, message)
+      return
     }
-    await addItem(item)
-    notifyTab(tab?.id, "已保存到拾句")
-  }
-
-  if (info.menuItemId === "pickquote-link" && info.linkUrl) {
-    const item: Item = {
-      id: crypto.randomUUID(),
-      type: "link",
-      content: info.linkUrl,
-      source: base.source,
-      createdAt: base.createdAt
+    if (info.srcUrl) {
+      await saveAndNotify("image", info.srcUrl, projectId, message)
+      return
     }
-    await addItem(item)
-    notifyTab(tab?.id, "已保存到拾句")
-  }
-
-  if (info.menuItemId === "pickquote-snapshot-image") {
-    // capture visible area using chrome.tabs.captureVisibleTab
+    if (info.linkUrl) {
+      await saveAndNotify("link", info.linkUrl, projectId, message)
+      return
+    }
+    // Page context → snapshot
     const windowId = tab?.windowId
-    chrome.tabs.captureVisibleTab(
-      windowId,
-      { format: "png" },
-      async (dataUrl) => {
-        const err = chrome.runtime.lastError
-        if (err) {
-          console.warn("captureVisibleTab failed:", err.message)
+    if (windowId) {
+      chrome.tabs.captureVisibleTab(windowId, { format: "png" }, async (dataUrl) => {
+        if (chrome.runtime.lastError) {
+          console.warn("captureVisibleTab failed:", chrome.runtime.lastError.message)
           return
         }
-        if (!dataUrl) return
-        const item: Item = {
-          id: crypto.randomUUID(),
-          type: "snapshot",
-          content: dataUrl,
-          source: base.source,
-          createdAt: base.createdAt
+        if (dataUrl) {
+          await saveAndNotify("snapshot", dataUrl, projectId, message)
         }
-        await addItem(item)
-        notifyTab(tab?.id, "已保存页面截图")
+      })
+    }
+  }
+
+  // ---- "新建项目并加入" ----
+  if (menuItemId === "pickquote-new-project") {
+    const rawName = prompt("请输入项目名称：")
+    if (!rawName || !rawName.trim()) return
+    const trimmedName = rawName.trim()
+
+    let project = await getProjectByName(trimmedName)
+    if (!project) {
+      project = {
+        id: crypto.randomUUID(),
+        name: trimmedName,
+        createdAt: Date.now()
       }
-    )
+      await addProject(project)
+    }
+    await captureAndSave(project.id, project.name)
+    return
+  }
+
+  // ---- "加入已有项目" (dynamic project menu items) ----
+  if (typeof menuItemId === "string" && menuItemId.startsWith("pickquote-proj-")) {
+    const projectId = menuItemId.slice("pickquote-proj-".length)
+    // Look up project name from DB for the notification message
+    const projects = await listProjects()
+    const project = projects.find((p) => p.id === projectId)
+    await captureAndSave(projectId, project?.name ?? "未知项目")
+    return
   }
 })
 

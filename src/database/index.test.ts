@@ -156,7 +156,7 @@ describe('database', () => {
         content: 'Goodbye world',
         source: { title: 'Another Page', url: 'https://example.com/3', site: 'example.com' },
         createdAt: 3000,
-        categoryId: 'cat1'
+        projectId: 'proj1'
       }))
     })
 
@@ -202,8 +202,8 @@ describe('database', () => {
       expect(results.every(item => item.createdAt <= 2000)).toBe(true)
     })
 
-    it('should filter by categoryId', async () => {
-      const results = await searchItems({ categoryId: 'cat1' })
+    it('should filter by projectId', async () => {
+      const results = await searchItems({ projectId: 'proj1' })
       expect(results).toHaveLength(1)
       expect(results[0].id).toBe('text2')
     })

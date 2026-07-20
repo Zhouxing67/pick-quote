@@ -1,6 +1,6 @@
 import JSZip from "jszip"
 
-import type { Item } from "../types"
+import type { Item, Project } from "../types"
 
 function dataUrlToBlob(dataUrl: string): Blob {
   const [meta, content] = dataUrl.split(",")
@@ -11,9 +11,15 @@ function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([arr], { type: mime })
 }
 
-export async function toZip(items: Item[]): Promise<Blob> {
+export async function toZip(
+  items: Item[],
+  projects?: Project[]
+): Promise<Blob> {
   const zip = new JSZip()
   const mdLines: string[] = []
+  const projectMap =
+    projects &&
+    Object.fromEntries(projects.map((p) => [p.id, p.name]))
 
   for (const it of items) {
     let assetPath = ""
@@ -26,6 +32,10 @@ export async function toZip(items: Item[]): Promise<Blob> {
       const blob = dataUrlToBlob(it.content)
       zip.file(filename, blob)
       assetPath = filename
+    }
+
+    if (it.projectId && projectMap?.[it.projectId]) {
+      mdLines.push(`> 项目：${projectMap[it.projectId]}`)
     }
 
     const content =
@@ -41,7 +51,10 @@ export async function toZip(items: Item[]): Promise<Blob> {
   return blob
 }
 
-export async function toJsonZip(items: Item[]): Promise<Blob> {
+export async function toJsonZip(
+  items: Item[],
+  projects?: Project[]
+): Promise<Blob> {
   const zip = new JSZip()
 
   for (const it of items) {
@@ -56,7 +69,16 @@ export async function toJsonZip(items: Item[]): Promise<Blob> {
     }
   }
 
-  const json = JSON.stringify(items, null, 2)
+  const payload: { items: Item[]; projects?: Project[] } = { items }
+  if (projects && projects.length > 0) {
+    payload.projects = projects.map(({ id, name, createdAt, note }) => ({
+      id,
+      name,
+      createdAt,
+      note
+    }))
+  }
+  const json = JSON.stringify(payload, null, 2)
   zip.file("export.json", json)
 
   const blob = await zip.generateAsync({ type: "blob" })

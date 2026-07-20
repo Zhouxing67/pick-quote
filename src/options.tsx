@@ -1,6 +1,4 @@
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
-import UnfoldLessRoundedIcon from "@mui/icons-material/UnfoldLessRounded"
-import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded"
 import {
   Box,
   Button,
@@ -21,18 +19,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import AppHeader from "./components/AppHeader"
 import BatchToolbar from "./components/BatchToolbar"
+import CardGrid from "./components/GroupSection"
 import ColorPalette from "./components/ColorPalette"
 import FilterChips from "./components/FilterChips"
 import Footer from "./components/Footer"
-import GroupSection from "./components/GroupSection"
-import SidebarFilters from "./components/SidebarFilters"
 import ItemDialog from "./components/ItemDialog"
-import { deleteItem, searchItems } from "./database"
+import SidebarFilters from "./components/SidebarFilters"
+import {
+  addProject,
+  deleteItem,
+  getProjectByName,
+  listProjects,
+  searchItems,
+  updateItem
+} from "./database"
 import { toZip, toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
-import type { Item, ItemType, PresetName, SearchQuery } from "./types"
-import { prettyUrl, normalizeUrl } from "./utils"
+import type { Item, ItemType, PresetName, Project, SearchQuery } from "./types"
+import { prettyUrl } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
 const MAX_DRAWER_WIDTH = 500
@@ -50,17 +55,12 @@ export default function OptionsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false)
-  const [selectedSites, setSelectedSites] = useState<string[]>([])
-  const [pendingSites, setPendingSites] = useState<string[]>([])
-  const [availableSites, setAvailableSites] = useState<string[]>([])
-  const [siteGroups, setSiteGroups] = useState<Record<string, string>>({})
-  const [renameTarget, setRenameTarget] = useState<{ domain: string; name: string } | null>(null)
-  const [collapsedUrls, setCollapsedUrls] = useState<Set<string>>(new Set())
-  const [groupOrder, setGroupOrder] = useState<string[] | null>(null)
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [focusedUrl, setFocusedUrl] = useState<string | null>(null)
   const [preset, setPreset] = useState<PresetName>("classic")
   const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+  const [newProjectName, setNewProjectName] = useState("")
+  const [projectError, setProjectError] = useState<string | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -82,9 +82,36 @@ export default function OptionsPage() {
     chrome.storage.sync.set({ preset })
   }, [preset])
 
+  const loadProjects = useCallback(async () => {
+    const list = await listProjects()
+    setProjects(list)
+    return list
+  }, [])
+
+  useEffect(() => {
+    loadProjects()
+  }, [loadProjects])
+
+  const onSearch = useCallback(
+    async (projectId?: string | null) => {
+      const pid = projectId ?? activeProjectId
+      const q: SearchQuery = {
+        keyword,
+        type: type ? (type as ItemType) : undefined,
+        projectId: pid ?? undefined
+      }
+      const list = await searchItems(q)
+      list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || b.createdAt - a.createdAt)
+      setAllItems(list)
+      setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
+      setHasMore(list.length > ITEMS_PER_PAGE)
+    },
+    [keyword, type, activeProjectId, ITEMS_PER_PAGE]
+  )
+
   useEffect(() => {
     onSearch()
-  }, [])
+  }, [onSearch])
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -93,56 +120,37 @@ export default function OptionsPage() {
     return () => clearTimeout(t)
   }, [keyword, type])
 
-  useEffect(() => {
-    const sites = Array.from(
-      new Set(allItems.map((it) => it.sourceSite).filter(Boolean))
-    ) as string[]
-    setAvailableSites([...sites].sort())
-  }, [allItems])
-
-  useEffect(() => {
-    chrome.storage.sync.get("siteGroups", (data) => {
-      if (data.siteGroups) setSiteGroups(data.siteGroups as Record<string, string>)
-    })
-    chrome.storage.sync.get("groupOrder", (data) => {
-      if (data.groupOrder) setGroupOrder(data.groupOrder as string[])
-    })
-  }, [])
-
-  const getDisplayName = (domain: string) => siteGroups[domain] || domain
-
-  const saveSiteGroup = (domain: string, name: string) => {
-    const next = { ...siteGroups }
-    if (name.trim() && name.trim() !== domain) {
-      next[domain] = name.trim()
-    } else {
-      delete next[domain]
-    }
-    setSiteGroups(next)
-    chrome.storage.sync.set({ siteGroups: next })
-  }
-
-  const onSearch = async (sites?: string[]) => {
-    const activeSites = sites ?? selectedSites
-    const q: SearchQuery = {
-      keyword,
-      type: type ? (type as ItemType) : undefined,
-      sites: activeSites.length > 0 ? activeSites : undefined
-    }
-    const list = await searchItems(q)
-    setAllItems(list)
-    setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
-    setHasMore(list.length > ITEMS_PER_PAGE)
-  }
-
   const handleToggleDrawer = () => {
-    if (drawerOpen) {
-      setSelectedSites(pendingSites)
-      onSearch(pendingSites)
-    } else {
-      setPendingSites(selectedSites)
-    }
     setDrawerOpen((prev) => !prev)
+  }
+
+  const handleCreateProject = async () => {
+    const name = newProjectName.trim()
+    if (!name) {
+      setProjectError("项目名不能为空")
+      return
+    }
+    const existing = await getProjectByName(name)
+    if (existing) {
+      setProjectError("项目名已存在，请换一个")
+      return
+    }
+    const project: Project = {
+      id: crypto.randomUUID(),
+      name,
+      createdAt: Date.now()
+    }
+    await addProject(project)
+    await loadProjects()
+    setNewProjectName("")
+    setProjectError(null)
+    setActiveProjectId(project.id)
+    onSearch(project.id)
+  }
+
+  const handleOpenProject = (id: string) => {
+    setActiveProjectId(id)
+    onSearch(id)
   }
 
   const onDelete = (id: string) => {
@@ -163,63 +171,6 @@ export default function OptionsPage() {
     setDisplayedItems(nextItems)
     setHasMore(nextItems.length < allItems.length)
   }, [allItems, displayedItems.length, hasMore, ITEMS_PER_PAGE])
-
-  const groupedItems = useMemo(() => {
-    const map = new Map<string, Item[]>()
-    for (const item of displayedItems) {
-      const key = normalizeUrl(item.source.url)
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push(item)
-    }
-    return Array.from(map.entries())
-      .map(([url, items]) => ({
-        url,
-        title: items[0]?.source.title || prettyUrl(url),
-        items
-      }))
-      .sort((a, b) => b.items[0].createdAt - a.items[0].createdAt)
-  }, [displayedItems])
-
-  const sortedGroups = useMemo(() => {
-    if (!groupOrder) return groupedItems
-    const map = new Map(groupedItems.map((g) => [g.url, g]))
-    const sorted: typeof groupedItems = []
-    for (const url of groupOrder) {
-      const group = map.get(url)
-      if (group) sorted.push(group)
-    }
-    for (const group of groupedItems) {
-      if (!groupOrder.includes(group.url)) sorted.push(group)
-    }
-    return sorted
-  }, [groupedItems, groupOrder])
-
-  useEffect(() => {
-    if (groupOrder === null) return
-    const t = setTimeout(() => {
-      chrome.storage.sync.set({ groupOrder })
-    }, 500)
-    return () => clearTimeout(t)
-  }, [groupOrder])
-
-  const dragHandlers = {
-    onDragStart: (e: React.DragEvent, idx: number) => {
-      e.dataTransfer.effectAllowed = "move"
-      setDragIndex(idx)
-    },
-    onDragOver: (e: React.DragEvent, idx: number) => {
-      e.preventDefault()
-      if (dragIndex === null || dragIndex === idx) return
-      const next = [...(groupOrder ?? groupedItems.map((g) => g.url))]
-      const [moved] = next.splice(dragIndex, 1)
-      next.splice(idx, 0, moved)
-      setGroupOrder(next)
-      setDragIndex(idx)
-    },
-    onDragEnd: () => {
-      setDragIndex(null)
-    }
-  }
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -271,6 +222,7 @@ export default function OptionsPage() {
         console.warn("导入跳过/失败的条目：", result.errors)
       }
       alert(msg + skipMsg)
+      await loadProjects()
       onSearch()
     } catch (err) {
       alert(`导入失败：${err}`)
@@ -284,52 +236,56 @@ export default function OptionsPage() {
 
   const headerHeight = 52
 
-  const handleRemoveSite = (site: string) => {
-    const nextSites = selectedSites.filter((s) => s !== site)
-    setSelectedSites(nextSites)
-    setPendingSites((prev) => prev.filter((s) => s !== site))
-    onSearch(nextSites)
+  const handleRemoveFilter = (kind: "keyword" | "type") => {
+    if (kind === "keyword") setKeyword("")
+    else setType("")
   }
 
   const clearAllFilters = () => {
     setKeyword("")
     setType("")
-    setSelectedSites([])
-    setPendingSites([])
-    onSearch([])
   }
 
-  const toggleCollapse = (url: string) => {
-    setCollapsedUrls((prev) => {
-      const next = new Set(prev)
-      if (next.has(url)) next.delete(url)
-      else next.add(url)
-      return next
-    })
+  // ---- Card drag reordering within project ----
+  const [dragId, setDragId] = useState<string | null>(null)
+
+  const reorderItems = useCallback(
+    async (fromId: string, toId: string) => {
+      if (fromId === toId) return
+      const ordered = [...allItems]
+      const fromIdx = ordered.findIndex((i) => i.id === fromId)
+      const toIdx = ordered.findIndex((i) => i.id === toId)
+      if (fromIdx === -1 || toIdx === -1) return
+      const [moved] = ordered.splice(fromIdx, 1)
+      ordered.splice(toIdx, 0, moved)
+      const updated = ordered.map((it, idx) => ({ ...it, order: idx }))
+      setAllItems(updated)
+      setDisplayedItems(updated.slice(0, ITEMS_PER_PAGE))
+      for (const it of updated) {
+        await updateItem(it)
+      }
+    },
+    [allItems, ITEMS_PER_PAGE]
+  )
+
+  const dragHandlers = {
+    onDragStart: (e: React.DragEvent, id: string) => {
+      e.dataTransfer.effectAllowed = "move"
+      setDragId(id)
+    },
+    onDragOver: (e: React.DragEvent, id: string) => {
+      e.preventDefault()
+    },
+    onDrop: (e: React.DragEvent, id: string) => {
+      e.preventDefault()
+      if (dragId) reorderItems(dragId, id)
+    },
+    onDragEnd: () => {
+      setDragId(null)
+    }
   }
 
-  const moveGroup = (url: string, targetIdx: number) => {
-    const order = groupOrder ?? sortedGroups.map((g) => g.url)
-    const from = order.indexOf(url)
-    if (from === -1 || targetIdx < 0 || targetIdx >= order.length) return
-    const next = [...order]
-    const [moved] = next.splice(from, 1)
-    next.splice(targetIdx, 0, moved)
-    setGroupOrder(next)
-  }
-
-  const expandAll = () => setCollapsedUrls(new Set())
-  const collapseAll = () => setCollapsedUrls(new Set(sortedGroups.map((g) => g.url)))
-
-  const focusGroup = (url: string) => {
-    collapseAll()
-    setFocusedUrl(url)
-    setCollapsedUrls((prev) => {
-      const next = new Set(prev)
-      next.delete(url)
-      return next
-    })
-  }
+  const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
 
   return (
     <ThemeProvider theme={theme}>
@@ -338,22 +294,17 @@ export default function OptionsPage() {
         <SidebarFilters
           open={drawerOpen}
           width={drawerWidth}
-          keyword={keyword}
-          type={type}
-          pendingSites={pendingSites}
-          availableSites={availableSites}
-          allItems={allItems}
-          renameTarget={renameTarget}
-          getDisplayName={getDisplayName}
+          projects={projects}
+          activeProjectId={activeProjectId}
+          newProjectName={newProjectName}
+          projectError={projectError}
           onClose={handleToggleDrawer}
-          onKeywordChange={setKeyword}
-          onTypeChange={setType}
-          setPendingSites={setPendingSites}
-          onApply={() => {
-            setSelectedSites(pendingSites)
-            onSearch(pendingSites)
+          onNewProjectNameChange={(v) => {
+            setNewProjectName(v)
+            setProjectError(null)
           }}
-          setRenameTarget={setRenameTarget}
+          onCreateProject={handleCreateProject}
+          onOpenProject={handleOpenProject}
           onWidthChange={(w) => setDrawerWidth(w)}
         />
 
@@ -383,11 +334,14 @@ export default function OptionsPage() {
             <FilterChips
               keyword={keyword}
               type={type}
-              selectedSites={selectedSites}
+              activeProject={activeProject}
               headerHeight={headerHeight}
-              onClearKeyword={() => setKeyword("")}
-              onClearType={() => setType("")}
-              onRemoveSite={handleRemoveSite}
+              onClearKeyword={() => handleRemoveFilter("keyword")}
+              onClearType={() => handleRemoveFilter("type")}
+              onClearProject={() => {
+                setActiveProjectId(null)
+                onSearch(null)
+              }}
               onClearAll={clearAllFilters}
             />
 
@@ -397,7 +351,7 @@ export default function OptionsPage() {
                 onSelectAll={() => setSelectedIds(allItems.map((i) => i.id))}
                 onExportMd={async () => {
                   const items = allItems.filter((i) => selectedIds.includes(i.id))
-                  const blob = await toZip(items)
+                  const blob = await toZip(items, projects)
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement("a")
                   a.href = url
@@ -407,7 +361,7 @@ export default function OptionsPage() {
                 }}
                 onExportJson={async () => {
                   const items = allItems.filter((i) => selectedIds.includes(i.id))
-                  const blob = await toJsonZip(items)
+                  const blob = await toJsonZip(items, projects)
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement("a")
                   a.href = url
@@ -419,45 +373,30 @@ export default function OptionsPage() {
               />
             )}
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-              <Button size="small" sx={{ borderRadius: 1, fontSize: "0.75rem", minWidth: 0 }} onClick={expandAll}>
-                <UnfoldMoreRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                展开全部
-              </Button>
-              <Button size="small" sx={{ borderRadius: 1, fontSize: "0.75rem", minWidth: 0 }} onClick={collapseAll}>
-                <UnfoldLessRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                折叠全部
-              </Button>
-              <Box sx={{ flex: 1 }} />
-              {focusedUrl && (
-                <Button
-                  size="small"
-                  color="warning"
-                  startIcon={<CloseRoundedIcon />}
-                  sx={{ borderRadius: 1, fontSize: "0.75rem", minWidth: 0 }}
-                  onClick={() => setFocusedUrl(null)}>
-                  退出聚焦
-                </Button>
-              )}
-            </Box>
+            {!activeProject && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 12,
+                  color: "text.secondary"
+                }}>
+                <Typography variant="h6" sx={{ fontWeight: 400, mb: 1 }}>
+                  请选择一个项目
+                </Typography>
+                <Typography variant="body2">
+                  从左侧项目面板新建或打开项目，开始整理你的灵感卡片
+                </Typography>
+              </Box>
+            )}
 
-            {sortedGroups.map((group, idx) => (
-              <GroupSection
-                key={group.url}
-                group={group}
-                idx={idx}
-                dragIndex={dragIndex}
-                collapsed={collapsedUrls.has(group.url)}
-                isFocused={focusedUrl === group.url}
-                dimmed={Boolean(focusedUrl) && focusedUrl !== group.url}
+            {activeProject && (
+              <CardGrid
+                items={displayedItems}
                 selectMode={selectMode}
                 selectedIds={selectedIds}
-                onToggleCollapse={() => toggleCollapse(group.url)}
-                onMoveGroup={(targetIdx) => moveGroup(group.url, targetIdx)}
-                onFocusGroup={() => focusGroup(group.url)}
-                onDragStart={dragHandlers.onDragStart}
-                onDragOver={dragHandlers.onDragOver}
-                onDragEnd={dragHandlers.onDragEnd}
                 onSelectItem={(id) =>
                   setSelectedIds((prev) =>
                     prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -465,10 +404,15 @@ export default function OptionsPage() {
                 }
                 onDeleteItem={onDelete}
                 onOpenDialog={setDialogItem}
+                onDragStart={dragHandlers.onDragStart}
+                onDragOver={dragHandlers.onDragOver}
+                onDrop={dragHandlers.onDrop}
+                onDragEnd={dragHandlers.onDragEnd}
+                dragId={dragId}
               />
-            ))}
+            )}
 
-            {hasMore && (
+            {hasMore && activeProject && (
               <Box
                 ref={loadMoreRef}
                 sx={{
@@ -482,11 +426,15 @@ export default function OptionsPage() {
               </Box>
             )}
 
-
             <ItemDialog
               item={dialogItem}
               open={Boolean(dialogItem)}
               onClose={() => setDialogItem(null)}
+              onSave={async (updated) => {
+                await updateItem(updated)
+                setDialogItem(null)
+                onSearch()
+              }}
             />
 
             <Dialog
@@ -523,62 +471,6 @@ export default function OptionsPage() {
                   onClick={confirmBatchDelete ? handleConfirmBatchDelete : handleConfirmDelete}
                   sx={{ borderRadius: 1 }}>
                   删除
-                </Button>
-              </DialogActions>
-            </Dialog>
-
-            <Dialog
-              open={Boolean(renameTarget)}
-              onClose={() => setRenameTarget(null)}
-              slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-              <DialogTitle sx={{ pb: 1 }}>重命名分组</DialogTitle>
-              <DialogContent>
-                <TextField
-                  autoFocus
-                  fullWidth
-                  size="small"
-                  value={renameTarget?.name ?? ""}
-                  onChange={(e) =>
-                    setRenameTarget((prev) => (prev ? { ...prev, name: e.target.value } : null))
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && renameTarget) {
-                      saveSiteGroup(renameTarget.domain, renameTarget.name)
-                      setRenameTarget(null)
-                    }
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": { borderRadius: 1, fontSize: "0.85rem" },
-                    mt: 1
-                  }}
-                />
-              </DialogContent>
-              <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button
-                  onClick={() => {
-                    if (renameTarget) {
-                      saveSiteGroup(renameTarget.domain, renameTarget.domain)
-                      setRenameTarget(null)
-                    }
-                  }}
-                  sx={{ borderRadius: 1 }}>
-                  重置为域名
-                </Button>
-                <Button
-                  onClick={() => setRenameTarget(null)}
-                  sx={{ borderRadius: 1 }}>
-                  取消
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    if (renameTarget) {
-                      saveSiteGroup(renameTarget.domain, renameTarget.name)
-                      setRenameTarget(null)
-                    }
-                  }}
-                  sx={{ borderRadius: 1 }}>
-                  确认
                 </Button>
               </DialogActions>
             </Dialog>

@@ -1,10 +1,10 @@
-import type { Item, SearchQuery } from "../types"
+import type { Item, Project, SearchQuery } from "../types"
 import { computeItemHash } from "../utils"
 
 const DB_NAME = "pickquote-db"
-const DB_VERSION = 2
+const DB_VERSION = 3
 
-type TableNames = "items" | "categories" | "sources"
+type TableNames = "items" | "projects" | "categories" | "sources"
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -16,7 +16,7 @@ function openDb(): Promise<IDBDatabase> {
         store.createIndex("type", "type", { unique: false })
         store.createIndex("createdAt", "createdAt", { unique: false })
         store.createIndex("sourceSite", "sourceSite", { unique: false })
-        store.createIndex("categoryId", "categoryId", { unique: false })
+        store.createIndex("projectId", "projectId", { unique: false })
         store.createIndex("hash", "hash", { unique: false })
       } else {
         // migrate: remove tags index if exists
@@ -30,6 +30,18 @@ function openDb(): Promise<IDBDatabase> {
             store.deleteIndex("tags")
           }
         } catch {}
+        // v3 migration: add projectId index if missing
+        try {
+          const tx = req.transaction as IDBTransaction
+          const store = tx.objectStore("items")
+          if (!(store.indexNames as any).contains?.("projectId")) {
+            store.createIndex("projectId", "projectId", { unique: false })
+          }
+        } catch {}
+      }
+      if (!db.objectStoreNames.contains("projects")) {
+        const ps = db.createObjectStore("projects", { keyPath: "id" })
+        ps.createIndex("name", "name", { unique: true })
       }
       // stub other stores for future
       if (!db.objectStoreNames.contains("categories")) {
@@ -108,7 +120,7 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
           (!q.sites || q.sites.length === 0 || q.sites.includes(item.sourceSite)) &&
           (!q.from || item.createdAt >= q.from) &&
           (!q.to || item.createdAt <= q.to) &&
-          (!q.categoryId || item.categoryId === q.categoryId) &&
+          (!q.projectId || item.projectId === q.projectId) &&
           (!q.keyword ||
             item.content?.toLowerCase().includes(q.keyword.toLowerCase()) ||
             item.source.title?.toLowerCase().includes(q.keyword.toLowerCase()))
@@ -204,5 +216,58 @@ export async function exportItems(): Promise<Item[]> {
       }
       cursorReq.onerror = () => reject(cursorReq.error)
     })
+  })
+}
+
+// ---- Projects ----
+
+export async function addProject(project: Project): Promise<void> {
+  await withStore("projects", "readwrite", (store) => {
+    store.put(project)
+  })
+}
+
+export async function listProjects(): Promise<Project[]> {
+  return withStore("projects", "readonly", async (store) => {
+    const all: Project[] = []
+    return new Promise<Project[]>((resolve, reject) => {
+      const cursorReq = store.openCursor()
+      cursorReq.onsuccess = () => {
+        const cursor = cursorReq.result
+        if (cursor) {
+          all.push(cursor.value as Project)
+          cursor.continue()
+        } else {
+          all.sort((a, b) => b.createdAt - a.createdAt)
+          resolve(all)
+        }
+      }
+      cursorReq.onerror = () => reject(cursorReq.error)
+    })
+  })
+}
+
+export async function getProjectByName(
+  name: string
+): Promise<Project | undefined> {
+  return withStore("projects", "readonly", async (store) => {
+    const idx = store.index("name")
+    return new Promise<Project | undefined>((resolve, reject) => {
+      const req = idx.get(name)
+      req.onsuccess = () => resolve(req.result as Project | undefined)
+      req.onerror = () => reject(req.error)
+    })
+  })
+}
+
+export async function updateProject(project: Project): Promise<void> {
+  await withStore("projects", "readwrite", (store) => {
+    store.put(project)
+  })
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await withStore("projects", "readwrite", (store) => {
+    store.delete(id)
   })
 }

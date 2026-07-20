@@ -1,7 +1,7 @@
 import JSZip from "jszip"
 
-import { addItem } from "../database"
-import type { Item, ItemType } from "../types"
+import { addItem, addProject, getProjectByName } from "../database"
+import type { Item, ItemType, Project } from "../types"
 
 export interface ImportResult {
   imported: number
@@ -56,9 +56,11 @@ function validateItem(raw: unknown, index: number): { item: Item } | { error: st
       obj.context && typeof obj.context === "object"
         ? (obj.context as Item["context"])
         : undefined,
-    categoryId:
-      typeof obj.categoryId === "string" ? obj.categoryId : undefined,
-    note: typeof obj.note === "string" ? obj.note : undefined
+    note: typeof obj.note === "string" ? obj.note : undefined,
+    projectId:
+      typeof obj.projectId === "string" && obj.projectId.length > 0
+        ? obj.projectId
+        : undefined
   }
 
   if (typeof obj.hash === "string" && obj.hash.length === 64) {
@@ -91,14 +93,46 @@ export async function importFromZip(file: File): Promise<ImportResult> {
   }
 
   let rawArray: unknown[]
+  let importedProjects: Project[] = []
   try {
     const parsed = JSON.parse(rawJson)
-    if (!Array.isArray(parsed)) {
-      return { ...result, errors: [{ index: -1, reason: "export.json 应为数组格式" }] }
+    if (Array.isArray(parsed)) {
+      // legacy format: plain items array
+      rawArray = parsed
+    } else if (typeof parsed === "object" && parsed !== null) {
+      const obj = parsed as Record<string, unknown>
+      if (Array.isArray(obj.items)) {
+        rawArray = obj.items
+      } else {
+        return {
+          ...result,
+          errors: [{ index: -1, reason: "export.json 缺少 items 数组" }]
+        }
+      }
+      if (Array.isArray(obj.projects)) {
+        importedProjects = obj.projects as Project[]
+      }
+    } else {
+      return { ...result, errors: [{ index: -1, reason: "export.json 格式无效" }] }
     }
-    rawArray = parsed
   } catch {
     return { ...result, errors: [{ index: -1, reason: "export.json JSON 解析失败" }] }
+  }
+
+  // ---- project id remapping ----
+  const projectIdMap = new Map<string, string>()
+  for (const p of importedProjects) {
+    const existing = await getProjectByName(p.name)
+    if (existing) {
+      // reuse existing project id
+      projectIdMap.set(p.id, existing.id)
+    } else {
+      // create new project (use original id or generate a new one)
+      const newId = p.id || crypto.randomUUID()
+      const project: Project = { ...p, id: newId }
+      await addProject(project)
+      projectIdMap.set(p.id, newId)
+    }
   }
 
   const validItems: Item[] = []
@@ -109,7 +143,18 @@ export async function importFromZip(file: File): Promise<ImportResult> {
       result.errors.push({ index: i, reason: r.error })
       result.skipped++
     } else {
-      validItems.push(r.item)
+      const item = r.item
+      // remap projectId
+      if (item.projectId && projectIdMap.has(item.projectId)) {
+        item.projectId = projectIdMap.get(item.projectId)!
+      } else if (
+        item.projectId &&
+        importedProjects.some((p) => p.id === item.projectId)
+      ) {
+        // project was in the export but mapping failed -> set to undefined
+        item.projectId = undefined
+      }
+      validItems.push(item)
     }
   }
 
