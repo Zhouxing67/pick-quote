@@ -54,7 +54,7 @@ export default function NewProjectPage() {
     chrome.notifications.create({
       type: "basic",
       iconUrl: "icon128.png",
-      title: "拾句",
+      title: "lime",
       message: `已加入项目：${projectName}`
     })
     chrome.storage.session.remove("pendingCapture")

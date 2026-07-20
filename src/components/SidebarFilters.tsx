@@ -317,7 +317,7 @@ function ProjectRow({
           "&:hover": { bgcolor: "action.selected" }
         }}>
         <Typography variant="caption" sx={{ display: "block", mb: 1 }}>
-          删除「{project.name}」？该项目的卡片将变为未归类。
+          删除「{project.name}」？该项目的所有卡片也将一并删除。
         </Typography>
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button size="small" onClick={() => setConfirming(false)}>

@@ -217,7 +217,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                 letterSpacing: "0.15em",
                 fontFamily: "'Noto Serif SC', 'Songti SC', serif"
               }}>
-              拾句 · 灵感捕手
+              lime · 灵感捕手
             </Typography>
           </Box>
         </Stack>

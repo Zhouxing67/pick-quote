@@ -651,7 +651,7 @@ export default function OptionsPage() {
                       没有找到匹配的卡片
                     </Typography>
                     <Typography variant="body2" sx={{ opacity: 0.5, mt: 0.5 }}>
-                      试试其他关键词或清除筛选条件
+                      试试其他关键词
                     </Typography>
                   </>
                 ) : (
