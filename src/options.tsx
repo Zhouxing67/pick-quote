@@ -146,6 +146,7 @@ export default function OptionsPage() {
     setProjectError(null)
     setActiveProjectId(project.id)
     onSearch(project.id)
+    chrome.runtime.sendMessage({ kind: "rebuild-menus" })
   }
 
   const handleOpenProject = (id: string) => {

@@ -1,4 +1,4 @@
-import { addItem, addProject, listProjects, getProjectByName } from "./database"
+import { addItem, listProjects } from "./database"
 import type { Item, Project } from "./types"
 
 function notifyTab(tabId: number | undefined, text: string) {
@@ -41,11 +41,24 @@ function createMenu(
   })
 }
 
+// Wrapper that resolves on the remove callback, swallowing lastError
+// (removing a non-existent id is harmless but surfaces as lastError).
+function removeMenu(id: string): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.contextMenus.remove(id, () => {
+      void chrome.runtime.lastError
+      resolve()
+    })
+  })
+}
+
 // Rebuild the "加入已有项目" submenu with current projects from DB.
-// Note: createMenus() calls removeAll() first, so the parent does not
-// need to be removed here (removing a non-existent id throws lastError).
-// Children are created only after the parent's create callback fires.
+// Safe to call repeatedly: removes the parent (and its children cascade)
+// before recreating, so added/removed projects stay in sync.
 async function rebuildProjectMenus() {
+  // Remove existing parent (children cascade) if present
+  await removeMenu("pickquote-existing")
+
   // Recreate the "加入已有项目" parent
   await createMenu({
     id: "pickquote-existing",
@@ -66,23 +79,33 @@ async function rebuildProjectMenus() {
   }
 }
 
-// Create full context menu structure (root + static children + dynamic projects)
-function createMenus() {
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
+// Create full context menu structure (root + static children + dynamic projects).
+// Uses an await chain so parent/child creation order is guaranteed, and a
+// re-entrancy guard so onInstalled + onStartup firing together can't race.
+let menusBuilding = false
+async function createMenus() {
+  if (menusBuilding) return
+  menusBuilding = true
+  try {
+    await new Promise<void>((resolve) =>
+      chrome.contextMenus.removeAll(() => resolve())
+    )
+    await createMenu({
       id: "pickquote-root",
       title: "拾句",
       contexts: ["selection", "image", "link", "page"]
     })
-    chrome.contextMenus.create({
+    await createMenu({
       id: "pickquote-new-project",
       title: "新建项目并加入",
       parentId: "pickquote-root",
       contexts: ["selection", "image", "link", "page"]
     })
     // rebuildProjectMenus creates "pickquote-existing" + project submenus
-    rebuildProjectMenus()
-  })
+    await rebuildProjectMenus()
+  } finally {
+    menusBuilding = false
+  }
 }
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -94,16 +117,17 @@ chrome.runtime.onStartup.addListener(() => {
 })
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  const { menuItemId } = info
+  try {
+    const { menuItemId } = info
 
-  const url = info.pageUrl ?? tab?.url ?? ""
-  const title = tab?.title ?? ""
-  const site = url ? new URL(url).hostname : undefined
+    const url = info.pageUrl ?? tab?.url ?? ""
+    const title = tab?.title ?? ""
+    const site = url ? new URL(url).hostname : undefined
 
-  const base = {
-    source: { title, url, site },
-    createdAt: Date.now()
-  }
+    const base = {
+      source: { title, url, site },
+      createdAt: Date.now()
+    }
 
   // Helper: build item with optional projectId, save, and notify
   const saveAndNotify = async (
@@ -159,21 +183,54 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   // ---- "新建项目并加入" ----
+  // NOTE: prompt() is unavailable in a Service Worker. We stash the
+  // captured payload in session storage and open a popup page to collect
+  // the project name, then that page performs addProject + addItem.
   if (menuItemId === "pickquote-new-project") {
-    const rawName = prompt("请输入项目名称：")
-    if (!rawName || !rawName.trim()) return
-    const trimmedName = rawName.trim()
-
-    let project = await getProjectByName(trimmedName)
-    if (!project) {
-      project = {
-        id: crypto.randomUUID(),
-        name: trimmedName,
-        createdAt: Date.now()
-      }
-      await addProject(project)
+    let captureType: Item["type"] = "text"
+    let captureContent = ""
+    if (info.selectionText) {
+      captureType = "text"
+      captureContent = info.selectionText
+    } else if (info.srcUrl) {
+      captureType = "image"
+      captureContent = info.srcUrl
+    } else if (info.linkUrl) {
+      captureType = "link"
+      captureContent = info.linkUrl
+    } else if (tab?.windowId) {
+      captureType = "snapshot"
+      const dataUrl = await new Promise<string | null>((resolve) => {
+        chrome.tabs.captureVisibleTab(
+          tab.windowId,
+          { format: "png" },
+          (d) => resolve(chrome.runtime.lastError ? null : d ?? null)
+        )
+      })
+      if (!dataUrl) return
+      captureContent = dataUrl
+    } else {
+      return
     }
-    await captureAndSave(project.id, project.name)
+
+    await new Promise<void>((resolve) =>
+      chrome.storage.session.set(
+        {
+          pendingCapture: {
+            type: captureType,
+            content: captureContent,
+            source: base.source
+          }
+        },
+        () => resolve()
+      )
+    )
+    chrome.windows.create({
+      url: chrome.runtime.getURL("tabs/new-project.html"),
+      type: "popup",
+      width: 480,
+      height: 460
+    })
     return
   }
 
@@ -186,10 +243,18 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     await captureAndSave(projectId, project?.name ?? "未知项目")
     return
   }
+  } catch (e) {
+    console.error("contextMenus.onClicked failed:", e)
+  }
 })
 
-// Messages from content scripts for advanced capture
+// Messages from content scripts / pages
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  // Refresh the "加入已有项目" submenu after a project is added/removed
+  if (msg?.kind === "rebuild-menus") {
+    rebuildProjectMenus()
+    return
+  }
   if (msg?.kind === "capture" && msg?.payload) {
     const item: Item = {
       id: crypto.randomUUID(),

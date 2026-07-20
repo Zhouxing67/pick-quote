@@ -2,7 +2,7 @@ import type { Item, Project, SearchQuery } from "../types"
 import { computeItemHash } from "../utils"
 
 const DB_NAME = "pickquote-db"
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 type TableNames = "items" | "projects" | "categories" | "sources"
 
