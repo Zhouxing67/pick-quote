@@ -2,6 +2,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded"
+import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
@@ -25,6 +26,7 @@ interface AppHeaderProps {
   onToggleSelectMode: () => void
   onToggleSwapMode: () => void
   onNewCard: () => void
+  onSettingsClick: () => void
 }
 
 export default function AppHeader({
@@ -42,7 +44,8 @@ export default function AppHeader({
   onImport,
   onToggleSelectMode,
   onToggleSwapMode,
-  onNewCard
+  onNewCard,
+  onSettingsClick
 }: AppHeaderProps) {
   return (
     <Box
@@ -106,6 +109,14 @@ export default function AppHeader({
             onClick={onPaletteClick}
             sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
             <PaletteRoundedIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="设置">
+          <IconButton
+            size="small"
+            onClick={onSettingsClick}
+            sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+            <SettingsRoundedIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
         <Box sx={{ flexGrow: 1 }} />

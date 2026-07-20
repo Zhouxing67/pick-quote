@@ -28,6 +28,7 @@ import CardGrid from "./components/GroupSection"
 import ColorPalette from "./components/ColorPalette"
 import FilterChips from "./components/FilterChips"
 import ItemDialog from "./components/ItemDialog"
+import SettingsDialog from "./components/SettingsDialog"
 import SidebarFilters from "./components/SidebarFilters"
 import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
@@ -74,6 +75,7 @@ export default function OptionsPage() {
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false)
   const [preset, setPreset] = useState<PresetName>("classic")
   const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [allItemCounts, setAllItemCounts] = useState<Record<string, number>>({})
   const [readingFilter, setReadingFilter] = useState(false)
@@ -403,6 +405,7 @@ export default function OptionsPage() {
                 setActiveProjectId(null)
                 onSearch(null)
               }}
+              onSettingsClick={() => setSettingsOpen(true)}
             />
 
             <FilterChips
@@ -773,6 +776,15 @@ export default function OptionsPage() {
               preset={preset}
               onClose={() => setPaletteAnchor(null)}
               onChange={(name) => setPreset(name)}
+            />
+
+            <SettingsDialog
+              open={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+              onDataChange={() => {
+                loadProjects()
+                onSearch()
+              }}
             />
           </Container>
         </Box>

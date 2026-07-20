@@ -310,3 +310,15 @@ export async function deleteProject(id: string): Promise<void> {
     store.delete(id)
   })
 }
+
+export async function clearAllItems(): Promise<void> {
+  await withStore("items", "readwrite", (store) => {
+    store.clear()
+  })
+}
+
+export async function clearAllProjects(): Promise<void> {
+  await withStore("projects", "readwrite", (store) => {
+    store.clear()
+  })
+}
