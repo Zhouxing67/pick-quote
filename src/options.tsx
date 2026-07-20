@@ -27,10 +27,12 @@ import CardGrid from "./components/GroupSection"
 import ColorPalette from "./components/ColorPalette"
 import FilterChips from "./components/FilterChips"
 import ItemDialog from "./components/ItemDialog"
+import ReviewSession from "./components/ReviewSession"
 import SettingsDialog from "./components/SettingsDialog"
 import SidebarFilters from "./components/SidebarFilters"
 import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
+import { getDueItems } from "./hooks/useSrs"
 import {
   deleteItem,
   searchItems,
@@ -75,6 +77,8 @@ export default function OptionsPage() {
   const [preset, setPreset] = useState<PresetName>("classic")
   const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [reviewMode, setReviewMode] = useState(false)
+  const [reviewItems, setReviewItems] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [allItemCounts, setAllItemCounts] = useState<Record<string, number>>({})
   const [readingFilter, setReadingFilter] = useState(false)
@@ -307,6 +311,23 @@ export default function OptionsPage() {
     })
   }, [selectedIds, swapItems])
 
+  const dueCount = useMemo(() => {
+    const due = getDueItems(allItems)
+    return due.length
+  }, [allItems])
+
+  const handleStartReview = useCallback(() => {
+    const due = getDueItems(allItems)
+    setReviewItems(due)
+    setReviewMode(true)
+  }, [allItems])
+
+  const handleExitReview = useCallback(() => {
+    setReviewMode(false)
+    setReviewItems([])
+    onSearch()
+  }, [onSearch])
+
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
 
   const stats = useMemo(() => {
@@ -419,6 +440,8 @@ export default function OptionsPage() {
                 onSearch(null)
               }}
               onSettingsClick={() => setSettingsOpen(true)}
+              onStartReview={handleStartReview}
+              dueCount={dueCount}
             />
 
             <FilterChips
@@ -455,6 +478,16 @@ export default function OptionsPage() {
               />
             )}
 
+            {reviewMode ? (
+              <ReviewSession
+                items={reviewItems}
+                onSave={async (item) => {
+                  await updateItem(item)
+                }}
+                onExit={handleExitReview}
+              />
+            ) : (
+              <>
             {!readingFilter && !activeProject && (
               <Box
                 sx={{
@@ -698,6 +731,8 @@ export default function OptionsPage() {
                   />
                 ))}
               </Box>
+            )}
+              </>
             )}
 
             <ItemDialog

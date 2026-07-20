@@ -8,6 +8,14 @@ export interface SourceMeta {
   anchor?: string
 }
 
+export interface SrsData {
+  dueDate: number
+  interval: number
+  easeFactor: number
+  reviewCount: number
+  lastReviewDate: number
+}
+
 export interface Item {
   id: string
   type: ItemType
@@ -28,6 +36,8 @@ export interface Item {
   sourceSite?: string
   /** Manual ordering within a project (lower = earlier) */
   order?: number
+  /** Spaced repetition scheduling data */
+  srs?: SrsData
 }
 
 export interface SearchQuery {
@@ -38,6 +48,7 @@ export interface SearchQuery {
   from?: number
   to?: number
   projectId?: string
+  dueBefore?: number
 }
 
 export interface Project {

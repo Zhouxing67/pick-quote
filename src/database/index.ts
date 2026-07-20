@@ -2,7 +2,7 @@ import type { Item, Project, SearchQuery } from "../types"
 import { computeItemHash } from "../utils"
 
 const DB_NAME = "pickquote-db"
-const DB_VERSION = 4
+const DB_VERSION = 5
 
 type TableNames = "items" | "projects" | "categories" | "sources"
 
@@ -148,6 +148,7 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
           (!q.from || item.createdAt >= q.from) &&
           (!q.to || item.createdAt <= q.to) &&
           (!q.projectId || item.projectId === q.projectId) &&
+          (!q.dueBefore || !item.srs || item.srs.dueDate <= q.dueBefore) &&
           (!q.keyword ||
             item.content?.toLowerCase().includes(q.keyword.toLowerCase()) ||
             item.source?.title?.toLowerCase().includes(q.keyword.toLowerCase()))

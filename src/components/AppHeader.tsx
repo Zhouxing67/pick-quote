@@ -2,10 +2,11 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded"
+import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
-import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
+import { Badge, Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
 import type { MutableRefObject } from "react"
 
 import type { Project } from "../types"
@@ -18,6 +19,7 @@ interface AppHeaderProps {
   headerHeight: number
   hasActiveProject: boolean
   activeProject: Project | null
+  dueCount?: number
   onClearProject: () => void
   onToggleDrawer: () => void
   onPaletteClick: (e: React.MouseEvent<HTMLElement>) => void
@@ -27,6 +29,7 @@ interface AppHeaderProps {
   onToggleSwapMode: () => void
   onNewCard: () => void
   onSettingsClick: () => void
+  onStartReview: () => void
 }
 
 export default function AppHeader({
@@ -37,6 +40,7 @@ export default function AppHeader({
   headerHeight,
   hasActiveProject,
   activeProject,
+  dueCount,
   onClearProject,
   onToggleDrawer,
   onPaletteClick,
@@ -45,7 +49,8 @@ export default function AppHeader({
   onToggleSelectMode,
   onToggleSwapMode,
   onNewCard,
-  onSettingsClick
+  onSettingsClick,
+  onStartReview
 }: AppHeaderProps) {
   return (
     <Box
@@ -120,6 +125,20 @@ export default function AppHeader({
           </IconButton>
         </Tooltip>
         <Box sx={{ flexGrow: 1 }} />
+        <Tooltip title="复习">
+          <IconButton
+            size="small"
+            onClick={onStartReview}
+            sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+            <Badge
+              badgeContent={dueCount ?? 0}
+              color="error"
+              invisible={!dueCount}
+              sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", height: 16, minWidth: 16 } }}>
+              <SchoolRoundedIcon sx={{ fontSize: 20 }} />
+            </Badge>
+          </IconButton>
+        </Tooltip>
         <Tooltip title="导入 ZIP">
           <IconButton
             size="small"
