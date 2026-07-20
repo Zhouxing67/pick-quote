@@ -95,7 +95,7 @@ export default function ItemCard({
         sx={{ mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Chip
-            label={item.type === "text" ? "文本" : item.type === "image" ? "图片" : item.type === "link" ? "链接" : "快照"}
+            label={item.type === "text" ? "文本" : item.type === "image" ? "图片" : "链接"}
             size="small"
             variant="outlined"
             sx={{
@@ -255,28 +255,6 @@ export default function ItemCard({
             </Typography>
           </Stack>
         )}
-        {item.type === "snapshot" &&
-          (typeof item.content === "string" &&
-          item.content.startsWith("data:image") ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-              <img
-                src={item.content}
-                alt={item.source?.title || (item.source ? prettyUrl(item.source.url) : "")}
-                draggable={false}
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: 240,
-                  borderRadius: 10
-                }}
-              />
-            </Box>
-          ) : (
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
-              已保存长截图（合成）
-            </Typography>
-          ))}
       </Box>
 
         {item.source && (

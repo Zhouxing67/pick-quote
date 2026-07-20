@@ -181,15 +181,6 @@ export default function SidebarFilters({
                 {dueCount > 0 ? `${dueCount} 张卡片等待复习` : "没有待复习的卡片"}
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              fullWidth
-              disabled={dueCount === 0}
-              onClick={onStartReview}
-              sx={{ borderRadius: 1 }}>
-              <SchoolRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-              开始复习
-            </Button>
           </Stack>
         ) : (
           /* Project tab content */

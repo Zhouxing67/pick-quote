@@ -101,7 +101,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           return
         }
         if (dataUrl) {
-          await saveAndNotify("snapshot", dataUrl, projectId, message)
+          await saveAndNotify("image", dataUrl, projectId, message)
         }
       })
     }
@@ -121,7 +121,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       captureType = "link"
       captureContent = info.linkUrl
     } else if (tab?.windowId) {
-      captureType = "snapshot"
+      captureType = "image"
       const dataUrl = await new Promise<string | null>((resolve) => {
         chrome.tabs.captureVisibleTab(
           tab.windowId,

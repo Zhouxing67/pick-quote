@@ -19,7 +19,7 @@ export async function toJsonZip(
 
   for (const it of items) {
     if (
-      (it.type === "image" || it.type === "snapshot") &&
+      it.type === "image" &&
       typeof it.content === "string" &&
       it.content.startsWith("data:image")
     ) {

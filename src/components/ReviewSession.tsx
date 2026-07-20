@@ -17,8 +17,7 @@ const COLORS = ["#ef4444", "#f97316", "#22c55e", "#3b82f6"]
 const TYPE_LABEL: Record<string, string> = {
   text: "文本",
   image: "图片",
-  link: "链接",
-  snapshot: "快照"
+  link: "链接"
 }
 
 export default function ReviewSession({
@@ -183,6 +182,7 @@ export default function ReviewSession({
         <Box
           sx={{
             position: "relative",
+            minHeight: 400,
             transformStyle: "preserve-3d",
             transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             transform: flipped ? "rotateX(-180deg)" : "rotateX(0deg)"
@@ -227,8 +227,7 @@ export default function ReviewSession({
               }}>
               "
             </Box>
-            {(current.type === "snapshot" || current.type === "link") &&
-            current.source?.url ? (
+            {current.type === "link" && current.source?.url ? (
               <Typography
                 component="a"
                 href={current.source.url}

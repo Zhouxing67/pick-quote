@@ -126,27 +126,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   }}
                 />
               </Box>
-            ) : item.type === "snapshot" &&
-              typeof item.content === "string" &&
-              item.content.startsWith("data:image") ? (
-              <Box
-                sx={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center"
-                }}>
-                <img
-                  src={item.content}
-                  alt="snapshot"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "400px",
-                    borderRadius: "12px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)"
-                  }}
-                />
-              </Box>
             ) : (
               <Typography
                 sx={{

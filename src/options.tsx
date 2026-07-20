@@ -368,7 +368,7 @@ export default function OptionsPage() {
   }
 
   const readingFilteredItems = allItems.filter(
-    (i) => (i.type === "link" || i.type === "snapshot") && !i.read
+    (i) => i.type === "link" && !i.read
   )
 
   return (

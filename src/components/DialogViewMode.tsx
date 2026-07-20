@@ -70,20 +70,6 @@ export default function DialogViewMode({ item }: { item: Item }) {
           </Link>
         </Typography>
       )}
-      {item.type === "snapshot" &&
-        (typeof item.content === "string" && item.content.startsWith("data:image") ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-            <img
-              src={item.content}
-              alt={item.source?.title || prettyUrl(item.source?.url || "")}
-              style={{ maxWidth: "100%", borderRadius: 12 }}
-            />
-          </Box>
-        ) : (
-          <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.95rem" }}>
-            长截图（合成）已保存
-          </Typography>
-        ))}
 
       <Box sx={{ mt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>

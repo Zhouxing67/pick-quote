@@ -1,4 +1,4 @@
-export type ItemType = "text" | "image" | "link" | "snapshot"
+export type ItemType = "text" | "image" | "link"
 
 export interface SourceMeta {
   title: string
