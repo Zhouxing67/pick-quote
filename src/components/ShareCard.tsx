@@ -183,7 +183,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                 textAlign: "center",
                 fontFamily: "'Noto Serif SC', 'Songti SC', serif"
               }}>
-              {item.source.title || prettyUrl(item.source.url)}
+              {item.source?.title || (item.source ? prettyUrl(item.source.url) : "")}
             </Typography>
             <Typography
               sx={{

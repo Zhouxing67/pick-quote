@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
+import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
@@ -32,6 +33,7 @@ interface SidebarFiltersProps {
   newProjectName: string
   projectError: string | null
   itemCounts: Record<string, number>
+  readingFilter: boolean
   onClose: () => void
   onNewProjectNameChange: (v: string) => void
   onCreateProject: () => void
@@ -40,6 +42,7 @@ interface SidebarFiltersProps {
   onUpdateNote: (id: string, note: string) => void
   onDeleteProject: (id: string) => void
   onWidthChange: (w: number) => void
+  onToggleReadingFilter: () => void
 }
 
 export default function SidebarFilters({
@@ -50,6 +53,7 @@ export default function SidebarFilters({
   newProjectName,
   projectError,
   itemCounts,
+  readingFilter,
   onClose,
   onNewProjectNameChange,
   onCreateProject,
@@ -57,7 +61,8 @@ export default function SidebarFilters({
   onRenameProject,
   onUpdateNote,
   onDeleteProject,
-  onWidthChange
+  onWidthChange,
+  onToggleReadingFilter
 }: SidebarFiltersProps) {
   return (
     <Drawer
@@ -195,6 +200,29 @@ export default function SidebarFilters({
             )}
           </Box>
         </Box>
+
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{
+            px: 1.5,
+            py: 1,
+            borderRadius: 1,
+            cursor: "pointer",
+            bgcolor: readingFilter ? "action.selected" : "transparent",
+            "&:hover": { bgcolor: "action.hover" }
+          }}
+          onClick={onToggleReadingFilter}>
+          <BookmarkBorderRoundedIcon
+            sx={{ fontSize: 18, color: readingFilter ? "primary.main" : "text.secondary" }}
+          />
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "0.85rem", color: readingFilter ? "primary.main" : "text.secondary" }}>
+            稍后阅读
+          </Typography>
+        </Stack>
       </Stack>
     </Drawer>
   )

@@ -2,7 +2,8 @@ import { addItem, listProjects } from "./database"
 import {
   createMenus,
   ensureMenusReady,
-  rebuildProjectMenus
+  rebuildProjectMenus,
+  updateRecentProjects
 } from "./background/menus"
 import type { Item } from "./types"
 
@@ -21,7 +22,7 @@ function notifySystem(text: string) {
     chrome.notifications.create({
       type: "basic",
       iconUrl: "icon128.png",
-      title: "拾句",
+      title: "lime",
       message: text
     })
   } catch {
@@ -56,7 +57,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     type: Item["type"],
     content: string,
     projectId?: string,
-    message: string = "已保存到拾句"
+    message: string = "已保存到 lime"
   ) => {
     const item: Item = {
       id: crypto.randomUUID(),
@@ -68,7 +69,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (projectId) item.projectId = projectId
     await addItem(item)
     if (projectId) {
-      chrome.storage.local.set({ lastProjectId: projectId })
+      updateRecentProjects(projectId).catch(() => {})
     }
     notifyTab(tab?.id, message)
   }
@@ -77,7 +78,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     projectId?: string,
     projectName?: string
   ): Promise<void> => {
-    const message = projectName ? `已加入项目：${projectName}` : "已保存到拾句"
+    const message = projectName ? `已加入项目：${projectName}` : "已保存到 lime"
 
     if (info.selectionText) {
       await saveAndNotify("text", info.selectionText, projectId, message)
@@ -154,20 +155,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     return
   }
 
-  // ---- "加入上次项目" ----
-  if (menuItemId === "pickquote-last-project") {
-    const lastProjectId = await new Promise<string | undefined>((resolve) => {
-      chrome.storage.local.get("lastProjectId", (r) =>
-        resolve((r as { lastProjectId?: string }).lastProjectId)
-      )
-    })
-    if (!lastProjectId) {
-      notifySystem("暂无上次项目，请先选择一个项目")
-      return
-    }
+  // ---- "最近项目" ----
+  if (
+    typeof menuItemId === "string" &&
+    menuItemId.startsWith("pickquote-recent-")
+  ) {
+    const idx = parseInt(menuItemId.slice("pickquote-recent-".length), 10)
+    const result = await chrome.storage.local.get("recentProjectIds")
+    const recentIds: string[] = (result as any).recentProjectIds ?? []
+    const projectId = recentIds[idx]
+    if (!projectId) return
     const projects = await listProjects()
-    const project = projects.find((p) => p.id === lastProjectId)
-    await captureAndSave(lastProjectId, project?.name ?? "未知项目")
+    const project = projects.find((p) => p.id === projectId)
+    await captureAndSave(projectId, project?.name ?? "未知项目")
     return
   }
 

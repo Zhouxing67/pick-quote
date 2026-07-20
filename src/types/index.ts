@@ -21,6 +21,8 @@ export interface Item {
   createdAt: number
   projectId?: string
   note?: string
+  /** Mark as read/unread for link type */
+  read?: boolean
   hash?: string
   /** Derived field for indexing */
   sourceSite?: string

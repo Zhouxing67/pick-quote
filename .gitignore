@@ -36,3 +36,5 @@ pnpm-workspace.yaml
 
 # typescript
 .tsbuildinfo
+tsconfig.tsbuildinfo
+.cortexkit/

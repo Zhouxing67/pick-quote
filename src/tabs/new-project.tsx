@@ -105,7 +105,7 @@ export default function NewProjectPage() {
                   ? "[图片]"
                   : "[网页快照]"}
             {" · "}
-            {pending.source.title || pending.source.url}
+            {pending.source.title || (pending.source?.url ?? "")}
           </Typography>
         )}
 

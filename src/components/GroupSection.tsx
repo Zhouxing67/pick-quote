@@ -11,6 +11,7 @@ interface CardGridProps {
   onDeleteItem: (id: string) => void
   onOpenDialog: (item: Item) => void
   swapMode: boolean
+  onToggleRead?: (id: string) => void
 }
 
 export default function CardGrid({
@@ -20,7 +21,8 @@ export default function CardGrid({
   onSelectItem,
   onDeleteItem,
   onOpenDialog,
-  swapMode
+  swapMode,
+  onToggleRead
 }: CardGridProps) {
   return (
     <Box
@@ -70,6 +72,7 @@ export default function CardGrid({
               if (selectMode || swapMode) return onSelectItem(it.id)
               onOpenDialog(it)
             }}
+            onToggleRead={onToggleRead}
           />
         </Box>
       ))}

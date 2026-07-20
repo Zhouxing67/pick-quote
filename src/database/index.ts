@@ -97,8 +97,8 @@ async function withStore<T>(
 export async function addItem(item: Item): Promise<void> {
   const normalized: Item = {
     ...item,
-    sourceSite: item.source.site ?? new URL(item.source.url).hostname,
-    hash: item.hash || (await computeItemHash(item.content, item.source.url))
+    sourceSite: item.source?.site ?? (item.source ? new URL(item.source.url).hostname : undefined),
+    hash: item.hash || (item.source ? await computeItemHash(item.content, item.source.url) : await computeItemHash(item.content, ""))
   }
   // simple de-dup: if hash exists for same url, skip
   const exists = await withStore("items", "readonly", async (store) => {
@@ -107,7 +107,7 @@ export async function addItem(item: Item): Promise<void> {
       const req = idx.get(normalized.hash)
       req.onsuccess = () => {
         const val = req.result as Item | undefined
-        resolve(Boolean(val && val.source?.url === normalized.source.url))
+        resolve(Boolean(val && normalized.source && val.source?.url === normalized.source.url))
       }
       req.onerror = () => reject(req.error)
     })
@@ -141,7 +141,7 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
           (!q.projectId || item.projectId === q.projectId) &&
           (!q.keyword ||
             item.content?.toLowerCase().includes(q.keyword.toLowerCase()) ||
-            item.source.title?.toLowerCase().includes(q.keyword.toLowerCase()))
+            item.source?.title?.toLowerCase().includes(q.keyword.toLowerCase()))
         ) {
           results.push(item)
         }

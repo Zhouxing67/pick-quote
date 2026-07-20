@@ -42,7 +42,7 @@ export async function toZip(
       (it.type === "image" || it.type === "snapshot") && assetPath
         ? `![snapshot](${assetPath})`
         : it.content.replace(/\n/g, " ")
-    const source = `(${it.source.title || it.source.url})`
+    const source = it.source ? `(${it.source.title || it.source.url})` : ""
     mdLines.push(`- ${content} ${source}`)
   }
 

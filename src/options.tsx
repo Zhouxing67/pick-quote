@@ -5,6 +5,7 @@ import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded"
 import {
   Box,
   Button,
+  Chip,
   CircularProgress,
   Container,
   CssBaseline,
@@ -74,6 +75,9 @@ export default function OptionsPage() {
   const [preset, setPreset] = useState<PresetName>("classic")
   const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+  const [readingFilter, setReadingFilter] = useState(false)
+  const [showRandomReview, setShowRandomReview] = useState(true)
+  const [refreshRandom, setRefreshRandom] = useState(0)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -300,6 +304,42 @@ export default function OptionsPage() {
     return m
   }, [allItems])
 
+  const stats = useMemo(() => {
+    const now = Date.now()
+    const recent7 = allItems.filter((i) => i.createdAt > now - 7 * 86400000).length
+    const sourceCounts = new Map<string, number>()
+    for (const item of allItems) {
+      const site = item.source?.site
+      if (site) sourceCounts.set(site, (sourceCounts.get(site) ?? 0) + 1)
+    }
+    const topSites = [...sourceCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([site, count]) => ({ site, count }))
+    return { totalItems: allItems.length, totalProjects: projects.length, recent7, topSites }
+  }, [allItems, projects])
+
+  const randomItem = useMemo(() => {
+    if (!activeProject || allItems.length === 0) return null
+    return allItems[Math.floor(Math.random() * allItems.length)]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProject, allItems, refreshRandom])
+
+  const handleToggleRead = async (id: string) => {
+    const item = allItems.find((i) => i.id === id)
+    if (!item) return
+    await updateItem({ ...item, read: !item.read })
+    onSearch()
+  }
+
+  const handleToggleReadingFilter = () => {
+    setReadingFilter((prev) => !prev)
+  }
+
+  const readingFilteredItems = allItems.filter(
+    (i) => (i.type === "link" || i.type === "snapshot") && !i.read
+  )
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -312,6 +352,8 @@ export default function OptionsPage() {
           newProjectName={newProjectName}
           projectError={projectError}
           itemCounts={itemCounts}
+          readingFilter={readingFilter}
+          onToggleReadingFilter={handleToggleReadingFilter}
           onClose={handleToggleDrawer}
           onNewProjectNameChange={(v) => {
             setNewProjectName(v)
@@ -381,7 +423,7 @@ export default function OptionsPage() {
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement("a")
                   a.href = url
-                  a.download = "pickquote-export.zip"
+                  a.download = "lime-export.zip"
                   a.click()
                   URL.revokeObjectURL(url)
                 }}
@@ -391,7 +433,7 @@ export default function OptionsPage() {
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement("a")
                   a.href = url
-                  a.download = "pickquote-export.json.zip"
+                  a.download = "lime-export.json.zip"
                   a.click()
                   URL.revokeObjectURL(url)
                 }}
@@ -400,7 +442,7 @@ export default function OptionsPage() {
               />
             )}
 
-            {!activeProject && (
+            {!readingFilter && !activeProject && (
               <Box
                 sx={{
                   display: "flex",
@@ -423,7 +465,155 @@ export default function OptionsPage() {
               </Box>
             )}
 
-            {activeProject && (
+            {!readingFilter && !activeProject && stats.totalItems > 0 && (
+              <Box
+                sx={{
+                  mx: "auto",
+                  maxWidth: 500,
+                  textAlign: "center",
+                  mb: 6
+                }}>
+                <Stack
+                  direction="row"
+                  spacing={3}
+                  justifyContent="center"
+                  sx={{ mb: 2.5 }}>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
+                      {stats.totalItems}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      收藏总数
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
+                      {stats.totalProjects}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      项目数
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
+                      {stats.recent7}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      本周新增
+                    </Typography>
+                  </Box>
+                </Stack>
+                {stats.topSites.length > 0 && (
+                  <>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.disabled",
+                        display: "block",
+                        mb: 1,
+                        fontSize: "0.7rem"
+                      }}>
+                      来源网站 Top5
+                    </Typography>
+                    <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap" useFlexGap>
+                      {stats.topSites.map((s) => (
+                        <Chip
+                          key={s.site}
+                          label={`${s.site} (${s.count})`}
+                          size="small"
+                          variant="outlined"
+                          sx={{ borderRadius: 1.5, fontSize: "0.7rem" }}
+                        />
+                      ))}
+                    </Stack>
+                  </>
+                )}
+              </Box>
+            )}
+
+            {readingFilter ? (
+              readingFilteredItems.length === 0 ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    py: 10,
+                    color: "text.secondary",
+                    userSelect: "none"
+                  }}>
+                  <SearchOffRoundedIcon
+                    sx={{ fontSize: 80, opacity: 0.12, mb: 3 }}
+                  />
+                  <Typography variant="body1" sx={{ opacity: 0.7 }}>
+                    阅读清单已清空
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.5, mt: 0.5 }}>
+                    所有链接都已标记为已读
+                  </Typography>
+                </Box>
+              ) : (
+                <CardGrid
+                  items={readingFilteredItems}
+                  selectMode={selectMode}
+                  selectedIds={selectedIds}
+                  onSelectItem={(id) =>
+                    setSelectedIds((prev) =>
+                      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+                    )
+                  }
+                  onDeleteItem={onDelete}
+                  onOpenDialog={setDialogItem}
+                  swapMode={swapMode}
+                  onToggleRead={handleToggleRead}
+                />
+              )
+            ) : activeProject && randomItem && showRandomReview ? (
+              <Box
+                sx={{
+                  mb: 2,
+                  p: 2.5,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  bgcolor: "background.paper"
+                }}>
+                <Stack direction="row" alignItems="flex-start" spacing={2}>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      fontSize: "1rem",
+                      lineHeight: 1.7,
+                      color: "text.primary",
+                      fontStyle: "italic"
+                    }}>
+                    <Box
+                      component="span"
+                      sx={{ fontSize: "1.5rem", color: "text.disabled", mr: 0.5 }}>
+                      "
+                    </Box>
+                    {randomItem.content.length > 200
+                      ? randomItem.content.slice(0, 200) + "…"
+                      : randomItem.content}
+                  </Box>
+                </Stack>
+                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1.5 }}>
+                  <Button size="small" onClick={() => setShowRandomReview(false)}>
+                    关闭
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => setRefreshRandom((prev) => prev + 1)}>
+                    下一条
+                  </Button>
+                </Stack>
+              </Box>
+            ) : null}
+
+            {!readingFilter && activeProject && (
               <CardGrid
                 items={displayedItems}
                 selectMode={selectMode}
@@ -436,10 +626,11 @@ export default function OptionsPage() {
                 onDeleteItem={onDelete}
                 onOpenDialog={setDialogItem}
                 swapMode={swapMode}
+                onToggleRead={handleToggleRead}
               />
             )}
 
-            {activeProject && !hasMore && allItems.length === 0 && (
+            {!readingFilter && activeProject && !hasMore && allItems.length === 0 && (
               <Box
                 sx={{
                   display: "flex",
@@ -478,7 +669,7 @@ export default function OptionsPage() {
               </Box>
             )}
 
-            {hasMore && activeProject && (
+            {hasMore && activeProject && !readingFilter && (
               <Box
                 ref={loadMoreRef}
                 sx={{

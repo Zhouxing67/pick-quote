@@ -1,3 +1,5 @@
+import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded"
+import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
 import {
@@ -22,6 +24,7 @@ export default function ItemCard({
   item,
   onDelete,
   onClick,
+  onToggleRead,
   draggable,
   onDragStart,
   onDragOver,
@@ -31,6 +34,7 @@ export default function ItemCard({
   item: Item
   onDelete: (id: string) => void
   onClick?: () => void
+  onToggleRead?: (id: string) => void
   draggable?: boolean
   onDragStart?: (e: React.DragEvent) => void
   onDragOver?: (e: React.DragEvent) => void
@@ -116,6 +120,20 @@ export default function ItemCard({
             transition: "opacity 0.2s",
             "&:hover": { opacity: 1 }
           }}>
+          <Tooltip title="复制引用">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                const src = item.source?.url
+                  ? `\n\n— ${item.source.title || prettyUrl(item.source.url)}`
+                  : ""
+                navigator.clipboard.writeText(`> ${item.content}${src}`)
+              }}
+              sx={{ p: 0.75 }}>
+              <ContentCopyRoundedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="导出为图片">
             <IconButton
               size="small"
@@ -137,6 +155,22 @@ export default function ItemCard({
               <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
+          {item.type === "link" && onToggleRead && (
+            <Tooltip title={item.read ? "标记未读" : "标记已读"}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleRead(item.id)
+                }}
+                sx={{
+                  p: 0.75,
+                  color: item.read ? "success.main" : "text.disabled"
+                }}>
+                <CheckCircleOutlineRoundedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
         <Menu
           anchorEl={anchorEl}
@@ -187,7 +221,7 @@ export default function ItemCard({
           <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
             <img
               src={item.content}
-              alt={item.source.title || prettyUrl(item.source.url)}
+              alt={item.source?.title || (item.source ? prettyUrl(item.source.url) : "")}
               draggable={false}
               style={{
                 maxWidth: "100%",
@@ -217,7 +251,7 @@ export default function ItemCard({
             <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
               <img
                 src={item.content}
-                alt={item.source.title || prettyUrl(item.source.url)}
+                alt={item.source?.title || (item.source ? prettyUrl(item.source.url) : "")}
                 draggable={false}
                 style={{
                   maxWidth: "100%",
@@ -235,33 +269,34 @@ export default function ItemCard({
           ))}
       </Box>
 
-      <Box
-        sx={{
-          mt: 1.5,
-          pt: 1.5,
-          borderTop: "1px solid",
-          borderColor: "divider",
-          display: "flex",
-          alignItems: "center",
-          gap: 0.5
-        }}>
-        <Link
-          href={item.source.url}
-          target="_blank"
-          rel="noreferrer"
-          underline="hover"
-          onClick={(e) => e.stopPropagation()}
+        {item.source && (
+        <Box
           sx={{
-            color: "text.secondary",
-            fontSize: "0.72rem",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            maxWidth: "100%"
+            mt: 1.5,
+            pt: 1.5,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5
           }}>
-          {item.source.title || prettyUrl(item.source.url)}
-        </Link>
-      </Box>
+          <Link
+            href={item.source.url}
+            target="_blank"
+            rel="noreferrer"
+            underline="hover"
+            onClick={(e) => e.stopPropagation()}
+            sx={{
+              color: "text.secondary",
+              fontSize: "0.72rem",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              maxWidth: "100%"
+            }}>
+            {item.source.title || prettyUrl(item.source.url)}
+          </Link>
+        </Box>)}
 
       <Box
         sx={{

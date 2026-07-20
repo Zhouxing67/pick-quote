@@ -39,6 +39,39 @@ async function rebuildProjectMenus() {
   }
 }
 
+async function rebuildRecentMenus() {
+  // Remove old recent items (up to 3)
+  for (let i = 0; i < 3; i++) {
+    await removeMenu(`pickquote-recent-${i}`)
+  }
+  // Read recent project IDs from storage
+  const result = await chrome.storage.local.get("recentProjectIds")
+  const recentIds: string[] = (result as any).recentProjectIds ?? []
+  if (recentIds.length === 0) return
+  const projects = await listProjects()
+  const recentProjects = recentIds
+    .map((id) => projects.find((p) => p.id === id))
+    .filter(Boolean) as typeof projects
+
+  // Insert after root, before "新建项目并加入"
+  for (let i = 0; i < recentProjects.length; i++) {
+    await createMenu({
+      id: `pickquote-recent-${i}`,
+      title: `[最近] ${recentProjects[i].name}`,
+      parentId: "pickquote-root",
+      contexts: ["selection", "image", "link", "page"]
+    })
+  }
+}
+
+export async function updateRecentProjects(projectId: string) {
+  const result = await chrome.storage.local.get("recentProjectIds")
+  const recentIds: string[] = (result as any).recentProjectIds ?? []
+  const updated = [projectId, ...recentIds.filter((id) => id !== projectId)].slice(0, 3)
+  await chrome.storage.local.set({ recentProjectIds: updated })
+  await rebuildRecentMenus()
+}
+
 let menusBuilding = false
 let menusReady = false
 
@@ -57,18 +90,13 @@ export async function createMenus() {
     )
     await createMenu({
       id: "pickquote-root",
-      title: "拾句",
+      title: "lime",
       contexts: ["selection", "image", "link", "page"]
     })
+    await rebuildRecentMenus()
     await createMenu({
       id: "pickquote-new-project",
       title: "新建项目并加入",
-      parentId: "pickquote-root",
-      contexts: ["selection", "image", "link", "page"]
-    })
-    await createMenu({
-      id: "pickquote-last-project",
-      title: "加入上次项目",
       parentId: "pickquote-root",
       contexts: ["selection", "image", "link", "page"]
     })
@@ -82,4 +110,4 @@ export async function createMenus() {
   }
 }
 
-export { rebuildProjectMenus }
+export { rebuildProjectMenus, rebuildRecentMenus }

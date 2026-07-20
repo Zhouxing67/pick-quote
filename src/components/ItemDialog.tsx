@@ -2,6 +2,7 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
 import {
@@ -268,6 +269,18 @@ export default function ItemDialog({
             </Link>
           )}
         </Box>
+        <Tooltip title="复制引用">
+          <IconButton
+            sx={{ flexShrink: 0, mr: 1 }}
+            onClick={() => {
+              const src = item.source?.url
+                ? `\n\n— ${item.source.title || prettyUrl(item.source.url)}`
+                : ""
+              navigator.clipboard.writeText(`> ${item.content}${src}`)
+            }}>
+            <ContentCopyRoundedIcon />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="关闭">
           <IconButton onClick={onClose} sx={{ flexShrink: 0 }}>
             <CloseRoundedIcon />
