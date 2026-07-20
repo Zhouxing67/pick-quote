@@ -227,7 +227,27 @@ export default function ReviewSession({
               }}>
               "
             </Box>
-            {current.type === "link" && current.source?.url ? (
+            {current.type === "image" ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flex: 1,
+                  minHeight: 0
+                }}>
+                <img
+                  src={current.content}
+                  alt={current.source?.title || ""}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 340,
+                    borderRadius: 10,
+                    objectFit: "contain"
+                  }}
+                />
+              </Box>
+            ) : current.type === "link" && current.source?.url ? (
               <Typography
                 component="a"
                 href={current.source.url}
@@ -280,19 +300,42 @@ export default function ReviewSession({
               display: "flex",
               flexDirection: "column"
             }}>
-            <Typography
-              sx={{
-                fontSize: "1.05rem",
-                lineHeight: 1.8,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                fontFamily: '"Noto Serif SC", "Songti SC", serif',
-                color: "text.primary",
-                textIndent: "1.5em",
-                mb: 2
-              }}>
-              {current.content}
-            </Typography>
+            {current.type === "image" ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flex: 1,
+                  minHeight: 0,
+                  mb: 2
+                }}>
+                <img
+                  src={current.content}
+                  alt={current.source?.title || ""}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 300,
+                    borderRadius: 10,
+                    objectFit: "contain"
+                  }}
+                />
+              </Box>
+            ) : (
+              <Typography
+                sx={{
+                  fontSize: "1.05rem",
+                  lineHeight: 1.8,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontFamily: '"Noto Serif SC", "Songti SC", serif',
+                  color: "text.primary",
+                  textIndent: "1.5em",
+                  mb: 2
+                }}>
+                {current.content}
+              </Typography>
+            )}
 
             {current.source?.url && (
               <Typography

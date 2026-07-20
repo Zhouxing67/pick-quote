@@ -93,17 +93,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       await saveAndNotify("link", info.linkUrl, projectId, message)
       return
     }
-    const windowId = tab?.windowId
-    if (windowId) {
-      chrome.tabs.captureVisibleTab(windowId, { format: "png" }, async (dataUrl) => {
-        if (chrome.runtime.lastError) {
-          console.warn("captureVisibleTab failed:", chrome.runtime.lastError.message)
-          return
-        }
-        if (dataUrl) {
-          await saveAndNotify("image", dataUrl, projectId, message)
-        }
-      })
+    if (tab?.url) {
+      await saveAndNotify("link", tab.url, projectId, message)
     }
   }
 
@@ -120,17 +111,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     } else if (info.linkUrl) {
       captureType = "link"
       captureContent = info.linkUrl
-    } else if (tab?.windowId) {
-      captureType = "image"
-      const dataUrl = await new Promise<string | null>((resolve) => {
-        chrome.tabs.captureVisibleTab(
-          tab.windowId,
-          { format: "png" },
-          (d) => resolve(chrome.runtime.lastError ? null : d ?? null)
-        )
-      })
-      if (!dataUrl) return
-      captureContent = dataUrl
+    } else if (tab?.url) {
+      captureType = "link"
+      captureContent = tab.url
     } else {
       return
     }
