@@ -2,6 +2,10 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import InboxRoundedIcon from "@mui/icons-material/InboxRounded"
 import NoteAddRoundedIcon from "@mui/icons-material/NoteAddRounded"
 import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded"
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
+import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
+import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
+import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import {
   Box,
   Button,
@@ -13,8 +17,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
   useMediaQuery
 } from "@mui/material"
@@ -279,6 +285,16 @@ export default function OptionsPage() {
   // ---- Card swap within project (checkbox mode) ----
   const [swapMode, setSwapMode] = useState(false)
 
+  const onToggleSwapMode = useCallback(() => {
+    setSelectedIds([])
+    setSwapMode((prev) => !prev)
+  }, [])
+
+  const onToggleSelectMode = useCallback(() => {
+    setSelectedIds([])
+    setSelectMode((prev) => !prev)
+  }, [])
+
   const swapItems = useCallback(
     async (idA: string, idB: string) => {
       if (idA === idB) return
@@ -423,36 +439,64 @@ export default function OptionsPage() {
           <Container sx={{ py: 4 }} maxWidth="xl">
             <AppHeader
               drawerOpen={drawerOpen}
-              selectMode={selectMode}
-              swapMode={swapMode}
-              reviewMode={reviewMode}
-              importing={importing}
               headerHeight={headerHeight}
-              hasActiveProject={Boolean(activeProjectId)}
               onToggleDrawer={handleToggleDrawer}
-              fileInputRef={fileInputRef}
-              onImport={handleImport}
-              onToggleSelectMode={() => {
-                if (selectMode) setSelectedIds([])
-                setSelectMode((prev) => !prev)
-              }}
-              onToggleSwapMode={() => {
-                setSelectedIds([])
-                setSwapMode((prev) => !prev)
-              }}
-              onNewCard={handleNewCard}
-              activeProject={activeProject}
-              onClearProject={() => {
-                setActiveProjectId(null)
-                onSearch(null)
-              }}
-              onSettingsClick={() => setSettingsOpen(true)}
-            />
+              onSettingsClick={() => setSettingsOpen(true)}>
+              {activeProject && !reviewMode && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    accept=".zip"
+                    onChange={handleImport}
+                  />
+                  <Tooltip title="导入 ZIP">
+                    <IconButton
+                      size="small"
+                      component="label"
+                      disabled={importing}
+                      sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+                      <UnarchiveRoundedIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={swapMode ? "退出交换" : "交换卡片"}>
+                    <IconButton
+                      size="small"
+                      onClick={onToggleSwapMode}
+                      sx={{ color: swapMode ? "primary.main" : "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+                      <SwapHorizRoundedIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="新建卡片">
+                    <IconButton
+                      size="small"
+                      onClick={handleNewCard}
+                      sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+                      <AddRoundedIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={selectMode ? "取消选择" : "选择卡片"}>
+                    <IconButton
+                      size="small"
+                      onClick={onToggleSelectMode}
+                      sx={{ color: selectMode ? "error.main" : "text.secondary", "&:hover": { color: "error.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+                      <DoneAllRoundedIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+            </AppHeader>
 
             <FilterChips
               keyword={keyword}
               type={type}
               headerHeight={headerHeight}
+              activeProject={activeProject}
+              onClearProject={() => {
+                setActiveProjectId(null)
+                onSearch(null)
+              }}
               onClearKeyword={() => handleRemoveFilter("keyword")}
               onClearType={() => handleRemoveFilter("type")}
             />

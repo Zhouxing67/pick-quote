@@ -1,50 +1,22 @@
-import AddRoundedIcon from "@mui/icons-material/AddRounded"
-import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
-import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
-import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
-import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
-import type { MutableRefObject } from "react"
-
-import type { Project } from "../types"
+import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material"
+import type { ReactNode } from "react"
 
 interface AppHeaderProps {
   drawerOpen: boolean
-  selectMode: boolean
-  swapMode: boolean
-  importing: boolean
   headerHeight: number
-  hasActiveProject: boolean
-  activeProject: Project | null
-  reviewMode?: boolean
-  onClearProject: () => void
   onToggleDrawer: () => void
-  fileInputRef: MutableRefObject<HTMLInputElement | null>
-  onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onToggleSelectMode: () => void
-  onToggleSwapMode: () => void
-  onNewCard: () => void
   onSettingsClick: () => void
+  children?: ReactNode
 }
 
 export default function AppHeader({
   drawerOpen,
-  selectMode,
-  swapMode,
-  importing,
   headerHeight,
-  hasActiveProject,
-  activeProject,
-  reviewMode,
-  onClearProject,
   onToggleDrawer,
-  fileInputRef,
-  onImport,
-  onToggleSelectMode,
-  onToggleSwapMode,
-  onNewCard,
-  onSettingsClick
+  onSettingsClick,
+  children
 }: AppHeaderProps) {
   return (
     <Box
@@ -70,7 +42,6 @@ export default function AppHeader({
         spacing={1.5}
         alignItems="center"
         sx={{ width: "100%" }}>
-        {!reviewMode && (
         <Tooltip title={drawerOpen ? "关闭项目面板" : "打开项目面板"}>
           <IconButton
             size="small"
@@ -83,27 +54,15 @@ export default function AppHeader({
             <FilterListRoundedIcon />
           </IconButton>
         </Tooltip>
-        )}
-        <Stack direction="row" spacing={0.5} alignItems="center">
-          <Typography
-            sx={{
-              fontSize: "1.25rem",
-              fontWeight: 500,
-              letterSpacing: "0.04em",
-              lineHeight: 1
-            }}>
-            lime
-          </Typography>
-          {activeProject && !reviewMode && (
-            <Chip
-              label={activeProject.name}
-              size="small"
-              color="primary"
-              onDelete={onClearProject}
-              sx={{ borderRadius: 1.5, ml: 0.5, height: 24 }}
-            />
-          )}
-        </Stack>
+        <Typography
+          sx={{
+            fontSize: "1.25rem",
+            fontWeight: 500,
+            letterSpacing: "0.04em",
+            lineHeight: 1
+          }}>
+          lime
+        </Typography>
         <Tooltip title="设置">
           <IconButton
             size="small"
@@ -112,54 +71,8 @@ export default function AppHeader({
             <SettingsRoundedIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
-        {!reviewMode && (
-          <>
         <Box sx={{ flexGrow: 1 }} />
-        <Tooltip title="导入 ZIP">
-          <IconButton
-            size="small"
-            component="label"
-            disabled={importing}
-            sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
-            <UnarchiveRoundedIcon sx={{ fontSize: 20 }} />
-            <input
-              ref={fileInputRef}
-              type="file"
-              hidden
-              accept=".zip"
-              onChange={onImport}
-            />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={swapMode ? "退出交换" : "交换卡片"}>
-          <IconButton
-            size="small"
-            onClick={onToggleSwapMode}
-            sx={{ color: swapMode ? "primary.main" : "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
-            <SwapHorizRoundedIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        </Tooltip>
-        {hasActiveProject && (
-          <Tooltip title="新建卡片">
-            <IconButton
-              size="small"
-              onClick={onNewCard}
-              sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
-              <AddRoundedIcon sx={{ fontSize: 20 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title={selectMode ? "取消选择" : "选择卡片"}>
-          <IconButton
-            size="small"
-            disabled={!hasActiveProject}
-            onClick={onToggleSelectMode}
-            sx={{ color: selectMode ? "error.main" : "text.secondary", "&:hover": { color: "error.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
-            <DoneAllRoundedIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        </Tooltip>
-          </>
-        )}
+        {children}
       </Stack>
     </Box>
   )
