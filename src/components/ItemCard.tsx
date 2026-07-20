@@ -14,6 +14,7 @@ import {
   Tooltip,
   Typography
 } from "@mui/material"
+import { useState } from "react"
 
 import type { Item } from "../types"
 import { prettyUrl } from "../utils"
@@ -52,6 +53,8 @@ export default function ItemCard({
     handleExportImage
   } = useExportImage(item)
 
+  const [copied, setCopied] = useState(false)
+
   const handleExportClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
     rawExportClick(e)
@@ -73,6 +76,10 @@ export default function ItemCard({
           boxShadow: 2,
           transform: "translateY(-2px)",
           borderColor: "primary.light"
+        },
+        "&:active": {
+          transform: "scale(0.97)",
+          transition: "transform 0.1s"
         }
       }}
       onClick={onClick}
@@ -120,7 +127,7 @@ export default function ItemCard({
             transition: "opacity 0.2s",
             "&:hover": { opacity: 1 }
           }}>
-          <Tooltip title="复制引用">
+          <Tooltip title={copied ? "已复制" : "复制引用"}>
             <IconButton
               size="small"
               onClick={(e) => {
@@ -129,6 +136,8 @@ export default function ItemCard({
                   ? `\n\n— ${item.source.title || prettyUrl(item.source.url)}`
                   : ""
                 navigator.clipboard.writeText(`> ${item.content}${src}`)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 1200)
               }}
               sx={{ p: 0.75 }}>
               <ContentCopyRoundedIcon sx={{ fontSize: 16 }} />
@@ -205,11 +214,12 @@ export default function ItemCard({
               variant="body2"
               sx={{
                 whiteSpace: "pre-wrap",
-                lineHeight: 1.9,
+                lineHeight: 1.75,
                 color: "text.primary",
                 pl: 2,
                 pr: 1,
-                fontSize: "0.95rem"
+                fontSize: "0.95rem",
+                fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif'
               }}>
               {item.content.length > 160
                 ? item.content.slice(0, 160) + "…"

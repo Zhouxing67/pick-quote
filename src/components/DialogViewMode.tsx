@@ -43,7 +43,8 @@ export default function DialogViewMode({ item }: { item: Item }) {
             textIndent: "2em",
             fontSize: "1.05rem",
             color: "text.primary",
-            textAlign: "justify"
+            textAlign: "justify",
+            fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif'
           }}>
           {item.content}
         </Typography>

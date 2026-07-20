@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Container,
   CssBaseline,
   Dialog,
@@ -349,6 +348,19 @@ export default function OptionsPage() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <style>{`
+        @keyframes skeletonPulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.6; }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+          background: #c0c0c0;
+          border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+      `}</style>
       <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
         <SidebarFilters
           open={drawerOpen}
@@ -671,14 +683,20 @@ export default function OptionsPage() {
             )}
 
             {hasMore && activeProject && !readingFilter && (
-              <Box
-                ref={loadMoreRef}
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  py: 4
-                }}>
-                <CircularProgress size={24} />
+              <Box ref={loadMoreRef} sx={{ py: 2 }}>
+                {[0, 1, 2].map((i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      borderRadius: 2.5,
+                      height: 120,
+                      mb: 1.5,
+                      bgcolor: "action.hover",
+                      animation: "skeletonPulse 1.4s ease-in-out infinite",
+                      animationDelay: `${i * 0.2}s`
+                    }}
+                  />
+                ))}
               </Box>
             )}
 

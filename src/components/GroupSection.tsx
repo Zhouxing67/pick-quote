@@ -28,6 +28,13 @@ export default function CardGrid({
   return (
     <>
       <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .masonry-item {
+          animation: fadeInUp 0.4s ease-out both;
+        }
         .masonry-grid {
           display: flex;
           margin-left: -12px;
@@ -42,14 +49,16 @@ export default function CardGrid({
         breakpointCols={{ default: 3, 900: 2, 600: 1 }}
         className="masonry-grid"
         columnClassName="masonry-grid-column">
-        {items.map((it) => (
+        {items.map((it, idx) => (
           <Box
             key={it.id}
+            className="masonry-item"
             sx={{
               mb: 1.5,
               position: "relative",
               breakInside: "avoid"
-            }}>
+            }}
+            style={{ animationDelay: `${idx * 40}ms` }}>
             {(selectMode || swapMode) && (
               <Box
                 sx={{
