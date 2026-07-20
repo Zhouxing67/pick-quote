@@ -137,30 +137,36 @@ export default function SidebarFilters({
           </IconButton>
         </Stack>
 
-        {/* Tab buttons */} 
-        <Stack direction="row" spacing={1}>
-          <Button
-            fullWidth
-            variant={reviewMode ? "outlined" : "contained"}
-            size="small"
-            onClick={() => { if (reviewMode) onExitReview() }}
-            sx={{ borderRadius: 1, fontSize: "0.8rem", py: 0.75 }}>
-            项目
-          </Button>
-          <Button
-            fullWidth
-            variant={reviewMode ? "contained" : "outlined"}
-            size="small"
-            onClick={() => { if (!reviewMode) onStartReview() }}
-            sx={{ borderRadius: 1, fontSize: "0.8rem", py: 0.75 }}>
-            <Badge
-              badgeContent={dueCount}
-              color="error"
-              invisible={dueCount === 0}
-              sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", height: 16, minWidth: 16, right: -10, top: 0 } }}>
-              复习
-            </Badge>
-          </Button>
+        {/* Tab buttons */}
+        <Stack direction="row" spacing={0.5} justifyContent="center">
+          <Tooltip title="项目管理">
+            <IconButton
+              size="small"
+              onClick={() => { if (reviewMode) onExitReview() }}
+              sx={{
+                color: reviewMode ? "text.secondary" : "primary.main",
+                "&:hover": { color: "primary.main" }
+              }}>
+              <FolderOpenRoundedIcon sx={{ fontSize: 22 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="间隔复习">
+            <IconButton
+              size="small"
+              onClick={() => { if (!reviewMode) onStartReview() }}
+              sx={{
+                color: reviewMode ? "primary.main" : "text.secondary",
+                "&:hover": { color: "primary.main" }
+              }}>
+              <Badge
+                badgeContent={dueCount}
+                color="error"
+                invisible={dueCount === 0}
+                sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", height: 16, minWidth: 16, right: -6, top: 0 } }}>
+                <SchoolRoundedIcon sx={{ fontSize: 22 }} />
+              </Badge>
+            </IconButton>
+          </Tooltip>
         </Stack>
 
         {reviewMode ? (
@@ -264,6 +270,7 @@ export default function SidebarFilters({
           </>
         )}
 
+        {!reviewMode && (
         <Stack
           direction="row"
           alignItems="center"
@@ -286,6 +293,7 @@ export default function SidebarFilters({
             稍后阅读
           </Typography>
         </Stack>
+        )}
       </Stack>
     </Drawer>
   )

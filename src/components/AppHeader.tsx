@@ -18,6 +18,7 @@ interface AppHeaderProps {
   headerHeight: number
   hasActiveProject: boolean
   activeProject: Project | null
+  reviewMode?: boolean
   onClearProject: () => void
   onToggleDrawer: () => void
   onPaletteClick: (e: React.MouseEvent<HTMLElement>) => void
@@ -37,6 +38,7 @@ export default function AppHeader({
   headerHeight,
   hasActiveProject,
   activeProject,
+  reviewMode,
   onClearProject,
   onToggleDrawer,
   onPaletteClick,
@@ -93,7 +95,7 @@ export default function AppHeader({
             }}>
             lime
           </Typography>
-          {activeProject && (
+          {activeProject && !reviewMode && (
             <Chip
               label={activeProject.name}
               size="small"

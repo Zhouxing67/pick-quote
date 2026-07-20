@@ -183,7 +183,6 @@ export default function ReviewSession({
         <Box
           sx={{
             position: "relative",
-            minHeight: 320,
             transformStyle: "preserve-3d",
             transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             transform: flipped ? "rotateX(-180deg)" : "rotateX(0deg)"
@@ -198,7 +197,7 @@ export default function ReviewSession({
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 3,
-              p: 4,
+              p: 5,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center"
@@ -228,18 +227,38 @@ export default function ReviewSession({
               }}>
               "
             </Box>
-            <Typography
-              sx={{
-                fontSize: "1.15rem",
-                lineHeight: 1.9,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                fontFamily: '"Noto Serif SC", "Songti SC", serif',
-                color: "text.primary",
-                textIndent: "1.5em"
-              }}>
-              {current.content}
-            </Typography>
+            {(current.type === "snapshot" || current.type === "link") &&
+            current.source?.url ? (
+              <Typography
+                component="a"
+                href={current.source.url}
+                target="_blank"
+                onClick={(e) => e.stopPropagation()}
+                sx={{
+                  fontSize: "1.1rem",
+                  lineHeight: 1.8,
+                  wordBreak: "break-word",
+                  color: "primary.main",
+                  textDecoration: "none",
+                  "&:hover": { textDecoration: "underline" },
+                  mb: 1
+                }}>
+                {current.source.title || prettyUrl(current.source.url)}
+              </Typography>
+            ) : (
+              <Typography
+                sx={{
+                  fontSize: "1.15rem",
+                  lineHeight: 1.9,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontFamily: '"Noto Serif SC", "Songti SC", serif',
+                  color: "text.primary",
+                  textIndent: "1.5em"
+                }}>
+                {current.content}
+              </Typography>
+            )}
             <Typography
               variant="caption"
               sx={{ mt: 2, color: "text.disabled", textAlign: "right" }}>
@@ -258,7 +277,7 @@ export default function ReviewSession({
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 3,
-              p: 4,
+              p: 5,
               display: "flex",
               flexDirection: "column"
             }}>
@@ -333,9 +352,9 @@ export default function ReviewSession({
       {/* Rating buttons — visible only after flip */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 1.5,
+          display: "flex",
+          flexDirection: "row",
+          gap: 1,
           opacity: flipped ? 1 : 0,
           transform: flipped ? "translateY(0)" : "translateY(12px)",
           transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -347,22 +366,24 @@ export default function ReviewSession({
             <Tooltip key={label} title={`快捷键 ${i + 1}`}>
               <Button
                 variant="outlined"
+                fullWidth
                 onClick={(e) => {
                   e.stopPropagation()
                   handleRate(rating)
                 }}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 1.5,
                   borderColor: COLORS[i],
                   color: COLORS[i],
-                  fontSize: "0.9rem",
-                  py: 1.5,
+                  fontSize: "0.78rem",
+                  py: 0.75,
+                  minWidth: 0,
                   "&:hover": {
                     bgcolor: `${COLORS[i]}14`,
                     borderColor: COLORS[i]
                   }
                 }}>
-                <Box component="span" sx={{ mr: 1, opacity: 0.5, fontSize: "0.75rem" }}>
+                <Box component="span" sx={{ mr: 0.5, opacity: 0.5, fontSize: "0.7rem" }}>
                   {i + 1}
                 </Box>
                 {label}

@@ -242,6 +242,12 @@ export default function OptionsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
 
+  const refreshAllData = useCallback(async () => {
+    await loadProjects()
+    await onSearch()
+    setAllItemCountsRefresh((k) => k + 1)
+  }, [loadProjects, onSearch])
+
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -254,8 +260,7 @@ export default function OptionsPage() {
         console.warn("导入跳过/失败的条目：", result.errors)
       }
       alert(msg + skipMsg)
-      await loadProjects()
-      onSearch()
+      await refreshAllData()
     } catch (err) {
       alert(`导入失败：${err}`)
     } finally {
@@ -422,6 +427,7 @@ export default function OptionsPage() {
               drawerOpen={drawerOpen}
               selectMode={selectMode}
               swapMode={swapMode}
+              reviewMode={reviewMode}
               importing={importing}
               headerHeight={headerHeight}
               hasActiveProject={Boolean(activeProjectId)}
@@ -837,11 +843,7 @@ export default function OptionsPage() {
             <SettingsDialog
               open={settingsOpen}
               onClose={() => setSettingsOpen(false)}
-              onDataChange={() => {
-                loadProjects()
-                onSearch()
-                setAllItemCountsRefresh((k) => k + 1)
-              }}
+              onDataChange={() => refreshAllData()}
             />
           </Container>
         </Box>
