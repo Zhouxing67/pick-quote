@@ -79,16 +79,15 @@ export default function OptionsPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [preset, setPreset] = useState<PresetName>("classic")
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [reviewMode, setReviewMode] = useState(false)
   const [reviewItems, setReviewItems] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
-  const [allItemCounts, setAllItemCounts] = useState<Record<string, number>>({})
   const [readingFilter, setReadingFilter] = useState(false)
   const [showRandomReview, setShowRandomReview] = useState(true)
   const [refreshRandom, setRefreshRandom] = useState(0)
-  const [allItemCountsRefresh, setAllItemCountsRefresh] = useState(0)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -160,16 +159,6 @@ export default function OptionsPage() {
     }, 300)
     return () => clearTimeout(t)
   }, [keyword, type])
-
-  useEffect(() => {
-    searchItems({}).then((items) => {
-      const m: Record<string, number> = {}
-      for (const item of items) {
-        if (item.projectId) m[item.projectId] = (m[item.projectId] ?? 0) + 1
-      }
-      setAllItemCounts(m)
-    })
-  }, [allItemCountsRefresh])
 
   const handleToggleDrawer = () => {
     setDrawerOpen((prev) => !prev)
@@ -249,7 +238,6 @@ export default function OptionsPage() {
   const refreshAllData = useCallback(async () => {
     await loadProjects()
     await onSearch()
-    setAllItemCountsRefresh((k) => k + 1)
   }, [loadProjects, onSearch])
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -407,19 +395,11 @@ export default function OptionsPage() {
           width={drawerWidth}
           projects={projects}
           activeProjectId={activeProjectId}
-          newProjectName={newProjectName}
-          projectError={projectError}
-          itemCounts={allItemCounts}
           readingFilter={readingFilter}
           dueCount={dueCount}
           reviewMode={reviewMode}
           onToggleReadingFilter={handleToggleReadingFilter}
           onClose={handleToggleDrawer}
-          onNewProjectNameChange={(v) => {
-            setNewProjectName(v)
-            setProjectError(null)
-          }}
-          onCreateProject={handleCreateProject}
           onOpenProject={handleOpenProject}
           onRenameProject={handleRenameProject}
           onUpdateNote={handleUpdateNote}
@@ -427,6 +407,7 @@ export default function OptionsPage() {
           onWidthChange={(w) => setDrawerWidth(w)}
           onStartReview={handleStartReview}
           onExitReview={handleExitReview}
+          onNewProjectClick={() => setCreateDialogOpen(true)}
         />
 
         <Box
@@ -877,6 +858,52 @@ export default function OptionsPage() {
                   onClick={confirmBatchDelete ? handleConfirmBatchDelete : handleConfirmDelete}
                   sx={{ borderRadius: 1 }}>
                   删除
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Dialog
+              open={createDialogOpen}
+              onClose={() => setCreateDialogOpen(false)}
+              maxWidth="xs"
+              fullWidth
+              slotProps={{
+                paper: { sx: { borderRadius: 3 } }
+              }}>
+              <DialogTitle sx={{ py: 2.5, px: 3, fontSize: "1rem" }}>
+                新建项目
+              </DialogTitle>
+              <DialogContent sx={{ px: 3, py: 1 }}>
+                <TextField
+                  autoFocus
+                  fullWidth
+                  size="small"
+                  label="项目名称"
+                  value={newProjectName}
+                  onChange={(e) => {
+                    setNewProjectName(e.target.value)
+                    setProjectError(null)
+                  }}
+                  error={Boolean(projectError)}
+                  helperText={projectError}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                      fontSize: "0.85rem"
+                    }
+                  }}
+                />
+              </DialogContent>
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={() => setCreateDialogOpen(false)}>
+                  取消
+                </Button>
+                <Button
+                  variant="contained"
+                  disabled={!newProjectName.trim()}
+                  onClick={handleCreateProject}
+                  sx={{ borderRadius: 1 }}>
+                  创建
                 </Button>
               </DialogActions>
             </Dialog>

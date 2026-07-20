@@ -1,24 +1,18 @@
 import { useState } from "react"
 
-import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded"
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded"
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import {
   Badge,
   Box,
   Button,
   Drawer,
-  FormControl,
   IconButton,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   Tooltip,
@@ -32,15 +26,10 @@ interface SidebarFiltersProps {
   width: number
   projects: Project[]
   activeProjectId: string | null
-  newProjectName: string
-  projectError: string | null
-  itemCounts: Record<string, number>
   readingFilter: boolean
   dueCount: number
   reviewMode: boolean
   onClose: () => void
-  onNewProjectNameChange: (v: string) => void
-  onCreateProject: () => void
   onOpenProject: (id: string) => void
   onRenameProject: (id: string, name: string) => void
   onUpdateNote: (id: string, note: string) => void
@@ -49,6 +38,7 @@ interface SidebarFiltersProps {
   onToggleReadingFilter: () => void
   onStartReview: () => void
   onExitReview: () => void
+  onNewProjectClick: () => void
 }
 
 export default function SidebarFilters({
@@ -56,15 +46,10 @@ export default function SidebarFilters({
   width,
   projects,
   activeProjectId,
-  newProjectName,
-  projectError,
-  itemCounts,
   readingFilter,
   dueCount,
   reviewMode,
   onClose,
-  onNewProjectNameChange,
-  onCreateProject,
   onOpenProject,
   onRenameProject,
   onUpdateNote,
@@ -72,7 +57,8 @@ export default function SidebarFilters({
   onWidthChange,
   onToggleReadingFilter,
   onStartReview,
-  onExitReview
+  onExitReview,
+  onNewProjectClick
 }: SidebarFiltersProps) {
   return (
     <Drawer
@@ -121,7 +107,8 @@ export default function SidebarFilters({
           document.addEventListener("mouseup", onUp)
         }}
       />
-      <Stack spacing={2} sx={{ p: 2, pt: 2.5 }}>
+      <Stack spacing={1.5} sx={{ p: 2, pt: 2.5 }}>
+        {/* Row 1: title */}
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography
             sx={{
@@ -137,8 +124,8 @@ export default function SidebarFilters({
           </IconButton>
         </Stack>
 
-        {/* Tab buttons */}
-        <Stack direction="row" spacing={0.5} justifyContent="center">
+        {/* Row 2: navigation icons */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Tooltip title="项目管理">
             <IconButton
               size="small"
@@ -169,6 +156,15 @@ export default function SidebarFilters({
           </Tooltip>
         </Stack>
 
+        {/* Thick divider */}
+        <Box
+          sx={{
+            borderBottom: "2px solid",
+            borderColor: "divider",
+            mx: 0.5
+          }}
+        />
+
         {reviewMode ? (
           /* Review tab content */
           <Stack spacing={2.5} alignItems="center" sx={{ py: 2 }}>
@@ -184,106 +180,87 @@ export default function SidebarFilters({
           </Stack>
         ) : (
           /* Project tab content */
-          <>
-            <TextField
-              placeholder="新建项目名称"
-              value={newProjectName}
-              onChange={(e) => onNewProjectNameChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onCreateProject()
-              }}
-              error={Boolean(projectError)}
-              helperText={projectError}
-              size="small"
-              fullWidth
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <AddRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-                    </InputAdornment>
-                  )
-                }
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  bgcolor: "background.paper",
-                  borderRadius: 1,
-                  fontSize: "0.8rem"
-                }
-              }}
-            />
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ borderRadius: 1 }}
-              onClick={onCreateProject}>
-              <AddRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-              新建项目
-            </Button>
-
-            <Box>
-              <Typography
-                variant="caption"
-                sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block", mb: 1 }}>
-                我的项目
-              </Typography>
-              <Box
-                sx={{
-                  maxHeight: 360,
-                  overflowY: "auto",
-                  bgcolor: "background.paper",
-                  borderRadius: 1,
-                  border: "1px solid",
-                  borderColor: "divider"
-                }}>
-                {projects.map((p) => (
-                  <ProjectRow
-                    key={p.id}
-                    project={p}
-                    active={activeProjectId === p.id}
-                    count={itemCounts[p.id] ?? 0}
-                    onOpen={() => onOpenProject(p.id)}
-                    onRename={(name) => onRenameProject(p.id, name)}
-                    onUpdateNote={(note) => onUpdateNote(p.id, note)}
-                    onDelete={() => onDeleteProject(p.id)}
-                  />
-                ))}
-                {projects.length === 0 && (
-                  <Box sx={{ px: 1.5, py: 1 }}>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      暂无项目，先新建一个吧
-                    </Typography>
-                  </Box>
-                )}
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              border: "1px solid",
+              borderColor: "divider",
+              overflow: "hidden"
+            }}>
+            {projects.map((p) => (
+              <ProjectRow
+                key={p.id}
+                project={p}
+                active={activeProjectId === p.id}
+                onOpen={() => onOpenProject(p.id)}
+                onRename={(name) => onRenameProject(p.id, name)}
+                onUpdateNote={(note) => onUpdateNote(p.id, note)}
+                onDelete={() => onDeleteProject(p.id)}
+              />
+            ))}
+            {projects.length === 0 && (
+              <Box sx={{ px: 1.5, py: 1 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  暂无项目
+                </Typography>
               </Box>
-            </Box>
-          </>
+            )}
+            {/* "+" tab — always last */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              onClick={onNewProjectClick}
+              sx={{
+                px: 1.5,
+                py: 0.5,
+                cursor: "pointer",
+                "&:hover": {
+                  bgcolor: "action.hover",
+                  "& .new-project-icon": { color: "primary.main" }
+                }
+              }}>
+              <AddRoundedIcon
+                className="new-project-icon"
+                sx={{ fontSize: 16, color: "text.secondary", transition: "color 0.15s" }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: "0.8rem",
+                  color: "text.secondary",
+                  flex: 1
+                }}>
+                新建项目
+              </Typography>
+            </Stack>
+          </Box>
         )}
 
         {!reviewMode && (
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={1}
-          sx={{
-            px: 1.5,
-            py: 1,
-            borderRadius: 1,
-            cursor: "pointer",
-            bgcolor: readingFilter ? "action.selected" : "transparent",
-            "&:hover": { bgcolor: "action.hover" }
-          }}
-          onClick={onToggleReadingFilter}>
-          <BookmarkBorderRoundedIcon
-            sx={{ fontSize: 18, color: readingFilter ? "primary.main" : "text.secondary" }}
-          />
-          <Typography
-            variant="body2"
-            sx={{ fontSize: "0.85rem", color: readingFilter ? "primary.main" : "text.secondary" }}>
-            稍后阅读
-          </Typography>
-        </Stack>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={1}
+            sx={{
+              px: 1.5,
+              py: 0.75,
+              borderRadius: 1,
+              cursor: "pointer",
+              bgcolor: readingFilter ? "action.selected" : "transparent",
+              "&:hover": { bgcolor: "action.hover" }
+            }}
+            onClick={onToggleReadingFilter}>
+            <BookmarkBorderRoundedIcon
+              sx={{ fontSize: 17, color: readingFilter ? "primary.main" : "text.secondary" }}
+            />
+            <Typography
+              variant="body2"
+              sx={{ fontSize: "0.8rem", color: readingFilter ? "primary.main" : "text.secondary" }}>
+              稍后阅读
+            </Typography>
+          </Stack>
         )}
       </Stack>
     </Drawer>
@@ -293,7 +270,6 @@ export default function SidebarFilters({
 interface ProjectRowProps {
   project: Project
   active: boolean
-  count: number
   onOpen: () => void
   onRename: (name: string) => void
   onUpdateNote: (note: string) => void
@@ -303,7 +279,6 @@ interface ProjectRowProps {
 function ProjectRow({
   project,
   active,
-  count,
   onOpen,
   onRename,
   onUpdateNote,
@@ -404,7 +379,7 @@ function ProjectRow({
       spacing={1}
       sx={{
         px: 1.5,
-        py: 1,
+        py: 0.5,
         cursor: "pointer",
         "&:hover": { bgcolor: "action.hover" },
         bgcolor: active ? "action.selected" : "transparent"
@@ -412,7 +387,7 @@ function ProjectRow({
       onClick={onOpen}>
       <FolderOpenRoundedIcon
         sx={{
-          fontSize: 18,
+          fontSize: 16,
           color: active ? "primary.main" : "text.secondary"
         }}
       />
@@ -421,25 +396,16 @@ function ProjectRow({
           variant="body2"
           noWrap
           sx={{
-            fontSize: "0.85rem",
+            fontSize: "0.8rem",
             fontWeight: active ? 500 : 400
           }}>
           {project.name}
-        </Typography>
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.disabled",
-            fontSize: "0.7rem",
-            mt: 0.25
-          }}>
-          {count} 张卡片
         </Typography>
         {project.note && (
           <Typography
             variant="caption"
             noWrap
-            sx={{ color: "text.secondary", display: "block" }}>
+            sx={{ color: "text.secondary", display: "block", fontSize: "0.65rem" }}>
             {project.note}
           </Typography>
         )}
@@ -448,10 +414,10 @@ function ProjectRow({
         sx={{ display: "flex", gap: 0.25, opacity: 0.6, "&:hover": { opacity: 1 } }}
         onClick={(e) => e.stopPropagation()}>
         <IconButton size="small" onClick={() => { setDraftName(project.name); setDraftNote(project.note ?? ""); setEditing(true) }}>
-          <EditRoundedIcon fontSize="small" />
+          <EditRoundedIcon sx={{ fontSize: 14 }} />
         </IconButton>
         <IconButton size="small" onClick={() => setConfirming(true)}>
-          <DeleteOutlineRoundedIcon fontSize="small" />
+          <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
         </IconButton>
       </Box>
     </Stack>
