@@ -392,6 +392,8 @@ export default function OptionsPage() {
           projectError={projectError}
           itemCounts={allItemCounts}
           readingFilter={readingFilter}
+          dueCount={dueCount}
+          reviewMode={reviewMode}
           onToggleReadingFilter={handleToggleReadingFilter}
           onClose={handleToggleDrawer}
           onNewProjectNameChange={(v) => {
@@ -404,6 +406,8 @@ export default function OptionsPage() {
           onUpdateNote={handleUpdateNote}
           onDeleteProject={handleDeleteProject}
           onWidthChange={(w) => setDrawerWidth(w)}
+          onStartReview={handleStartReview}
+          onExitReview={handleExitReview}
         />
 
         <Box
@@ -440,8 +444,6 @@ export default function OptionsPage() {
                 onSearch(null)
               }}
               onSettingsClick={() => setSettingsOpen(true)}
-              onStartReview={handleStartReview}
-              dueCount={dueCount}
             />
 
             <FilterChips

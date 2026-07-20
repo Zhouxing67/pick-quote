@@ -1,5 +1,5 @@
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
-import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material"
+import { Box, Button, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
 import { useCallback, useEffect, useState } from "react"
 
 import { rateCard } from "../hooks/useSrs"
@@ -14,6 +14,12 @@ interface ReviewSessionProps {
 
 const LABELS = ["重来", "困难", "良好", "简单"]
 const COLORS = ["#ef4444", "#f97316", "#22c55e", "#3b82f6"]
+const TYPE_LABEL: Record<string, string> = {
+  text: "文本",
+  image: "图片",
+  link: "链接",
+  snapshot: "快照"
+}
 
 export default function ReviewSession({
   items,
@@ -60,13 +66,6 @@ export default function ReviewSession({
     },
     [current, transitioning, index, queue.length, onSave]
   )
-
-  // Auto-flip after 2s
-  useEffect(() => {
-    if (!current || flipped || transitioning) return
-    const t = setTimeout(() => setFlipped(true), 2000)
-    return () => clearTimeout(t)
-  }, [current, flipped, transitioning, index])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -143,7 +142,7 @@ export default function ReviewSession({
   return (
     <Box
       sx={{
-        maxWidth: 560,
+        maxWidth: 640,
         mx: "auto",
         mt: 4,
         animation: transitioning
@@ -184,7 +183,7 @@ export default function ReviewSession({
         <Box
           sx={{
             position: "relative",
-            minHeight: 240,
+            minHeight: 320,
             transformStyle: "preserve-3d",
             transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             transform: flipped ? "rotateX(-180deg)" : "rotateX(0deg)"
@@ -204,6 +203,20 @@ export default function ReviewSession({
               flexDirection: "column",
               justifyContent: "center"
             }}>
+            <Chip
+              label={TYPE_LABEL[current.type] ?? "文本"}
+              size="small"
+              variant="outlined"
+              sx={{
+                position: "absolute",
+                top: 12,
+                right: 12,
+                height: 20,
+                fontSize: "0.65rem",
+                fontWeight: 500,
+                letterSpacing: "0.04em"
+              }}
+            />
             <Box
               component="span"
               sx={{
@@ -220,6 +233,7 @@ export default function ReviewSession({
                 fontSize: "1.15rem",
                 lineHeight: 1.9,
                 whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
                 fontFamily: '"Noto Serif SC", "Songti SC", serif',
                 color: "text.primary",
                 textIndent: "1.5em"
@@ -229,7 +243,7 @@ export default function ReviewSession({
             <Typography
               variant="caption"
               sx={{ mt: 2, color: "text.disabled", textAlign: "right" }}>
-              点击或等待翻转查看详情
+              点击查看详情
             </Typography>
           </Box>
 
@@ -253,6 +267,7 @@ export default function ReviewSession({
                 fontSize: "1.05rem",
                 lineHeight: 1.8,
                 whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
                 fontFamily: '"Noto Serif SC", "Songti SC", serif',
                 color: "text.primary",
                 textIndent: "1.5em",
@@ -273,7 +288,8 @@ export default function ReviewSession({
                   textDecoration: "none",
                   "&:hover": { textDecoration: "underline" },
                   mb: 1,
-                  fontSize: "0.8rem"
+                  fontSize: "0.8rem",
+                  wordBreak: "break-word"
                 }}>
                 {current.source.title || prettyUrl(current.source.url)}
               </Typography>
@@ -289,7 +305,8 @@ export default function ReviewSession({
                   bgcolor: "action.hover",
                   borderRadius: 1,
                   px: 1.5,
-                  py: 1
+                  py: 1,
+                  wordBreak: "break-word"
                 }}>
                 {current.note}
               </Typography>
@@ -303,7 +320,8 @@ export default function ReviewSession({
                   fontSize: "0.8rem",
                   lineHeight: 1.6,
                   mt: 1,
-                  opacity: 0.6
+                  opacity: 0.6,
+                  wordBreak: "break-word"
                 }}>
                 {current.context.paragraph}
               </Typography>

@@ -6,8 +6,10 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded"
+import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import {
+  Badge,
   Box,
   Button,
   Drawer,
@@ -34,6 +36,8 @@ interface SidebarFiltersProps {
   projectError: string | null
   itemCounts: Record<string, number>
   readingFilter: boolean
+  dueCount: number
+  reviewMode: boolean
   onClose: () => void
   onNewProjectNameChange: (v: string) => void
   onCreateProject: () => void
@@ -43,6 +47,8 @@ interface SidebarFiltersProps {
   onDeleteProject: (id: string) => void
   onWidthChange: (w: number) => void
   onToggleReadingFilter: () => void
+  onStartReview: () => void
+  onExitReview: () => void
 }
 
 export default function SidebarFilters({
@@ -54,6 +60,8 @@ export default function SidebarFilters({
   projectError,
   itemCounts,
   readingFilter,
+  dueCount,
+  reviewMode,
   onClose,
   onNewProjectNameChange,
   onCreateProject,
@@ -62,7 +70,9 @@ export default function SidebarFilters({
   onUpdateNote,
   onDeleteProject,
   onWidthChange,
-  onToggleReadingFilter
+  onToggleReadingFilter,
+  onStartReview,
+  onExitReview
 }: SidebarFiltersProps) {
   return (
     <Drawer
@@ -114,92 +124,145 @@ export default function SidebarFilters({
       <Stack spacing={2} sx={{ p: 2, pt: 2.5 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography
-            variant="h6"
             sx={{
-              fontWeight: 400,
-              letterSpacing: "0.05em",
-              fontSize: "0.9rem"
+              fontWeight: 500,
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              color: "text.primary"
             }}>
-            项目
+            lime
           </Typography>
           <IconButton size="small" onClick={onClose}>
             <CloseRoundedIcon fontSize="small" />
           </IconButton>
         </Stack>
 
-        <TextField
-          placeholder="新建项目名称"
-          value={newProjectName}
-          onChange={(e) => onNewProjectNameChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onCreateProject()
-          }}
-          error={Boolean(projectError)}
-          helperText={projectError}
-          size="small"
-          fullWidth
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AddRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
-                </InputAdornment>
-              )
-            }
-          }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              bgcolor: "background.paper",
-              borderRadius: 1,
-              fontSize: "0.8rem"
-            }
-          }}
-        />
-        <Button
-          variant="contained"
-          fullWidth
-          sx={{ borderRadius: 1 }}
-          onClick={onCreateProject}>
-          <AddRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-          新建项目
-        </Button>
+        {/* Tab buttons */} 
+        <Stack direction="row" spacing={1}>
+          <Button
+            fullWidth
+            variant={reviewMode ? "outlined" : "contained"}
+            size="small"
+            onClick={() => { if (reviewMode) onExitReview() }}
+            sx={{ borderRadius: 1, fontSize: "0.8rem", py: 0.75 }}>
+            项目
+          </Button>
+          <Button
+            fullWidth
+            variant={reviewMode ? "contained" : "outlined"}
+            size="small"
+            onClick={() => { if (!reviewMode) onStartReview() }}
+            sx={{ borderRadius: 1, fontSize: "0.8rem", py: 0.75 }}>
+            <Badge
+              badgeContent={dueCount}
+              color="error"
+              invisible={dueCount === 0}
+              sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", height: 16, minWidth: 16, right: -10, top: 0 } }}>
+              复习
+            </Badge>
+          </Button>
+        </Stack>
 
-        <Box>
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block", mb: 1 }}>
-            我的项目
-          </Typography>
-          <Box
-            sx={{
-              maxHeight: 360,
-              overflowY: "auto",
-              bgcolor: "background.paper",
-              borderRadius: 1,
-              border: "1px solid",
-              borderColor: "divider"
-            }}>
-            {projects.map((p) => (
-              <ProjectRow
-                key={p.id}
-                project={p}
-                active={activeProjectId === p.id}
-                count={itemCounts[p.id] ?? 0}
-                onOpen={() => onOpenProject(p.id)}
-                onRename={(name) => onRenameProject(p.id, name)}
-                onUpdateNote={(note) => onUpdateNote(p.id, note)}
-                onDelete={() => onDeleteProject(p.id)}
-              />
-            ))}
-            {projects.length === 0 && (
-              <Box sx={{ px: 1.5, py: 1 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  暂无项目，先新建一个吧
-                </Typography>
+        {reviewMode ? (
+          /* Review tab content */
+          <Stack spacing={2.5} alignItems="center" sx={{ py: 2 }}>
+            <SchoolRoundedIcon sx={{ fontSize: 48, color: "primary.main", opacity: 0.6 }} />
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" sx={{ fontSize: "1rem", fontWeight: 500, mb: 0.5 }}>
+                间隔复习
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                {dueCount > 0 ? `${dueCount} 张卡片等待复习` : "没有待复习的卡片"}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={dueCount === 0}
+              onClick={onStartReview}
+              sx={{ borderRadius: 1 }}>
+              <SchoolRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
+              开始复习
+            </Button>
+          </Stack>
+        ) : (
+          /* Project tab content */
+          <>
+            <TextField
+              placeholder="新建项目名称"
+              value={newProjectName}
+              onChange={(e) => onNewProjectNameChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onCreateProject()
+              }}
+              error={Boolean(projectError)}
+              helperText={projectError}
+              size="small"
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AddRoundedIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+                    </InputAdornment>
+                  )
+                }
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "background.paper",
+                  borderRadius: 1,
+                  fontSize: "0.8rem"
+                }
+              }}
+            />
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ borderRadius: 1 }}
+              onClick={onCreateProject}>
+              <AddRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
+              新建项目
+            </Button>
+
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", fontSize: "0.7rem", display: "block", mb: 1 }}>
+                我的项目
+              </Typography>
+              <Box
+                sx={{
+                  maxHeight: 360,
+                  overflowY: "auto",
+                  bgcolor: "background.paper",
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider"
+                }}>
+                {projects.map((p) => (
+                  <ProjectRow
+                    key={p.id}
+                    project={p}
+                    active={activeProjectId === p.id}
+                    count={itemCounts[p.id] ?? 0}
+                    onOpen={() => onOpenProject(p.id)}
+                    onRename={(name) => onRenameProject(p.id, name)}
+                    onUpdateNote={(note) => onUpdateNote(p.id, note)}
+                    onDelete={() => onDeleteProject(p.id)}
+                  />
+                ))}
+                {projects.length === 0 && (
+                  <Box sx={{ px: 1.5, py: 1 }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      暂无项目，先新建一个吧
+                    </Typography>
+                  </Box>
+                )}
               </Box>
-            )}
-          </Box>
-        </Box>
+            </Box>
+          </>
+        )}
 
         <Stack
           direction="row"
