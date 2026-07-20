@@ -51,3 +51,12 @@ Cards are organized by **Project**, not by website/page:
 - Popover positioning convention: `anchorOrigin: {bottom, right}` + `transformOrigin: {top, right}` (top-right dropdown).
 - Grouping layout uses flex-wrap (responsive 1/2/3 cols), not masonry — `react-masonry-css` is a dependency but unused by current UI.
 - `tsconfig.json` extends `plasmo/templates/tsconfig.base` and sets `ignoreDeprecations: "5.0"`.
+
+## SRS (spaced repetition)
+
+Cards support an optional `Item.srs?: SrsData` field for SM-2 spaced repetition scheduling.
+- `src/hooks/useSrs.ts`: `ensureSrs(item)` initializes first-time cards; `rateCard(item, 1-4)` runs SM-2 and returns a new `Item`; `getDueItems(items)` filters and sorts by `srs.dueDate`.
+- `src/components/ReviewSession.tsx`: Review UI — 3D card-flip animation, 1-4 rating buttons, keyboard shortcuts (1-4 for rating, Enter/Space for flip), progress counter, completion summary with accuracy.
+- `AppHeader` shows a `<SchoolRoundedIcon>` button with a `<Badge>` counting cards due today (`dueBefore: Date.now()`).
+- `SearchQuery.dueBefore` filters items whose `srs.dueDate <= dueBefore` or have no `srs` yet.
+- DB_VERSION 5 — no new stores, just the `dueBefore` filter in `searchItems`.
