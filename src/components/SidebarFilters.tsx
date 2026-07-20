@@ -39,6 +39,7 @@ interface SidebarFiltersProps {
   onStartReview: () => void
   onExitReview: () => void
   onNewProjectClick: () => void
+  onCloseProject: () => void
 }
 
 export default function SidebarFilters({
@@ -58,7 +59,8 @@ export default function SidebarFilters({
   onToggleReadingFilter,
   onStartReview,
   onExitReview,
-  onNewProjectClick
+  onNewProjectClick,
+  onCloseProject
 }: SidebarFiltersProps) {
   return (
     <Drawer
@@ -124,8 +126,8 @@ export default function SidebarFilters({
           </IconButton>
         </Stack>
 
-        {/* Row 2: navigation icons */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        {/* Row 2: navigation icons — 📂 left, 📚 centered */}
+        <Box sx={{ position: "relative", display: "flex", alignItems: "center" }}>
           <Tooltip title="项目管理">
             <IconButton
               size="small"
@@ -137,30 +139,37 @@ export default function SidebarFilters({
               <FolderOpenRoundedIcon sx={{ fontSize: 22 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="间隔复习">
-            <IconButton
-              size="small"
-              onClick={() => { if (!reviewMode) onStartReview() }}
-              sx={{
-                color: reviewMode ? "primary.main" : "text.secondary",
-                "&:hover": { color: "primary.main" }
-              }}>
-              <Badge
-                badgeContent={dueCount}
-                color="error"
-                invisible={dueCount === 0}
-                sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", height: 16, minWidth: 16, right: -6, top: 0 } }}>
-                <SchoolRoundedIcon sx={{ fontSize: 22 }} />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-        </Stack>
+          <Box
+            sx={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)"
+            }}>
+            <Tooltip title="间隔复习">
+              <IconButton
+                size="small"
+                onClick={() => { if (!reviewMode) onStartReview() }}
+                sx={{
+                  color: reviewMode ? "primary.main" : "text.secondary",
+                  "&:hover": { color: "primary.main" }
+                }}>
+                <Badge
+                  badgeContent={dueCount}
+                  color="error"
+                  invisible={dueCount === 0}
+                  sx={{ "& .MuiBadge-badge": { fontSize: "0.6rem", height: 16, minWidth: 16, right: -6, top: 0 } }}>
+                  <SchoolRoundedIcon sx={{ fontSize: 22 }} />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
 
         {/* Thick divider */}
         <Box
           sx={{
-            borderBottom: "2px solid",
-            borderColor: "divider",
+            borderBottom: "3px solid",
+            borderColor: "primary.main",
             mx: 0.5
           }}
         />
@@ -197,6 +206,7 @@ export default function SidebarFilters({
                 onRename={(name) => onRenameProject(p.id, name)}
                 onUpdateNote={(note) => onUpdateNote(p.id, note)}
                 onDelete={() => onDeleteProject(p.id)}
+                onCloseProject={onCloseProject}
               />
             ))}
             {projects.length === 0 && (
@@ -274,6 +284,7 @@ interface ProjectRowProps {
   onRename: (name: string) => void
   onUpdateNote: (note: string) => void
   onDelete: () => void
+  onCloseProject: () => void
 }
 
 function ProjectRow({
@@ -282,7 +293,8 @@ function ProjectRow({
   onOpen,
   onRename,
   onUpdateNote,
-  onDelete
+  onDelete,
+  onCloseProject
 }: ProjectRowProps) {
   const [editing, setEditing] = useState(false)
   const [draftName, setDraftName] = useState(project.name)
@@ -381,14 +393,16 @@ function ProjectRow({
         px: 1.5,
         py: 0.5,
         cursor: "pointer",
-        "&:hover": { bgcolor: "action.hover" },
-        bgcolor: active ? "action.selected" : "transparent"
+        "&:hover": {
+          bgcolor: active ? "primary.dark" : "action.hover"
+        },
+        bgcolor: active ? "primary.main" : "transparent"
       }}
-      onClick={onOpen}>
+      onClick={active ? undefined : onOpen}>
       <FolderOpenRoundedIcon
         sx={{
           fontSize: 16,
-          color: active ? "primary.main" : "text.secondary"
+          color: active ? "primary.contrastText" : "text.secondary"
         }}
       />
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -397,7 +411,8 @@ function ProjectRow({
           noWrap
           sx={{
             fontSize: "0.8rem",
-            fontWeight: active ? 500 : 400
+            fontWeight: active ? 600 : 400,
+            color: active ? "primary.contrastText" : "text.primary"
           }}>
           {project.name}
         </Typography>
@@ -405,21 +420,36 @@ function ProjectRow({
           <Typography
             variant="caption"
             noWrap
-            sx={{ color: "text.secondary", display: "block", fontSize: "0.65rem" }}>
+            sx={{
+              color: active ? "rgba(255,255,255,0.7)" : "text.secondary",
+              display: "block",
+              fontSize: "0.65rem"
+            }}>
             {project.note}
           </Typography>
         )}
       </Box>
-      <Box
-        sx={{ display: "flex", gap: 0.25, opacity: 0.6, "&:hover": { opacity: 1 } }}
-        onClick={(e) => e.stopPropagation()}>
-        <IconButton size="small" onClick={() => { setDraftName(project.name); setDraftNote(project.note ?? ""); setEditing(true) }}>
-          <EditRoundedIcon sx={{ fontSize: 14 }} />
-        </IconButton>
-        <IconButton size="small" onClick={() => setConfirming(true)}>
-          <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
-        </IconButton>
-      </Box>
+      {active ? (
+        <Tooltip title="关闭项目">
+          <IconButton
+            size="small"
+            onClick={(e) => { e.stopPropagation(); onCloseProject() }}
+            sx={{ color: "primary.contrastText", opacity: 0.8, "&:hover": { opacity: 1 } }}>
+            <CloseRoundedIcon sx={{ fontSize: 14 }} />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Box
+          sx={{ display: "flex", gap: 0.25, opacity: 0.6, "&:hover": { opacity: 1 } }}
+          onClick={(e) => e.stopPropagation()}>
+          <IconButton size="small" onClick={() => { setDraftName(project.name); setDraftNote(project.note ?? ""); setEditing(true) }}>
+            <EditRoundedIcon sx={{ fontSize: 14 }} />
+          </IconButton>
+          <IconButton size="small" onClick={() => setConfirming(true)}>
+            <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
+          </IconButton>
+        </Box>
+      )}
     </Stack>
   )
 }

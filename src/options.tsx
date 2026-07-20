@@ -408,6 +408,10 @@ export default function OptionsPage() {
           onStartReview={handleStartReview}
           onExitReview={handleExitReview}
           onNewProjectClick={() => setCreateDialogOpen(true)}
+          onCloseProject={() => {
+            setActiveProjectId(null)
+            onSearch(null)
+          }}
         />
 
         <Box
@@ -473,11 +477,6 @@ export default function OptionsPage() {
               keyword={keyword}
               type={type}
               headerHeight={headerHeight}
-              activeProject={activeProject}
-              onClearProject={() => {
-                setActiveProjectId(null)
-                onSearch(null)
-              }}
               onClearKeyword={() => handleRemoveFilter("keyword")}
               onClearType={() => handleRemoveFilter("type")}
             />
@@ -864,8 +863,8 @@ export default function OptionsPage() {
 
             <Dialog
               open={createDialogOpen}
-              onClose={() => setCreateDialogOpen(false)}
-              maxWidth="xs"
+              onClose={() => { setCreateDialogOpen(false); setProjectError(null) }}
+              maxWidth="sm"
               fullWidth
               slotProps={{
                 paper: { sx: { borderRadius: 3 } }
@@ -890,18 +889,22 @@ export default function OptionsPage() {
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 1,
                       fontSize: "0.85rem"
+                    },
+                    "& .MuiFormHelperText-root": {
+                      whiteSpace: "normal",
+                      wordBreak: "break-word"
                     }
                   }}
                 />
               </DialogContent>
               <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button onClick={() => setCreateDialogOpen(false)}>
+                <Button onClick={() => { setCreateDialogOpen(false); setProjectError(null) }}>
                   取消
                 </Button>
                 <Button
                   variant="contained"
                   disabled={!newProjectName.trim()}
-                  onClick={handleCreateProject}
+                  onClick={() => { handleCreateProject(); setCreateDialogOpen(false) }}
                   sx={{ borderRadius: 1 }}>
                   创建
                 </Button>
