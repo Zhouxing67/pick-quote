@@ -1,3 +1,4 @@
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded"
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
@@ -11,12 +12,14 @@ interface AppHeaderProps {
   swapMode: boolean
   importing: boolean
   headerHeight: number
+  hasActiveProject: boolean
   onToggleDrawer: () => void
   onPaletteClick: (e: React.MouseEvent<HTMLElement>) => void
   fileInputRef: MutableRefObject<HTMLInputElement | null>
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
   onToggleSelectMode: () => void
   onToggleSwapMode: () => void
+  onNewCard: () => void
 }
 
 export default function AppHeader({
@@ -25,12 +28,14 @@ export default function AppHeader({
   swapMode,
   importing,
   headerHeight,
+  hasActiveProject,
   onToggleDrawer,
   onPaletteClick,
   fileInputRef,
   onImport,
   onToggleSelectMode,
-  onToggleSwapMode
+  onToggleSwapMode,
+  onNewCard
 }: AppHeaderProps) {
   return (
     <Box
@@ -114,6 +119,16 @@ export default function AppHeader({
           <SwapHorizRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
           {swapMode ? "退出交换" : "交换"}
         </Button>
+        {hasActiveProject && (
+          <Tooltip title="新建卡片">
+            <IconButton
+              size="small"
+              onClick={onNewCard}
+              sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+              <AddRoundedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+        )}
         <Button
           size="small"
           sx={{

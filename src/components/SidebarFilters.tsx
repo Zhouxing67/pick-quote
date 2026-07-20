@@ -153,6 +153,7 @@ export default function SidebarFilters({
           fullWidth
           sx={{ borderRadius: 1 }}
           onClick={onCreateProject}>
+          <AddRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
           新建项目
         </Button>
 

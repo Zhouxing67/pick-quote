@@ -17,7 +17,7 @@ export interface Item {
     after?: string
     paragraph?: string
   }
-  source: SourceMeta
+  source?: SourceMeta
   createdAt: number
   projectId?: string
   note?: string

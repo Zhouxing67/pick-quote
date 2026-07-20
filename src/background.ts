@@ -101,6 +101,13 @@ async function createMenus() {
       parentId: "pickquote-root",
       contexts: ["selection", "image", "link", "page"]
     })
+    // One-step shortcut: re-join the most recently used project
+    await createMenu({
+      id: "pickquote-last-project",
+      title: "加入上次项目",
+      parentId: "pickquote-root",
+      contexts: ["selection", "image", "link", "page"]
+    })
     // rebuildProjectMenus creates "pickquote-existing" + project submenus
     await rebuildProjectMenus()
   } finally {
@@ -145,6 +152,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
     if (projectId) item.projectId = projectId
     await addItem(item)
+    // Remember last used project for the "加入上次项目" shortcut
+    if (projectId) {
+      chrome.storage.local.set({ lastProjectId: projectId })
+    }
     notifyTab(tab?.id, message)
   }
 
@@ -231,6 +242,23 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       width: 480,
       height: 460
     })
+    return
+  }
+
+  // ---- "加入上次项目" (one-step shortcut) ----
+  if (menuItemId === "pickquote-last-project") {
+    const lastProjectId = await new Promise<string | undefined>((resolve) => {
+      chrome.storage.local.get("lastProjectId", (r) =>
+        resolve((r as { lastProjectId?: string }).lastProjectId)
+      )
+    })
+    if (!lastProjectId) {
+      notifySystem("暂无上次项目，请先选择一个项目")
+      return
+    }
+    const projects = await listProjects()
+    const project = projects.find((p) => p.id === lastProjectId)
+    await captureAndSave(lastProjectId, project?.name ?? "未知项目")
     return
   }
 

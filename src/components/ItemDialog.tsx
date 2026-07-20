@@ -1,5 +1,7 @@
 import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded"
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded"
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded"
@@ -33,12 +35,14 @@ export default function ItemDialog({
   item,
   open,
   onClose,
-  onSave
+  onSave,
+  onNavigate
 }: {
   item: Item | null
   open: boolean
   onClose: () => void
   onSave?: (updated: Item) => void | Promise<void>
+  onNavigate?: (direction: "prev" | "next") => void
 }) {
   if (!item) return null
 
@@ -48,6 +52,7 @@ export default function ItemDialog({
       open={open}
       onClose={onClose}
       onSave={onSave}
+      onNavigate={onNavigate}
     />
   )
 }
@@ -56,12 +61,14 @@ function ItemDialogInner({
   item,
   open,
   onClose,
-  onSave
+  onSave,
+  onNavigate
 }: {
   item: Item
   open: boolean
   onClose: () => void
   onSave?: (updated: Item) => void | Promise<void>
+  onNavigate?: (direction: "prev" | "next") => void
 }) {
   const [editing, setEditing] = useState(false)
   const [draftContent, setDraftContent] = useState(item.content)
@@ -128,6 +135,44 @@ function ItemDialogInner({
           }
         }
       }}>
+      {onNavigate && (
+        <>
+          <IconButton
+            size="small"
+            onClick={() => onNavigate("prev")}
+            sx={{
+              position: "fixed",
+              left: 24,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: (theme) => theme.zIndex.modal + 1,
+              bgcolor: "background.paper",
+              border: "1px solid",
+              borderColor: "divider",
+              boxShadow: 2,
+              "&:hover": { bgcolor: "action.hover" }
+            }}>
+            <ChevronLeftRoundedIcon />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => onNavigate("next")}
+            sx={{
+              position: "fixed",
+              right: 24,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: (theme) => theme.zIndex.modal + 1,
+              bgcolor: "background.paper",
+              border: "1px solid",
+              borderColor: "divider",
+              boxShadow: 2,
+              "&:hover": { bgcolor: "action.hover" }
+            }}>
+            <ChevronRightRoundedIcon />
+          </IconButton>
+        </>
+      )}
       <DialogTitle
         sx={{
           display: "flex",
@@ -431,9 +476,11 @@ function ItemDialogInner({
             {item.source.title || prettyUrl(item.source.url)}
           </Link>
         </Box>
-        <Button onClick={onClose} sx={{ px: 3, flexShrink: 0 }}>
-          关闭
-        </Button>
+        <Tooltip title="关闭">
+          <IconButton onClick={onClose} sx={{ flexShrink: 0 }}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </Tooltip>
       </DialogActions>
 
       <Box

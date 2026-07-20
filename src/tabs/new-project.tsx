@@ -1,3 +1,4 @@
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import { useEffect, useState } from "react"
 import {
   Box,
@@ -132,6 +133,7 @@ export default function NewProjectPage() {
           disabled={busy}
           onClick={handleCreate}
           sx={{ borderRadius: 1.5, mb: 3 }}>
+          <AddRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
           创建并加入
         </Button>
 

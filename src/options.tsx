@@ -26,6 +26,7 @@ import ItemDialog from "./components/ItemDialog"
 import SidebarFilters from "./components/SidebarFilters"
 import { useProjects } from "./hooks/useProjects"
 import {
+  addItem,
   deleteItem,
   searchItems,
   updateItem
@@ -45,6 +46,22 @@ export default function OptionsPage() {
   const [keyword, setKeyword] = useState("")
   const [type, setType] = useState<string>("")
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
+  const [newCardOpen, setNewCardOpen] = useState(false)
+  const [newCardContent, setNewCardContent] = useState("")
+
+  // Navigate prev/next within the currently displayed list
+  const handleNavigate = useCallback(
+    (direction: "prev" | "next") => {
+      if (!dialogItem) return
+      const idx = displayedItems.findIndex((i) => i.id === dialogItem.id)
+      if (idx === -1) return
+      const nextIdx = direction === "prev" ? idx - 1 : idx + 1
+      if (nextIdx < 0 || nextIdx >= displayedItems.length) return
+      setDialogItem(displayedItems[nextIdx])
+    },
+    [dialogItem, displayedItems]
+  )
+
   const [hasMore, setHasMore] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerWidth, setDrawerWidth] = useState(280)
@@ -134,6 +151,30 @@ export default function OptionsPage() {
   const handleOpenProject = (id: string) => {
     setActiveProjectId(id)
     onSearch(id)
+  }
+
+  // ---- 项目内新建卡片 ----
+  const handleNewCard = () => {
+    if (!activeProjectId) return
+    setNewCardContent("")
+    setNewCardOpen(true)
+  }
+
+  const handleSaveNewCard = async () => {
+    const content = newCardContent.trim()
+    if (!content || !activeProjectId) return
+    const item: Item = {
+      id: crypto.randomUUID(),
+      type: "text",
+      content,
+      createdAt: Date.now(),
+      projectId: activeProjectId
+      // 无 source —— 新建卡片不显示溯源
+    }
+    await addItem(item)
+    setNewCardOpen(false)
+    setNewCardContent("")
+    onSearch(activeProjectId)
   }
 
   const onDelete = (id: string) => {
@@ -307,6 +348,7 @@ export default function OptionsPage() {
               swapMode={swapMode}
               importing={importing}
               headerHeight={headerHeight}
+              hasActiveProject={Boolean(activeProjectId)}
               onToggleDrawer={handleToggleDrawer}
               onPaletteClick={(e) => setPaletteAnchor(e.currentTarget)}
               fileInputRef={fileInputRef}
@@ -319,6 +361,7 @@ export default function OptionsPage() {
                 setSelectedIds([])
                 setSwapMode((prev) => !prev)
               }}
+              onNewCard={handleNewCard}
             />
 
             <FilterChips
@@ -420,12 +463,52 @@ export default function OptionsPage() {
               item={dialogItem}
               open={Boolean(dialogItem)}
               onClose={() => setDialogItem(null)}
+              onNavigate={handleNavigate}
               onSave={async (updated) => {
                 await updateItem(updated)
                 setDialogItem(null)
                 onSearch()
               }}
             />
+
+            <Dialog
+              open={newCardOpen}
+              onClose={() => setNewCardOpen(false)}
+              maxWidth="sm"
+              fullWidth
+              slotProps={{
+                paper: { sx: { borderRadius: 3 } }
+              }}>
+              <DialogTitle sx={{ py: 2.5, px: 3, fontSize: "1rem" }}>
+                新建卡片
+              </DialogTitle>
+              <DialogContent sx={{ px: 3, py: 1 }}>
+                <TextField
+                  autoFocus
+                  multiline
+                  minRows={4}
+                  fullWidth
+                  placeholder="输入卡片内容…"
+                  value={newCardContent}
+                  onChange={(e) => setNewCardContent(e.target.value)}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                      fontSize: "1rem"
+                    }
+                  }}
+                />
+              </DialogContent>
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={() => setNewCardOpen(false)}>取消</Button>
+                <Button
+                  variant="contained"
+                  disabled={!newCardContent.trim()}
+                  onClick={handleSaveNewCard}>
+                  保存
+                </Button>
+              </DialogActions>
+            </Dialog>
 
             <Dialog
               open={Boolean(confirmDeleteId) || confirmBatchDelete}
