@@ -81,6 +81,7 @@ export default function OptionsPage() {
   const [readingFilter, setReadingFilter] = useState(false)
   const [showRandomReview, setShowRandomReview] = useState(true)
   const [refreshRandom, setRefreshRandom] = useState(0)
+  const [allItemCountsRefresh, setAllItemCountsRefresh] = useState(0)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -161,7 +162,7 @@ export default function OptionsPage() {
       }
       setAllItemCounts(m)
     })
-  }, [])
+  }, [allItemCountsRefresh])
 
   const handleToggleDrawer = () => {
     setDrawerOpen((prev) => !prev)
@@ -784,6 +785,7 @@ export default function OptionsPage() {
               onDataChange={() => {
                 loadProjects()
                 onSearch()
+                setAllItemCountsRefresh((k) => k + 1)
               }}
             />
           </Container>
