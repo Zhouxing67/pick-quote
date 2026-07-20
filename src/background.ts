@@ -195,6 +195,30 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     )
     return
   }
+  if (msg?.kind === "webdav") {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 20000)
+    const headers: Record<string, string> = {
+      Authorization: `Basic ${msg.authBase64}`
+    }
+    if (msg.contentType) headers["Content-Type"] = msg.contentType
+    fetch(msg.url, {
+      method: msg.method ?? "GET",
+      headers,
+      body: msg.body ?? null,
+      signal: controller.signal
+    })
+      .then(async (res) => {
+        clearTimeout(timer)
+        const body = await res.text()
+        sendResponse({ ok: res.ok, status: res.status, body })
+      })
+      .catch((e) => {
+        clearTimeout(timer)
+        sendResponse({ ok: false, status: 0, body: e.message })
+      })
+    return true
+  }
   if (msg?.kind === "capture" && msg?.payload) {
     const item: Item = {
       id: crypto.randomUUID(),

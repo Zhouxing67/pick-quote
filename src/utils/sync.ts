@@ -1,9 +1,8 @@
-import { computeItemHash, sha256 } from "./index"
+import { computeItemHash } from "./index"
 import type { Item, Project } from "../types"
 
 const SYNC_PATH = "/Apps/lime/lime-sync.json"
 const BASE_URL = "https://dav.jianguoyun.com/dav"
-const TIMEOUT = 15000
 
 export interface SyncCredentials {
   username: string
@@ -26,44 +25,31 @@ export interface SyncResult {
   payload?: SyncPayload
 }
 
-function basicAuth(cred: SyncCredentials): string {
-  return "Basic " + btoa(`${cred.username}:${cred.appPassword}`)
-}
-
-async function webdavFetch(
+async function bgFetch(
   cred: SyncCredentials,
   path: string,
-  options: RequestInit = {}
-): Promise<Response> {
-  const controller = new AbortController()
-  const id = setTimeout(() => controller.abort(), TIMEOUT)
-  try {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        Authorization: basicAuth(cred),
-        ...(options.headers as Record<string, string>)
-      }
-    })
-    return res
-  } finally {
-    clearTimeout(id)
-  }
+  options: { method?: string; body?: string; contentType?: string } = {}
+): Promise<{ ok: boolean; status: number; body: string }> {
+  const authBase64 = btoa(`${cred.username}:${cred.appPassword}`)
+  return chrome.runtime.sendMessage({
+    kind: "webdav",
+    url: `${BASE_URL}${path}`,
+    method: options.method ?? "GET",
+    authBase64,
+    body: options.body,
+    contentType: options.contentType
+  })
 }
 
 export async function testConnection(
   cred: SyncCredentials
 ): Promise<{ ok: boolean; message: string }> {
   try {
-    const res = await webdavFetch(cred, "/Apps/lime/", { method: "PROPFIND" })
+    const res = await bgFetch(cred, "/Apps/lime/", { method: "PROPFIND" })
     if (res.status === 401 || res.status === 403)
       return { ok: false, message: "认证失败，请检查用户名和 App 密码" }
-    if (res.status === 404) return { ok: true, message: "目录不存在，将在同步时自动创建" }
-    if (res.ok) return { ok: true, message: "连接成功" }
-    return { ok: false, message: `服务器返回 ${res.status}` }
+    return { ok: true, message: "连接成功" }
   } catch (err: any) {
-    if (err.name === "AbortError") return { ok: false, message: "连接超时" }
     return { ok: false, message: `连接失败：${err.message ?? err}` }
   }
 }
@@ -71,12 +57,11 @@ export async function testConnection(
 async function downloadSyncFile(
   cred: SyncCredentials
 ): Promise<SyncPayload | null> {
-  const res = await webdavFetch(cred, SYNC_PATH)
+  const res = await bgFetch(cred, SYNC_PATH)
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`下载失败：HTTP ${res.status}`)
-  const text = await res.text()
   try {
-    const payload = JSON.parse(text) as SyncPayload
+    const payload = JSON.parse(res.body) as SyncPayload
     if (!payload.version || !Array.isArray(payload.items))
       throw new Error("数据格式异常：缺少 items 字段")
     return payload
@@ -90,12 +75,12 @@ async function uploadSyncFile(
   payload: SyncPayload
 ): Promise<void> {
   // Ensure /Apps/lime/ directory exists
-  await webdavFetch(cred, "/Apps/lime/", { method: "MKCOL" }).catch(() => {})
+  await bgFetch(cred, "/Apps/lime/", { method: "MKCOL" }).catch(() => {})
   const json = JSON.stringify(payload)
-  const res = await webdavFetch(cred, SYNC_PATH, {
+  const res = await bgFetch(cred, SYNC_PATH, {
     method: "PUT",
     body: json,
-    headers: { "Content-Type": "application/json" }
+    contentType: "application/json"
   })
   if (!res.ok) throw new Error(`上传失败：HTTP ${res.status}`)
 }
@@ -134,7 +119,6 @@ export async function runSync(
       return { success: true, direction: "noop", message: "数据已一致，无需同步" }
     }
 
-    // Data differs — upload local (last-write-wins)
     await uploadSyncFile(cred, localPayload)
     return {
       success: true,
