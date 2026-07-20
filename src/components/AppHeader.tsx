@@ -146,6 +146,7 @@ export default function AppHeader({
         <Tooltip title={selectMode ? "取消选择" : "选择卡片"}>
           <IconButton
             size="small"
+            disabled={!hasActiveProject}
             onClick={onToggleSelectMode}
             sx={{ color: selectMode ? "error.main" : "text.secondary", "&:hover": { color: "error.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
             <DoneAllRoundedIcon sx={{ fontSize: 20 }} />

@@ -3,6 +3,7 @@ import {
   createMenus,
   ensureMenusReady,
   rebuildProjectMenus,
+  rebuildRecentMenus,
   updateRecentProjects
 } from "./background/menus"
 import type { Item } from "./types"
@@ -188,6 +189,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.kind === "rebuild-menus") {
     rebuildProjectMenus().catch((e) =>
       console.warn("rebuild-menus failed:", e)
+    )
+    rebuildRecentMenus().catch((e) =>
+      console.warn("rebuildRecentMenus failed:", e)
     )
     return
   }

@@ -75,6 +75,7 @@ export default function OptionsPage() {
   const [preset, setPreset] = useState<PresetName>("classic")
   const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+  const [allItemCounts, setAllItemCounts] = useState<Record<string, number>>({})
   const [readingFilter, setReadingFilter] = useState(false)
   const [showRandomReview, setShowRandomReview] = useState(true)
   const [refreshRandom, setRefreshRandom] = useState(0)
@@ -149,6 +150,16 @@ export default function OptionsPage() {
     }, 300)
     return () => clearTimeout(t)
   }, [keyword, type])
+
+  useEffect(() => {
+    searchItems({}).then((items) => {
+      const m: Record<string, number> = {}
+      for (const item of items) {
+        if (item.projectId) m[item.projectId] = (m[item.projectId] ?? 0) + 1
+      }
+      setAllItemCounts(m)
+    })
+  }, [])
 
   const handleToggleDrawer = () => {
     setDrawerOpen((prev) => !prev)
@@ -296,14 +307,6 @@ export default function OptionsPage() {
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
 
-  const itemCounts = useMemo(() => {
-    const m: Record<string, number> = {}
-    for (const item of allItems) {
-      if (item.projectId) m[item.projectId] = (m[item.projectId] ?? 0) + 1
-    }
-    return m
-  }, [allItems])
-
   const stats = useMemo(() => {
     const now = Date.now()
     const recent7 = allItems.filter((i) => i.createdAt > now - 7 * 86400000).length
@@ -351,7 +354,7 @@ export default function OptionsPage() {
           activeProjectId={activeProjectId}
           newProjectName={newProjectName}
           projectError={projectError}
-          itemCounts={itemCounts}
+          itemCounts={allItemCounts}
           readingFilter={readingFilter}
           onToggleReadingFilter={handleToggleReadingFilter}
           onClose={handleToggleDrawer}

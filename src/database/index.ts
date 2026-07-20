@@ -100,14 +100,23 @@ export async function addItem(item: Item): Promise<void> {
     sourceSite: item.source?.site ?? (item.source ? new URL(item.source.url).hostname : undefined),
     hash: item.hash || (item.source ? await computeItemHash(item.content, item.source.url) : await computeItemHash(item.content, ""))
   }
-  // simple de-dup: if hash exists for same url, skip
+  // simple de-dup: if same project has same hash + same url, skip
   const exists = await withStore("items", "readonly", async (store) => {
     const idx = store.index("hash")
     return new Promise<boolean>((resolve, reject) => {
-      const req = idx.get(normalized.hash)
+      const req = idx.openCursor(normalized.hash)
       req.onsuccess = () => {
-        const val = req.result as Item | undefined
-        resolve(Boolean(val && normalized.source && val.source?.url === normalized.source.url))
+        const cursor = req.result
+        if (!cursor) { resolve(false); return }
+        const val = cursor.value as Item
+        if (
+          val.projectId === normalized.projectId &&
+          val.source?.url === normalized.source?.url
+        ) {
+          resolve(true)
+          return
+        }
+        cursor.continue()
       }
       req.onerror = () => reject(req.error)
     })
