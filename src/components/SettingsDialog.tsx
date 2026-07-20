@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Stack,
   TextField,
+  Tooltip,
   Typography
 } from "@mui/material"
 import { useEffect, useState } from "react"
@@ -22,18 +23,24 @@ import {
   listProjects,
   searchItems
 } from "../database"
-import type { Item, Project } from "../types"
+import { palettes } from "../theme"
+import type { Item, Project, PresetName } from "../types"
+import { PRESET_LABELS } from "../types"
 import { testConnection, runSync, downloadRemote } from "../utils/sync"
 import type { SyncCredentials, SyncResult } from "../utils/sync"
 
 export default function SettingsDialog({
   open,
   onClose,
-  onDataChange
+  onDataChange,
+  preset,
+  onPresetChange
 }: {
   open: boolean
   onClose: () => void
   onDataChange?: () => void
+  preset: PresetName
+  onPresetChange: (name: PresetName) => void
 }) {
   const [username, setUsername] = useState("")
   const [appPassword, setAppPassword] = useState("")
@@ -242,8 +249,53 @@ export default function SettingsDialog({
             }}>
             App 密码请在坚果云网页端「账户信息 → 安全选项」中生成。
             <br />
-            上传 → 本地数据覆盖云端。下载 → 云端数据覆盖本地。
-          </Typography>
+             上传 → 本地数据覆盖云端。下载 → 云端数据覆盖本地。
+            </Typography>
+
+            <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid", borderColor: "divider" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ mb: 1.5, color: "text.secondary", fontSize: "0.85rem" }}>
+                🎨 主题配色
+              </Typography>
+              <Stack direction="row" spacing={2} alignItems="center">
+                {(Object.keys(PRESET_LABELS) as PresetName[]).map((name) => (
+                  <Tooltip key={name} title={PRESET_LABELS[name]}>
+                    <Stack
+                      alignItems="center"
+                      spacing={0.5}
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => onPresetChange(name)}>
+                      <Box
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          transition: "all 0.2s",
+                          "&:hover": { transform: "scale(1.15)" },
+                          border: "2px solid",
+                          borderColor:
+                            preset === name ? "primary.main" : "transparent",
+                          bgcolor: palettes[name].primary.main
+                        }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontSize: "0.6rem",
+                          color:
+                            preset === name
+                              ? "primary.main"
+                              : "text.disabled",
+                          fontWeight: preset === name ? 600 : 400
+                        }}>
+                        {PRESET_LABELS[name]}
+                      </Typography>
+                    </Stack>
+                  </Tooltip>
+                ))}
+              </Stack>
+            </Box>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>

@@ -24,7 +24,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import AppHeader from "./components/AppHeader"
 import BatchToolbar from "./components/BatchToolbar"
 import CardGrid from "./components/GroupSection"
-import ColorPalette from "./components/ColorPalette"
 import FilterChips from "./components/FilterChips"
 import ItemDialog from "./components/ItemDialog"
 import ReviewSession from "./components/ReviewSession"
@@ -75,7 +74,6 @@ export default function OptionsPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false)
   const [preset, setPreset] = useState<PresetName>("classic")
-  const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [reviewMode, setReviewMode] = useState(false)
   const [reviewItems, setReviewItems] = useState<Item[]>([])
@@ -432,7 +430,6 @@ export default function OptionsPage() {
               headerHeight={headerHeight}
               hasActiveProject={Boolean(activeProjectId)}
               onToggleDrawer={handleToggleDrawer}
-              onPaletteClick={(e) => setPaletteAnchor(e.currentTarget)}
               fileInputRef={fileInputRef}
               onImport={handleImport}
               onToggleSelectMode={() => {
@@ -840,18 +837,12 @@ export default function OptionsPage() {
               </DialogActions>
             </Dialog>
 
-            <ColorPalette
-              open={Boolean(paletteAnchor)}
-              anchorEl={paletteAnchor}
-              preset={preset}
-              onClose={() => setPaletteAnchor(null)}
-              onChange={(name) => setPreset(name)}
-            />
-
             <SettingsDialog
               open={settingsOpen}
               onClose={() => setSettingsOpen(false)}
               onDataChange={() => refreshAllData()}
+              preset={preset}
+              onPresetChange={(name) => setPreset(name)}
             />
           </Container>
         </Box>

@@ -1,7 +1,6 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
-import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
@@ -21,7 +20,6 @@ interface AppHeaderProps {
   reviewMode?: boolean
   onClearProject: () => void
   onToggleDrawer: () => void
-  onPaletteClick: (e: React.MouseEvent<HTMLElement>) => void
   fileInputRef: MutableRefObject<HTMLInputElement | null>
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
   onToggleSelectMode: () => void
@@ -41,7 +39,6 @@ export default function AppHeader({
   reviewMode,
   onClearProject,
   onToggleDrawer,
-  onPaletteClick,
   fileInputRef,
   onImport,
   onToggleSelectMode,
@@ -107,14 +104,6 @@ export default function AppHeader({
             />
           )}
         </Stack>
-        <Tooltip title="配色">
-          <IconButton
-            size="small"
-            onClick={onPaletteClick}
-            sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
-            <PaletteRoundedIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        </Tooltip>
         <Tooltip title="设置">
           <IconButton
             size="small"
