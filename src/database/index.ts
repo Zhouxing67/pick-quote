@@ -267,6 +267,18 @@ export async function updateProject(project: Project): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
+  // Cascade: remove the project record and all its cards
+  await withStore("items", "readwrite", (store) => {
+    const idx = store.index("projectId")
+    const range = IDBKeyRange.only(id)
+    idx.openCursor(range).onsuccess = (e) => {
+      const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result
+      if (cursor) {
+        cursor.delete()
+        cursor.continue()
+      }
+    }
+  })
   await withStore("projects", "readwrite", (store) => {
     store.delete(id)
   })

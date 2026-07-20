@@ -229,20 +229,23 @@ export default function OptionsPage() {
     setType("")
   }
 
-  // ---- Card drag reordering within project ----
-  const [dragId, setDragId] = useState<string | null>(null)
-  const [overId, setOverId] = useState<string | null>(null)
+  // ---- Card swap within project (checkbox mode) ----
+  const [swapMode, setSwapMode] = useState(false)
 
-  const reorderItems = useCallback(
-    async (fromId: string, toId: string) => {
-      if (fromId === toId) return
+  const swapItems = useCallback(
+    async (idA: string, idB: string) => {
+      if (idA === idB) return
       const ordered = [...allItems]
-      const fromIdx = ordered.findIndex((i) => i.id === fromId)
-      const toIdx = ordered.findIndex((i) => i.id === toId)
-      if (fromIdx === -1 || toIdx === -1) return
-      const [moved] = ordered.splice(fromIdx, 1)
-      ordered.splice(toIdx, 0, moved)
-      const updated = ordered.map((it, idx) => ({ ...it, order: idx }))
+      const idxA = ordered.findIndex((i) => i.id === idA)
+      const idxB = ordered.findIndex((i) => i.id === idB)
+      if (idxA === -1 || idxB === -1) return
+      // Swap positions in the array, then reassign order sequentially
+      const next = [...ordered]
+      const [a] = next.splice(idxA, 1)
+      const [b] = next.splice(idxB, 1)
+      next.splice(idxA, 0, b)
+      next.splice(idxB, 0, a)
+      const updated = next.map((it, idx) => ({ ...it, order: idx }))
       setAllItems(updated)
       setDisplayedItems(updated.slice(0, ITEMS_PER_PAGE))
       for (const it of updated) {
@@ -252,26 +255,17 @@ export default function OptionsPage() {
     [allItems, ITEMS_PER_PAGE]
   )
 
-  const dragHandlers = {
-    onDragStart: (e: React.DragEvent, id: string) => {
-      e.dataTransfer.effectAllowed = "move"
-      setDragId(id)
-    },
-    onDragOver: (e: React.DragEvent, id: string) => {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = "move"
-      if (dragId && dragId !== id) setOverId(id)
-    },
-    onDrop: (e: React.DragEvent, id: string) => {
-      e.preventDefault()
-      if (dragId) reorderItems(dragId, id)
-      setOverId(null)
-    },
-    onDragEnd: () => {
-      setDragId(null)
-      setOverId(null)
+  const handleSwap = useCallback(() => {
+    if (selectedIds.length !== 2) {
+      window.alert("请选择恰好两张卡片进行交换")
+      return
     }
-  }
+    const [a, b] = selectedIds
+    void swapItems(a, b).then(() => {
+      setSelectedIds([])
+      setSwapMode(false)
+    })
+  }, [selectedIds, swapItems])
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
 
@@ -310,6 +304,7 @@ export default function OptionsPage() {
             <AppHeader
               drawerOpen={drawerOpen}
               selectMode={selectMode}
+              swapMode={swapMode}
               importing={importing}
               headerHeight={headerHeight}
               onToggleDrawer={handleToggleDrawer}
@@ -319,6 +314,10 @@ export default function OptionsPage() {
               onToggleSelectMode={() => {
                 if (selectMode) setSelectedIds([])
                 setSelectMode((prev) => !prev)
+              }}
+              onToggleSwapMode={() => {
+                setSelectedIds([])
+                setSwapMode((prev) => !prev)
               }}
             />
 
@@ -336,10 +335,13 @@ export default function OptionsPage() {
               onClearAll={clearAllFilters}
             />
 
-            {selectMode && (
+            {(selectMode || swapMode) && (
               <BatchToolbar
                 selectedIds={selectedIds}
-                onSelectAll={() => setSelectedIds(allItems.map((i) => i.id))}
+                swapMode={swapMode}
+                onSelectAll={() =>
+                  setSelectedIds(displayedItems.map((i) => i.id))
+                }
                 onExportMd={async () => {
                   const items = allItems.filter((i) => selectedIds.includes(i.id))
                   const blob = await toZip(items, projects)
@@ -361,6 +363,7 @@ export default function OptionsPage() {
                   URL.revokeObjectURL(url)
                 }}
                 onBatchDelete={handleBatchDelete}
+                onSwap={handleSwap}
               />
             )}
 
@@ -395,12 +398,7 @@ export default function OptionsPage() {
                 }
                 onDeleteItem={onDelete}
                 onOpenDialog={setDialogItem}
-                onDragStart={dragHandlers.onDragStart}
-                onDragOver={dragHandlers.onDragOver}
-                onDrop={dragHandlers.onDrop}
-                onDragEnd={dragHandlers.onDragEnd}
-                dragId={dragId}
-                overId={overId}
+                swapMode={swapMode}
               />
             )}
 

@@ -1,5 +1,6 @@
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded"
+import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material"
 import type { MutableRefObject } from "react"
@@ -7,6 +8,7 @@ import type { MutableRefObject } from "react"
 interface AppHeaderProps {
   drawerOpen: boolean
   selectMode: boolean
+  swapMode: boolean
   importing: boolean
   headerHeight: number
   onToggleDrawer: () => void
@@ -14,18 +16,21 @@ interface AppHeaderProps {
   fileInputRef: MutableRefObject<HTMLInputElement | null>
   onImport: (e: React.ChangeEvent<HTMLInputElement>) => void
   onToggleSelectMode: () => void
+  onToggleSwapMode: () => void
 }
 
 export default function AppHeader({
   drawerOpen,
   selectMode,
+  swapMode,
   importing,
   headerHeight,
   onToggleDrawer,
   onPaletteClick,
   fileInputRef,
   onImport,
-  onToggleSelectMode
+  onToggleSelectMode,
+  onToggleSwapMode
 }: AppHeaderProps) {
   return (
     <Box
@@ -95,6 +100,19 @@ export default function AppHeader({
             accept=".zip"
             onChange={onImport}
           />
+        </Button>
+        <Button
+          size="small"
+          sx={{
+            borderRadius: 1,
+            fontSize: "0.75rem",
+            px: 1.5,
+            minWidth: 0,
+            color: swapMode ? "primary.main" : "text.secondary"
+          }}
+          onClick={onToggleSwapMode}>
+          <SwapHorizRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
+          {swapMode ? "退出交换" : "交换"}
         </Button>
         <Button
           size="small"

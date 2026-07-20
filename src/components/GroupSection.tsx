@@ -1,7 +1,4 @@
-import {
-  Box,
-  Checkbox
-} from "@mui/material"
+import { Box, Checkbox } from "@mui/material"
 
 import type { Item } from "../types"
 import ItemCard from "./ItemCard"
@@ -13,12 +10,7 @@ interface CardGridProps {
   onSelectItem: (id: string) => void
   onDeleteItem: (id: string) => void
   onOpenDialog: (item: Item) => void
-  onDragStart: (e: React.DragEvent, id: string) => void
-  onDragOver: (e: React.DragEvent, id: string) => void
-  onDrop: (e: React.DragEvent, id: string) => void
-  onDragEnd: () => void
-  dragId: string | null
-  overId: string | null
+  swapMode: boolean
 }
 
 export default function CardGrid({
@@ -28,12 +20,7 @@ export default function CardGrid({
   onSelectItem,
   onDeleteItem,
   onOpenDialog,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
-  dragId,
-  overId
+  swapMode
 }: CardGridProps) {
   return (
     <Box
@@ -54,25 +41,9 @@ export default function CardGrid({
             pl: 1.5,
             mb: 1.5,
             position: "relative",
-            opacity: dragId === it.id ? 0.4 : 1,
-            transform: dragId === it.id ? "scale(0.97)" : "none",
-            transition: "opacity 0.2s, transform 0.2s, box-shadow 0.15s",
-            ...(overId === it.id && dragId !== it.id
-              ? {
-                  "&::after": {
-                    content: '""',
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: 2,
-                    border: "2px dashed",
-                    borderColor: "primary.main",
-                    pointerEvents: "none",
-                    zIndex: 5
-                  }
-                }
-              : {})
+            borderRadius: 2
           }}>
-          {selectMode && (
+          {(selectMode || swapMode) && (
             <Box
               sx={{
                 position: "absolute",
@@ -95,14 +66,10 @@ export default function CardGrid({
           <ItemCard
             item={it}
             onDelete={onDeleteItem}
-            onClick={() =>
-              selectMode ? onSelectItem(it.id) : onOpenDialog(it)
-            }
-            draggable
-            onDragStart={(e) => onDragStart(e, it.id)}
-            onDragOver={(e) => onDragOver(e, it.id)}
-            onDrop={(e) => onDrop(e, it.id)}
-            onDragEnd={onDragEnd}
+            onClick={() => {
+              if (selectMode || swapMode) return onSelectItem(it.id)
+              onOpenDialog(it)
+            }}
           />
         </Box>
       ))}
