@@ -22,14 +22,11 @@ import BatchToolbar from "./components/BatchToolbar"
 import CardGrid from "./components/GroupSection"
 import ColorPalette from "./components/ColorPalette"
 import FilterChips from "./components/FilterChips"
-import Footer from "./components/Footer"
 import ItemDialog from "./components/ItemDialog"
 import SidebarFilters from "./components/SidebarFilters"
+import { useProjects } from "./hooks/useProjects"
 import {
-  addProject,
   deleteItem,
-  getProjectByName,
-  listProjects,
   searchItems,
   updateItem
 } from "./database"
@@ -57,10 +54,7 @@ export default function OptionsPage() {
   const [confirmBatchDelete, setConfirmBatchDelete] = useState(false)
   const [preset, setPreset] = useState<PresetName>("classic")
   const [paletteAnchor, setPaletteAnchor] = useState<HTMLElement | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
-  const [newProjectName, setNewProjectName] = useState("")
-  const [projectError, setProjectError] = useState<string | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const ITEMS_PER_PAGE = 20
@@ -82,16 +76,6 @@ export default function OptionsPage() {
     chrome.storage.sync.set({ preset })
   }, [preset])
 
-  const loadProjects = useCallback(async () => {
-    const list = await listProjects()
-    setProjects(list)
-    return list
-  }, [])
-
-  useEffect(() => {
-    loadProjects()
-  }, [loadProjects])
-
   const onSearch = useCallback(
     async (projectId?: string | null) => {
       const pid = projectId ?? activeProjectId
@@ -109,6 +93,29 @@ export default function OptionsPage() {
     [keyword, type, activeProjectId, ITEMS_PER_PAGE]
   )
 
+  const {
+    projects,
+    newProjectName,
+    projectError,
+    loadProjects,
+    setNewProjectName,
+    setProjectError,
+    handleCreateProject,
+    handleRenameProject,
+    handleUpdateNote,
+    handleDeleteProject
+  } = useProjects({
+    onSearch,
+    onActivate: (id) => {
+      setActiveProjectId(id)
+      onSearch(id)
+    },
+    onDeactivate: () => {
+      setActiveProjectId(null)
+      onSearch(null)
+    }
+  })
+
   useEffect(() => {
     onSearch()
   }, [onSearch])
@@ -122,31 +129,6 @@ export default function OptionsPage() {
 
   const handleToggleDrawer = () => {
     setDrawerOpen((prev) => !prev)
-  }
-
-  const handleCreateProject = async () => {
-    const name = newProjectName.trim()
-    if (!name) {
-      setProjectError("项目名不能为空")
-      return
-    }
-    const existing = await getProjectByName(name)
-    if (existing) {
-      setProjectError("项目名已存在，请换一个")
-      return
-    }
-    const project: Project = {
-      id: crypto.randomUUID(),
-      name,
-      createdAt: Date.now()
-    }
-    await addProject(project)
-    await loadProjects()
-    setNewProjectName("")
-    setProjectError(null)
-    setActiveProjectId(project.id)
-    onSearch(project.id)
-    chrome.runtime.sendMessage({ kind: "rebuild-menus" })
   }
 
   const handleOpenProject = (id: string) => {
@@ -249,6 +231,7 @@ export default function OptionsPage() {
 
   // ---- Card drag reordering within project ----
   const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
 
   const reorderItems = useCallback(
     async (fromId: string, toId: string) => {
@@ -276,13 +259,17 @@ export default function OptionsPage() {
     },
     onDragOver: (e: React.DragEvent, id: string) => {
       e.preventDefault()
+      e.dataTransfer.dropEffect = "move"
+      if (dragId && dragId !== id) setOverId(id)
     },
     onDrop: (e: React.DragEvent, id: string) => {
       e.preventDefault()
       if (dragId) reorderItems(dragId, id)
+      setOverId(null)
     },
     onDragEnd: () => {
       setDragId(null)
+      setOverId(null)
     }
   }
 
@@ -306,6 +293,9 @@ export default function OptionsPage() {
           }}
           onCreateProject={handleCreateProject}
           onOpenProject={handleOpenProject}
+          onRenameProject={handleRenameProject}
+          onUpdateNote={handleUpdateNote}
+          onDeleteProject={handleDeleteProject}
           onWidthChange={(w) => setDrawerWidth(w)}
         />
 
@@ -410,6 +400,7 @@ export default function OptionsPage() {
                 onDrop={dragHandlers.onDrop}
                 onDragEnd={dragHandlers.onDragEnd}
                 dragId={dragId}
+                overId={overId}
               />
             )}
 
@@ -483,8 +474,6 @@ export default function OptionsPage() {
               onClose={() => setPaletteAnchor(null)}
               onChange={(name) => setPreset(name)}
             />
-
-            <Footer />
           </Container>
         </Box>
       </Box>

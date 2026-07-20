@@ -18,6 +18,7 @@ interface CardGridProps {
   onDrop: (e: React.DragEvent, id: string) => void
   onDragEnd: () => void
   dragId: string | null
+  overId: string | null
 }
 
 export default function CardGrid({
@@ -31,7 +32,8 @@ export default function CardGrid({
   onDragOver,
   onDrop,
   onDragEnd,
-  dragId
+  dragId,
+  overId
 }: CardGridProps) {
   return (
     <Box
@@ -53,7 +55,22 @@ export default function CardGrid({
             mb: 1.5,
             position: "relative",
             opacity: dragId === it.id ? 0.4 : 1,
-            transition: "opacity 0.2s"
+            transform: dragId === it.id ? "scale(0.97)" : "none",
+            transition: "opacity 0.2s, transform 0.2s, box-shadow 0.15s",
+            ...(overId === it.id && dragId !== it.id
+              ? {
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: 2,
+                    border: "2px dashed",
+                    borderColor: "primary.main",
+                    pointerEvents: "none",
+                    zIndex: 5
+                  }
+                }
+              : {})
           }}>
           {selectMode && (
             <Box

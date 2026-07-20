@@ -1,5 +1,9 @@
+import { useState } from "react"
+
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
+import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded"
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded"
 import {
@@ -7,14 +11,15 @@ import {
   Button,
   Drawer,
   FormControl,
+  IconButton,
   InputAdornment,
   InputLabel,
   MenuItem,
   Select,
   Stack,
   TextField,
-  Typography,
-  IconButton
+  Tooltip,
+  Typography
 } from "@mui/material"
 
 import type { Project } from "../types"
@@ -30,6 +35,9 @@ interface SidebarFiltersProps {
   onNewProjectNameChange: (v: string) => void
   onCreateProject: () => void
   onOpenProject: (id: string) => void
+  onRenameProject: (id: string, name: string) => void
+  onUpdateNote: (id: string, note: string) => void
+  onDeleteProject: (id: string) => void
   onWidthChange: (w: number) => void
 }
 
@@ -44,6 +52,9 @@ export default function SidebarFilters({
   onNewProjectNameChange,
   onCreateProject,
   onOpenProject,
+  onRenameProject,
+  onUpdateNote,
+  onDeleteProject,
   onWidthChange
 }: SidebarFiltersProps) {
   return (
@@ -161,36 +172,15 @@ export default function SidebarFilters({
               borderColor: "divider"
             }}>
             {projects.map((p) => (
-              <Stack
+              <ProjectRow
                 key={p.id}
-                direction="row"
-                alignItems="center"
-                spacing={1}
-                sx={{
-                  px: 1.5,
-                  py: 1,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "action.hover" },
-                  bgcolor:
-                    activeProjectId === p.id ? "action.selected" : "transparent"
-                }}
-                onClick={() => onOpenProject(p.id)}>
-                <FolderOpenRoundedIcon
-                  sx={{
-                    fontSize: 18,
-                    color: activeProjectId === p.id ? "primary.main" : "text.secondary"
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{
-                    flex: 1,
-                    fontSize: "0.85rem",
-                    fontWeight: activeProjectId === p.id ? 500 : 400
-                  }}>
-                  {p.name}
-                </Typography>
-              </Stack>
+                project={p}
+                active={activeProjectId === p.id}
+                onOpen={() => onOpenProject(p.id)}
+                onRename={(name) => onRenameProject(p.id, name)}
+                onUpdateNote={(note) => onUpdateNote(p.id, note)}
+                onDelete={() => onDeleteProject(p.id)}
+              />
             ))}
             {projects.length === 0 && (
               <Box sx={{ px: 1.5, py: 1 }}>
@@ -203,5 +193,162 @@ export default function SidebarFilters({
         </Box>
       </Stack>
     </Drawer>
+  )
+}
+
+interface ProjectRowProps {
+  project: Project
+  active: boolean
+  onOpen: () => void
+  onRename: (name: string) => void
+  onUpdateNote: (note: string) => void
+  onDelete: () => void
+}
+
+function ProjectRow({
+  project,
+  active,
+  onOpen,
+  onRename,
+  onUpdateNote,
+  onDelete
+}: ProjectRowProps) {
+  const [editing, setEditing] = useState(false)
+  const [draftName, setDraftName] = useState(project.name)
+  const [draftNote, setDraftNote] = useState(project.note ?? "")
+  const [confirming, setConfirming] = useState(false)
+
+  const commitRename = () => {
+    const trimmed = draftName.trim()
+    if (trimmed && trimmed !== project.name) onRename(trimmed)
+    else setDraftName(project.name)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <Box sx={{ px: 1.5, py: 1, bgcolor: "action.selected" }}>
+        <TextField
+          autoFocus
+          fullWidth
+          size="small"
+          label="项目名称"
+          value={draftName}
+          onChange={(e) => setDraftName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitRename()
+            if (e.key === "Escape") {
+              setDraftName(project.name)
+              setEditing(false)
+            }
+          }}
+          sx={{ mb: 1 }}
+        />
+        <TextField
+          fullWidth
+          size="small"
+          multiline
+          minRows={2}
+          label="备注"
+          placeholder="可选"
+          value={draftNote}
+          onChange={(e) => setDraftNote(e.target.value)}
+          sx={{ mb: 1 }}
+        />
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button size="small" onClick={() => { setEditing(false); setDraftName(project.name); setDraftNote(project.note ?? "") }}>
+            取消
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => {
+              commitRename()
+              if (draftNote !== (project.note ?? "")) onUpdateNote(draftNote.trim())
+            }}>
+            保存
+          </Button>
+        </Stack>
+      </Box>
+    )
+  }
+
+  if (confirming) {
+    return (
+      <Box
+        sx={{
+          px: 1.5,
+          py: 1,
+          bgcolor: "action.selected",
+          "&:hover": { bgcolor: "action.selected" }
+        }}>
+        <Typography variant="caption" sx={{ display: "block", mb: 1 }}>
+          删除「{project.name}」？该项目的卡片将变为未归类。
+        </Typography>
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button size="small" onClick={() => setConfirming(false)}>
+            取消
+          </Button>
+          <Button
+            size="small"
+            color="error"
+            variant="contained"
+            onClick={() => { setConfirming(false); onDelete() }}>
+            删除
+          </Button>
+        </Stack>
+      </Box>
+    )
+  }
+
+  return (
+    <Stack
+      direction="row"
+      alignItems="center"
+      spacing={1}
+      sx={{
+        px: 1.5,
+        py: 1,
+        cursor: "pointer",
+        "&:hover": { bgcolor: "action.hover" },
+        bgcolor: active ? "action.selected" : "transparent"
+      }}
+      onClick={onOpen}>
+      <FolderOpenRoundedIcon
+        sx={{
+          fontSize: 18,
+          color: active ? "primary.main" : "text.secondary"
+        }}
+      />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          variant="body2"
+          noWrap
+          sx={{
+            fontSize: "0.85rem",
+            fontWeight: active ? 500 : 400
+          }}>
+          {project.name}
+        </Typography>
+        {project.note && (
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{ color: "text.secondary", display: "block" }}>
+            {project.note}
+          </Typography>
+        )}
+      </Box>
+      <Box
+        sx={{ display: "flex", gap: 0.25, opacity: 0.6, "&:hover": { opacity: 1 } }}
+        onClick={(e) => e.stopPropagation()}>
+        <IconButton size="small" onClick={() => { setDraftName(project.name); setDraftNote(project.note ?? ""); setEditing(true) }}>
+          <EditRoundedIcon fontSize="small" />
+        </IconButton>
+        <IconButton size="small" onClick={() => setConfirming(true)}>
+          <DeleteOutlineRoundedIcon fontSize="small" />
+        </IconButton>
+      </Box>
+    </Stack>
   )
 }

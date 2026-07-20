@@ -44,7 +44,7 @@ export default function AppHeader({
         spacing={1.5}
         alignItems="center"
         sx={{ width: "100%" }}>
-        <Tooltip title={drawerOpen ? "关闭筛选面板" : "打开筛选面板"}>
+        <Tooltip title={drawerOpen ? "关闭项目面板" : "打开项目面板"}>
           <IconButton
             size="small"
             onClick={onToggleDrawer}
