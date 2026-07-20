@@ -1,6 +1,5 @@
 import CodeRoundedIcon from "@mui/icons-material/CodeRounded"
 import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded"
-import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import {
@@ -15,7 +14,6 @@ interface BatchToolbarProps {
   selectedIds: string[]
   swapMode: boolean
   onSelectAll: () => void
-  onExportMd: () => void
   onExportJson: () => void
   onBatchDelete: () => void
   onSwap: () => void
@@ -25,7 +23,6 @@ export default function BatchToolbar({
   selectedIds,
   swapMode,
   onSelectAll,
-  onExportMd,
   onExportJson,
   onBatchDelete,
   onSwap
@@ -68,14 +65,6 @@ export default function BatchToolbar({
               全选
             </Button>
             <Divider orientation="vertical" flexItem />
-            <Button
-              size="small"
-              sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-              disabled={selectedIds.length === 0}
-              onClick={onExportMd}>
-              <DescriptionRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-              导出 MD
-            </Button>
             <Button
               size="small"
               sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}

@@ -36,7 +36,7 @@ import {
   searchItems,
   updateItem
 } from "./database"
-import { toZip, toJsonZip } from "./export"
+import { toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
 import type { Item, ItemType, PresetName, Project, SearchQuery } from "./types"
@@ -417,18 +417,12 @@ export default function OptionsPage() {
                 onSelectAll={() =>
                   setSelectedIds(displayedItems.map((i) => i.id))
                 }
-                onExportMd={async () => {
-                  const items = allItems.filter((i) => selectedIds.includes(i.id))
-                  const blob = await toZip(items, projects)
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement("a")
-                  a.href = url
-                  a.download = "lime-export.zip"
-                  a.click()
-                  URL.revokeObjectURL(url)
-                }}
                 onExportJson={async () => {
-                  const items = allItems.filter((i) => selectedIds.includes(i.id))
+                  const items = allItems.filter(
+                    (i) =>
+                      selectedIds.includes(i.id) &&
+                      (!activeProjectId || i.projectId === activeProjectId)
+                  )
                   const blob = await toJsonZip(items, projects)
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement("a")
