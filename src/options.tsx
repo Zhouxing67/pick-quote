@@ -473,7 +473,15 @@ export default function OptionsPage() {
                       selectedIds.includes(i.id) &&
                       (!activeProjectId || i.projectId === activeProjectId)
                   )
-                  const blob = await toJsonZip(items, projects)
+                  const exportedProjectIds = new Set(
+                    items
+                      .map((i) => i.projectId)
+                      .filter((id): id is string => Boolean(id))
+                  )
+                  const blob = await toJsonZip(
+                    items,
+                    projects.filter((p) => exportedProjectIds.has(p.id))
+                  )
                   const url = URL.createObjectURL(blob)
                   const a = document.createElement("a")
                   a.href = url

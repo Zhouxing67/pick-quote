@@ -73,6 +73,7 @@ export default function AppHeader({
         spacing={1.5}
         alignItems="center"
         sx={{ width: "100%" }}>
+        {!reviewMode && (
         <Tooltip title={drawerOpen ? "关闭项目面板" : "打开项目面板"}>
           <IconButton
             size="small"
@@ -85,6 +86,7 @@ export default function AppHeader({
             <FilterListRoundedIcon />
           </IconButton>
         </Tooltip>
+        )}
         <Stack direction="row" spacing={0.5} alignItems="center">
           <Typography
             sx={{
@@ -121,6 +123,8 @@ export default function AppHeader({
             <SettingsRoundedIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
+        {!reviewMode && (
+          <>
         <Box sx={{ flexGrow: 1 }} />
         <Tooltip title="导入 ZIP">
           <IconButton
@@ -165,6 +169,8 @@ export default function AppHeader({
             <DoneAllRoundedIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
+          </>
+        )}
       </Stack>
     </Box>
   )
