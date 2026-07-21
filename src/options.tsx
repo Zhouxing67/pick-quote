@@ -653,12 +653,23 @@ export default function OptionsPage() {
             borderColor: "primary.main"
           }}>
           <Container sx={{ py: 4 }} maxWidth="xl">
+            <style>{`
+              @keyframes emptyFloat {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-8px); }
+              }
+              .empty-icon {
+                opacity: 0.12;
+                animation: emptyFloat 4s ease-in-out infinite;
+              }
+            `}</style>
             <AppHeader
               drawerOpen={drawerOpen}
               headerHeight={headerHeight}
               onToggleDrawer={handleToggleDrawer}
               onSettingsClick={() => setSettingsOpen(true)}
-              reviewProgress={reviewProgress}>
+              reviewProgress={reviewProgress}
+              activeProjectName={activeProject?.name}>
               {sidebarTab === "review" ? (
                 <Tooltip title="退出复习">
                   <IconButton
@@ -744,7 +755,8 @@ export default function OptionsPage() {
                   userSelect: "none"
                 }}>
                 <InboxRoundedIcon
-                  sx={{ fontSize: 96, opacity: 0.12, mb: 3 }}
+                  className="empty-icon"
+                  sx={{ fontSize: 96, mb: 3 }}
                 />
                 <Typography variant="h6" sx={{ fontWeight: 400, mb: 1 }}>
                   选择一个项目
@@ -917,7 +929,8 @@ export default function OptionsPage() {
                     userSelect: "none"
                   }}>
                   <SearchOffRoundedIcon
-                    sx={{ fontSize: 80, opacity: 0.12, mb: 3 }}
+                    className="empty-icon"
+                    sx={{ fontSize: 80, mb: 3 }}
                   />
                   <Typography variant="body1" sx={{ opacity: 0.7 }}>
                     阅读清单已清空
@@ -1019,7 +1032,8 @@ export default function OptionsPage() {
                 {keyword ? (
                   <>
                     <SearchOffRoundedIcon
-                      sx={{ fontSize: 80, opacity: 0.12, mb: 3 }}
+                      className="empty-icon"
+                      sx={{ fontSize: 80, mb: 3 }}
                     />
                     <Typography variant="body1" sx={{ opacity: 0.7 }}>
                       没有找到匹配的卡片
@@ -1031,7 +1045,8 @@ export default function OptionsPage() {
                 ) : (
                   <>
                     <NoteAddRoundedIcon
-                      sx={{ fontSize: 80, opacity: 0.12, mb: 3 }}
+                      className="empty-icon"
+                      sx={{ fontSize: 80, mb: 3 }}
                     />
                     <Typography variant="body1" sx={{ opacity: 0.7 }}>
                       此项目暂无卡片

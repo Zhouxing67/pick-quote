@@ -29,7 +29,7 @@ export default function NewCardDialog({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+      slotProps={{ paper: { sx: { borderRadius: 2 } } }}>
       <DialogTitle sx={{ py: 2.5, px: 3, fontSize: "1rem" }}>
         新建卡片
       </DialogTitle>

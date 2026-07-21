@@ -286,7 +286,7 @@ export default function ReviewSession({
               bgcolor: "background.paper",
               border: "1px solid",
               borderColor: "divider",
-              borderRadius: 3,
+              borderRadius: 2,
               boxShadow: (theme) =>
                 theme.palette.mode === "light"
                   ? "0 8px 32px rgba(0,0,0,0.06)"
@@ -381,7 +381,7 @@ export default function ReviewSession({
               bgcolor: "background.paper",
               border: "1px solid",
               borderColor: "divider",
-              borderRadius: 3,
+              borderRadius: 2,
               boxShadow: (theme) =>
                 theme.palette.mode === "light"
                   ? "0 8px 32px rgba(0,0,0,0.06)"

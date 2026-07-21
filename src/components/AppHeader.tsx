@@ -9,6 +9,7 @@ interface AppHeaderProps {
   onToggleDrawer: () => void
   onSettingsClick: () => void
   reviewProgress?: { current: number; total: number }
+  activeProjectName?: string
   children?: ReactNode
 }
 
@@ -18,6 +19,7 @@ export default function AppHeader({
   onToggleDrawer,
   onSettingsClick,
   reviewProgress,
+  activeProjectName,
   children
 }: AppHeaderProps) {
   return (
@@ -63,7 +65,9 @@ export default function AppHeader({
             letterSpacing: "0.04em",
             lineHeight: 1
           }}>
-          lime
+          {activeProjectName ? (
+            <>lime · <Box component="span" sx={{ fontSize: "1rem", fontWeight: 400, opacity: 0.8 }}>{activeProjectName}</Box></>
+          ) : "lime"}
         </Typography>
         <Tooltip title="设置">
           <IconButton

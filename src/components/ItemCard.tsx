@@ -69,7 +69,7 @@ export default function ItemCard({
     <Paper
       elevation={0}
       sx={{
-        borderRadius: 2.5,
+        borderRadius: 2,
         p: 2.5,
         mb: 2,
         cursor: "pointer",

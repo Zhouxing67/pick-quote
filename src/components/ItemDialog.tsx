@@ -101,7 +101,7 @@ export default function ItemDialog({
       slotProps={{
         paper: {
           sx: {
-            borderRadius: 3,
+            borderRadius: 2,
             height: "85vh",
             display: "flex",
             bgcolor: "background.paper"

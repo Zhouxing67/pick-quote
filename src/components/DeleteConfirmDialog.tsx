@@ -26,7 +26,7 @@ export default function DeleteConfirmDialog({
     <Dialog
       open={open}
       onClose={onCancel}
-      slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+      slotProps={{ paper: { sx: { borderRadius: 2 } } }}>
       <DialogTitle sx={{ pb: 1 }}>
         {batch ? "批量删除" : "确认删除"}
       </DialogTitle>

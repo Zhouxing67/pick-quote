@@ -21,7 +21,7 @@ export default function MoveCopyCards({
       onClose={onClose}
       maxWidth="xs"
       fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+      slotProps={{ paper: { sx: { borderRadius: 2 } } }}>
       <DialogTitle sx={{ fontSize: "1rem", py: 2.5, px: 3 }}>
         {title}
       </DialogTitle>

@@ -154,9 +154,17 @@ export const createAppTheme = (mode: PaletteMode, preset: PresetName = "classic"
       MuiIconButton: {
         styleOverrides: {
           root: {
+            transition: "all 0.2s",
             "&:hover": {
               backgroundColor: mode === "light" ? "rgba(45, 52, 54, 0.04)" : "rgba(232, 230, 227, 0.08)"
             }
+          }
+        }
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: {
+            transition: "all 0.2s"
           }
         }
       }
