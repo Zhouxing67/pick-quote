@@ -181,19 +181,6 @@ export default function OptionsPage() {
     searchItems({}).then(setAllItemsUnfiltered)
   }, [])
 
-  // Subscribe to database changes via storage broadcast
-  useEffect(() => {
-    const onChange = (
-      changes: Record<string, chrome.storage.StorageChange>
-    ) => {
-      if (changes._dbi || changes._dbp) {
-        searchItems({}).then(setAllItemsUnfiltered)
-      }
-    }
-    chrome.storage.onChanged.addListener(onChange)
-    return () => chrome.storage.onChanged.removeListener(onChange)
-  }, [])
-
   // Immediate search for non-keyword filter changes
   useEffect(() => {
     onSearch()
@@ -447,6 +434,22 @@ export default function OptionsPage() {
       setSyncStatus("下载失败")
     }
   }
+
+  // Subscribe to database changes via storage broadcast
+  const refreshRef = useRef(refreshAllData)
+  refreshRef.current = refreshAllData
+
+  useEffect(() => {
+    const onChange = (
+      changes: Record<string, chrome.storage.StorageChange>
+    ) => {
+      if (changes._dbi || changes._dbp) {
+        refreshRef.current()
+      }
+    }
+    chrome.storage.onChanged.addListener(onChange)
+    return () => chrome.storage.onChanged.removeListener(onChange)
+  }, [])
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
 
