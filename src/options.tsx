@@ -45,7 +45,6 @@ import {
   deleteItems,
   isDuplicate,
   searchItems,
-  subscribeDb,
   updateItem
 } from "./database"
 import { toJsonZip } from "./export"
@@ -182,13 +181,17 @@ export default function OptionsPage() {
     searchItems({}).then(setAllItemsUnfiltered)
   }, [])
 
-  // Subscribe to database changes: refresh allItemsUnfiltered badge + review count
+  // Subscribe to database changes via storage broadcast
   useEffect(() => {
-    const refreshBadge = async () => {
-      const all = await searchItems({})
-      setAllItemsUnfiltered(all)
+    const onChange = (
+      changes: Record<string, chrome.storage.StorageChange>
+    ) => {
+      if (changes._dbi || changes._dbp) {
+        searchItems({}).then(setAllItemsUnfiltered)
+      }
     }
-    return subscribeDb(refreshBadge)
+    chrome.storage.onChanged.addListener(onChange)
+    return () => chrome.storage.onChanged.removeListener(onChange)
   }, [])
 
   // Immediate search for non-keyword filter changes

@@ -1,4 +1,4 @@
-import { addItem, listProjects } from "./database"
+import { addItem, listProjects, searchItems } from "./database"
 import {
   createMenus,
   ensureMenusReady,
@@ -7,6 +7,7 @@ import {
   updateRecentProjects
 } from "./background/menus"
 import type { Item } from "./types"
+import { getDueItems } from "./hooks/useSrs"
 
 function notifyTab(
   tabId: number | undefined,
@@ -42,6 +43,23 @@ function notifySystem(text: string) {
     // notifications API unavailable
   }
 }
+
+// Listen for database changes broadcast via storage
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes._dbp) {
+    rebuildProjectMenus().catch(() => {})
+    rebuildRecentMenus().catch(() => {})
+  }
+  if (changes._dbi) {
+    searchItems({})
+      .then((all) => {
+        const due = getDueItems(all)
+        chrome.action.setBadgeText({ text: due.length > 0 ? String(due.length) : "" })
+        chrome.action.setBadgeBackgroundColor({ color: "#dc2626" })
+      })
+      .catch(() => {})
+  }
+})
 
 chrome.runtime.onInstalled.addListener(() => {
   createMenus().catch((e) => console.warn("onInstalled createMenus failed:", e))
