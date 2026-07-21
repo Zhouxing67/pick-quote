@@ -8,14 +8,12 @@ import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
 import {
   Box,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
   Link,
   Stack,
-  Tooltip,
-  Typography
+  Tooltip
 } from "@mui/material"
 import { useEffect, useState } from "react"
 
@@ -54,6 +52,8 @@ export default function ItemDialog({
     setDraftTags(item.tags ?? [])
   }, [item.id])
 
+  const [animDir, setAnimDir] = useState<"prev" | "next" | null>(null)
+
   const {
     shareCardRef,
     isExporting,
@@ -83,6 +83,15 @@ export default function ItemDialog({
     setEditing(false)
   }
 
+  const handleNavigate = (dir: "prev" | "next") => {
+    if (animDir || !onNavigate) return
+    setAnimDir(dir)
+    setTimeout(() => {
+      onNavigate(dir)
+      setAnimDir(null)
+    }, 250)
+  }
+
   return (
     <Dialog
       open={open}
@@ -102,8 +111,7 @@ export default function ItemDialog({
       {onNavigate && (
         <>
           <IconButton
-            size="small"
-            onClick={() => onNavigate("prev")}
+            onClick={() => handleNavigate("prev")}
             sx={{
               position: "fixed",
               left: 24,
@@ -119,7 +127,7 @@ export default function ItemDialog({
             <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
           </IconButton>
           <IconButton
-            onClick={() => onNavigate("next")}
+            onClick={() => handleNavigate("next")}
             sx={{
               position: "fixed",
               right: 24,
@@ -136,6 +144,18 @@ export default function ItemDialog({
           </IconButton>
         </>
       )}
+      <style>{`
+        @keyframes dialogSlideOutLeft {
+          to { opacity: 0; transform: translateX(-24px); }
+        }
+        @keyframes dialogSlideOutRight {
+          to { opacity: 0; transform: translateX(24px); }
+        }
+        @keyframes dialogSlideIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <DialogTitle
         sx={{
           display: "flex",
@@ -147,6 +167,28 @@ export default function ItemDialog({
           py: 2.5,
           px: 3
         }}>
+        <Box
+          sx={{
+            flex: 1,
+            mr: 2,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}>
+          {item.source && (
+            <Link
+              href={item.source.url}
+              target="_blank"
+              rel="noreferrer"
+              underline="hover"
+              sx={{
+                color: "primary.main",
+                fontSize: "0.8rem"
+              }}>
+              {item.source.title || prettyUrl(item.source.url)}
+            </Link>
+          )}
+        </Box>
         <Stack direction="row" spacing={0.5} alignItems="center">
           {editing ? (
             <>
@@ -176,6 +218,18 @@ export default function ItemDialog({
               <ImageOutlinedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+          <Tooltip title="复制引用">
+            <IconButton
+              size="small"
+              onClick={() => {
+                const src = item.source?.url
+                  ? `\n\n— ${item.source.title || prettyUrl(item.source.url)}`
+                  : ""
+                navigator.clipboard.writeText(`> ${item.content}${src}`)
+              }}>
+              <ContentCopyRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
         <ExportImageMenu
           anchorEl={anchorEl}
@@ -193,6 +247,9 @@ export default function ItemDialog({
           display: "flex",
           flexDirection: "column",
           bgcolor: "background.paper",
+          animation: animDir
+            ? `dialogSlideOut${animDir === "next" ? "Left" : "Right"} 0.2s ease-in forwards`
+            : "none",
           "&::-webkit-scrollbar": {
             width: "8px"
           },
@@ -213,79 +270,21 @@ export default function ItemDialog({
             }
           }
         }}>
-        {editing ? (
-          <DialogEditMode
-            draftContent={draftContent}
-            draftNote={draftNote}
-            draftTags={draftTags}
-            onContentChange={setDraftContent}
-            onNoteChange={setDraftNote}
-            onTagsChange={setDraftTags}
-          />
-        ) : (
-          <DialogViewMode item={item} />
-        )}
-      </DialogContent>
-      <DialogActions
-        sx={{
-          px: 3,
-          py: 2,
-          borderTop: "1px solid",
-          borderColor: "divider",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }}>
-        <Box
-          sx={{
-            flex: 1,
-            mr: 2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap"
-          }}>
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              fontSize: "0.75rem",
-              display: "inline"
-            }}>
-            来源：
-          </Typography>
-          {item.source && (
-            <Link
-              href={item.source.url}
-              target="_blank"
-              rel="noreferrer"
-              underline="hover"
-              sx={{
-                color: "primary.main",
-                ml: 0.5,
-                fontSize: "0.75rem"
-              }}>
-              {item.source.title || prettyUrl(item.source.url)}
-            </Link>
+        <Box key={item.id} sx={{ flex: 1, display: "flex", flexDirection: "column", animation: animDir ? "none" : "dialogSlideIn 0.25s ease-out" }}>
+          {editing ? (
+            <DialogEditMode
+              draftContent={draftContent}
+              draftNote={draftNote}
+              draftTags={draftTags}
+              onContentChange={setDraftContent}
+              onNoteChange={setDraftNote}
+              onTagsChange={setDraftTags}
+            />
+          ) : (
+            <DialogViewMode item={item} />
           )}
         </Box>
-        <Tooltip title="复制引用">
-          <IconButton
-            sx={{ flexShrink: 0, mr: 1 }}
-            onClick={() => {
-              const src = item.source?.url
-                ? `\n\n— ${item.source.title || prettyUrl(item.source.url)}`
-                : ""
-              navigator.clipboard.writeText(`> ${item.content}${src}`)
-            }}>
-            <ContentCopyRoundedIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="关闭">
-          <IconButton onClick={onClose} sx={{ flexShrink: 0 }}>
-            <CloseRoundedIcon />
-          </IconButton>
-        </Tooltip>
-      </DialogActions>
+      </DialogContent>
 
       <Box
         sx={{

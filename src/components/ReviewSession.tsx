@@ -35,6 +35,7 @@ export default function ReviewSession({
   const [transitioning, setTransitioning] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [ratings, setRatings] = useState<number[]>([])
+  const [slideDir, setSlideDir] = useState<1 | -1>(1)
 
   // Reset session state when items prop changes (new review set)
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function ReviewSession({
   const handleRate = useCallback(
     async (rating: 1 | 2 | 3 | 4) => {
       if (!current || transitioning) return
+      setSlideDir(1)
       setTransitioning(true)
       const updated = rateCard(current, rating)
       setRatings((prev) => [...prev, rating])
@@ -94,15 +96,25 @@ export default function ReviewSession({
 
   const handlePrev = useCallback(() => {
     if (index > 0 && !transitioning) {
+      setSlideDir(-1)
+      setTransitioning(true)
       setFlipped(false)
-      setIndex((i) => i - 1)
+      setTimeout(() => {
+        setIndex((i) => i - 1)
+        setTransitioning(false)
+      }, 350)
     }
   }, [index, transitioning])
 
   const handleNext = useCallback(() => {
     if (index < queue.length - 1 && !transitioning) {
+      setSlideDir(1)
+      setTransitioning(true)
       setFlipped(false)
-      setIndex((i) => i + 1)
+      setTimeout(() => {
+        setIndex((i) => i + 1)
+        setTransitioning(false)
+      }, 350)
     }
   }, [index, queue.length, transitioning])
 
@@ -194,80 +206,89 @@ export default function ReviewSession({
           : "reviewSlideIn 0.35s ease-out"
       }}>
       <style>{`
-        @keyframes reviewSlideIn {
-          from { opacity: 0; transform: translateX(40px); }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(60px); }
           to { opacity: 1; transform: translateX(0); }
         }
-        @keyframes reviewSlideOut {
-          to { opacity: 0; transform: translateX(-40px); }
+        @keyframes slideOutLeft {
+          to { opacity: 0; transform: translateX(-60px); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-60px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+          to { opacity: 0; transform: translateX(60px); }
         }
       `}</style>
 
       <Stack
         direction="row"
         alignItems="center"
-        justifyContent="center"
+        justifyContent="space-between"
         sx={{ mb: 2, px: 1 }}>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {index + 1} / {dueCount}
         </Typography>
-        <IconButton size="small" onClick={onExit} sx={{ position: "absolute", right: 8 }}>
+        <IconButton size="small" onClick={onExit}>
           <CloseRoundedIcon sx={{ fontSize: 20 }} />
         </IconButton>
       </Stack>
 
-      {/* Side navigation arrows */}
-      <IconButton
-        disabled={index === 0}
-        onClick={handlePrev}
-        sx={{
-          position: "fixed",
-          left: 24,
-          top: "50%",
-          transform: "translateY(-50%)",
-          zIndex: (theme) => theme.zIndex.modal + 1,
-          bgcolor: "background.paper",
-          border: "1px solid",
-          borderColor: "divider",
-          boxShadow: 2,
-          "&:hover": { bgcolor: "action.hover" }
-        }}>
-        <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
-      </IconButton>
-      <IconButton
-        disabled={index >= queue.length - 1}
-        onClick={handleNext}
-        sx={{
-          position: "fixed",
-          right: 24,
-          top: "50%",
-          transform: "translateY(-50%)",
-          zIndex: (theme) => theme.zIndex.modal + 1,
-          bgcolor: "background.paper",
-          border: "1px solid",
-          borderColor: "divider",
-          boxShadow: 2,
-          "&:hover": { bgcolor: "action.hover" }
-        }}>
-        <ChevronRightRoundedIcon sx={{ fontSize: 28 }} />
-      </IconButton>
-
-      <Box
-        onDoubleClick={() => { /* no double click */ }}
-        onClick={handleFlip}
-        sx={{
-          perspective: "800px",
-          cursor: "pointer",
-          mb: 3
-        }}>
-        <Box
+      <Box sx={{ position: "relative", mb: 3 }}>
+        <IconButton
+          disabled={index === 0}
+          onClick={handlePrev}
           sx={{
-            position: "relative",
-            minHeight: 400,
-            transformStyle: "preserve-3d",
-            transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-            transform: flipped ? "rotateX(-180deg)" : "rotateX(0deg)"
+            position: "absolute",
+            left: -48,
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 2,
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            boxShadow: 2,
+            "&:hover": { bgcolor: "action.hover" }
           }}>
+          <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
+        </IconButton>
+        <IconButton
+          disabled={index >= queue.length - 1}
+          onClick={handleNext}
+          sx={{
+            position: "absolute",
+            right: -48,
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 2,
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            boxShadow: 2,
+            "&:hover": { bgcolor: "action.hover" }
+          }}>
+          <ChevronRightRoundedIcon sx={{ fontSize: 28 }} />
+        </IconButton>
+
+        <Box
+          onDoubleClick={() => { /* no double click */ }}
+          onClick={handleFlip}
+          sx={{
+            perspective: "800px",
+            cursor: "pointer",
+            animation: transitioning
+              ? `slideOut${slideDir === 1 ? "Left" : "Right"} 0.3s ease-in forwards`
+              : `slideIn${slideDir === 1 ? "Right" : "Left"} 0.35s ease-out`
+          }}>
+          <Box
+            sx={{
+              position: "relative",
+              minHeight: 400,
+              transformStyle: "preserve-3d",
+              transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+              transform: flipped ? "rotateX(-180deg)" : "rotateX(0deg)"
+            }}>
           {/* Front */}
           <Box
             sx={{
@@ -445,6 +466,7 @@ export default function ReviewSession({
           </Box>
         </Box>
       </Box>
+    </Box>
 
       {/* Rating buttons — visible only after flip */}
       <Box
