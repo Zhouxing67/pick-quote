@@ -43,7 +43,7 @@ export default function DialogViewMode({ item }: { item: Item }) {
               lineHeight: 2,
               fontSize: "1.1rem",
               color: "text.primary",
-              fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif'
+              fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", "STSong", serif'
             }}>
             {item.content}
           </Typography>

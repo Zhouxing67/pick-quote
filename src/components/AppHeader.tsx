@@ -60,8 +60,8 @@ export default function AppHeader({
         </Tooltip>
         <Typography
           sx={{
-            fontSize: "1.25rem",
-            fontWeight: 500,
+            fontSize: "1.35rem",
+            fontWeight: 600,
             letterSpacing: "0.04em",
             lineHeight: 1
           }}>

@@ -11,7 +11,6 @@ interface CardGridProps {
   onSelectItem: (id: string) => void
   onDeleteItem: (id: string) => void
   onOpenDialog: (item: Item) => void
-  swapMode: boolean
   onToggleRead?: (id: string) => void
   onMoveToProject?: (id: string) => void
   onCopyToProject?: (id: string) => void
@@ -24,7 +23,6 @@ export default function CardGrid({
   onSelectItem,
   onDeleteItem,
   onOpenDialog,
-  swapMode,
   onToggleRead,
   onMoveToProject,
   onCopyToProject
@@ -63,7 +61,7 @@ export default function CardGrid({
               breakInside: "avoid"
             }}
             style={{ animationDelay: `${idx * 40}ms` }}>
-            {(selectMode || swapMode) && (
+            {(selectMode) && (
               <Box
                 sx={{
                   position: "absolute",
@@ -87,7 +85,7 @@ export default function CardGrid({
               item={it}
               onDelete={onDeleteItem}
               onClick={() => {
-                if (selectMode || swapMode) return onSelectItem(it.id)
+                if (selectMode) return onSelectItem(it.id)
                 onOpenDialog(it)
               }}
               onToggleRead={onToggleRead}

@@ -45,7 +45,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
           boxSizing: "border-box",
           position: "relative",
           overflow: "hidden",
-          fontFamily: "'Noto Serif SC', 'Songti SC', serif"
+          fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif"
         }}>
         {/* 装饰性引号 - 左上 */}
         <Box
@@ -103,7 +103,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   textIndent: "2em",
                   wordBreak: "break-word",
                   whiteSpace: "pre-wrap",
-                  fontFamily: "'Noto Serif SC', 'Songti SC', serif"
+                  fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif"
                 }}>
                 {truncateText(item.content, maxLength)}
               </Typography>
@@ -134,7 +134,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   color: currentTheme.text,
                   fontWeight: 400,
                   letterSpacing: "0.05em",
-                  fontFamily: "'Noto Serif SC', 'Songti SC', serif"
+                  fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif"
                 }}>
                 {truncateText(item.content, maxLength)}
               </Typography>
@@ -160,7 +160,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                 fontWeight: 300,
                 letterSpacing: "0.03em",
                 textAlign: "center",
-                fontFamily: "'Noto Serif SC', 'Songti SC', serif"
+                fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif"
               }}>
               {item.source?.title || (item.source ? prettyUrl(item.source.url) : "")}
             </Typography>
@@ -194,7 +194,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                 color: currentTheme.secondary,
                 fontWeight: 300,
                 letterSpacing: "0.15em",
-                fontFamily: "'Noto Serif SC', 'Songti SC', serif"
+                fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif"
               }}>
               lime · 灵感捕手
             </Typography>

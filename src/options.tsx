@@ -4,7 +4,6 @@ import NoteAddRoundedIcon from "@mui/icons-material/NoteAddRounded"
 import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
-import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import {
   Box,
   Button,
@@ -305,53 +304,11 @@ export default function OptionsPage() {
 
   const handleClearKeyword = () => setKeyword("")
 
-  // ---- Card swap within project (checkbox mode) ----
-  const [swapMode, setSwapMode] = useState(false)
-
-  const onToggleSwapMode = useCallback(() => {
-    setSelectedIds([])
-    setSwapMode((prev) => !prev)
-  }, [])
-
+  // ---- Card selection ----
   const onToggleSelectMode = useCallback(() => {
     setSelectedIds([])
     setSelectMode((prev) => !prev)
   }, [])
-
-  const swapItems = useCallback(
-    async (idA: string, idB: string) => {
-      if (idA === idB) return
-      const ordered = [...allItems]
-      const idxA = ordered.findIndex((i) => i.id === idA)
-      const idxB = ordered.findIndex((i) => i.id === idB)
-      if (idxA === -1 || idxB === -1) return
-      // Swap positions in the array, then reassign order sequentially
-      const next = [...ordered]
-      const [a] = next.splice(idxA, 1)
-      const [b] = next.splice(idxB, 1)
-      next.splice(idxA, 0, b)
-      next.splice(idxB, 0, a)
-      const updated = next.map((it, idx) => ({ ...it, order: idx }))
-      setAllItems(updated)
-      setDisplayedItems(updated.slice(0, ITEMS_PER_PAGE))
-      for (const it of updated) {
-        await updateItem(it)
-      }
-    },
-    [allItems, ITEMS_PER_PAGE]
-  )
-
-  const handleSwap = useCallback(() => {
-    if (selectedIds.length !== 2) {
-      setSnackbarMsg("请选择恰好两张卡片进行交换")
-      return
-    }
-    const [a, b] = selectedIds
-    void swapItems(a, b).then(() => {
-      setSelectedIds([])
-      setSwapMode(false)
-    })
-  }, [selectedIds, swapItems])
 
   const dueCount = useMemo(() => {
     const due = getDueItems(allItemsUnfiltered)
@@ -682,14 +639,6 @@ export default function OptionsPage() {
                 </Tooltip>
               ) : activeProject && (
                 <>
-                  <Tooltip title={swapMode ? "退出交换" : "交换卡片"}>
-                    <IconButton
-                      size="small"
-                      onClick={onToggleSwapMode}
-                      sx={{ color: swapMode ? "primary.main" : "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
-                      <SwapHorizRoundedIcon sx={{ fontSize: 20 }} />
-                    </IconButton>
-                  </Tooltip>
                   <Tooltip title="新建卡片">
                     <IconButton
                       size="small"
@@ -716,17 +665,15 @@ export default function OptionsPage() {
               onClearKeyword={handleClearKeyword}
             />
 
-            {(selectMode || swapMode) && (
+            {selectMode && (
               <BatchToolbar
                 selectedIds={selectedIds}
-                swapMode={swapMode}
                 onSelectAll={() =>
                   setSelectedIds(displayedItems.map((i) => i.id))
                 }
                 onBatchDelete={handleBatchDelete}
                 onBatchMove={handleBatchMove}
                 onBatchCopy={handleBatchCopy}
-                onSwap={handleSwap}
               />
             )}
 
@@ -955,10 +902,9 @@ export default function OptionsPage() {
                       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
                     )
                   }
-                  onDeleteItem={onDelete}
-                  onOpenDialog={setDialogItem}
-                  swapMode={swapMode}
-                  onToggleRead={handleToggleRead}
+                   onDeleteItem={onDelete}
+                   onOpenDialog={setDialogItem}
+                   onToggleRead={handleToggleRead}
                   onMoveToProject={setMoveCardId}
                   onCopyToProject={setCopyCardId}
                 />
@@ -1017,7 +963,6 @@ export default function OptionsPage() {
                 }
                 onDeleteItem={onDelete}
                 onOpenDialog={setDialogItem}
-                swapMode={swapMode}
                 onToggleRead={handleToggleRead}
                 onMoveToProject={setMoveCardId}
                 onCopyToProject={setCopyCardId}

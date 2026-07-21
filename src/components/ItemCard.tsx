@@ -69,6 +69,8 @@ export default function ItemCard({
     <Paper
       elevation={0}
       sx={{
+        position: "relative",
+        overflow: "hidden",
         borderRadius: 2,
         p: 2.5,
         mb: 2,
@@ -93,6 +95,7 @@ export default function ItemCard({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}>
+      <Box sx={{ position: "absolute", top: 0, left: 0, width: 48, height: 3, bgcolor: "primary.main", borderTopLeftRadius: 16 }} />
       <Stack
         direction="row"
         alignItems="center"
@@ -244,7 +247,7 @@ export default function ItemCard({
                 pl: 2,
                 pr: 1,
                 fontSize: "0.95rem",
-                fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif'
+                fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", "STSong", serif'
               }}>
               {truncateText(item.content, 160)}
             </Typography>

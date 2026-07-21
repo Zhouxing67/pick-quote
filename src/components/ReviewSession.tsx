@@ -316,6 +316,7 @@ export default function ReviewSession({
             sx={{
               position: "absolute",
               inset: 0,
+              overflow: "hidden",
               opacity: flipped ? 0 : 1,
               pointerEvents: flipped ? "none" : "auto",
               transition: "opacity 0.3s ease",
@@ -391,7 +392,7 @@ export default function ReviewSession({
                     lineHeight: 1.9,
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
-                    fontFamily: '"Noto Serif SC", "Songti SC", serif',
+                    fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
                     color: "text.primary",
                     fontStyle: "italic"
                   }}>
@@ -411,6 +412,7 @@ export default function ReviewSession({
             sx={{
               position: "absolute",
               inset: 0,
+              overflow: "hidden",
               opacity: flipped ? 1 : 0,
               pointerEvents: flipped ? "auto" : "none",
               transition: "opacity 0.3s ease",

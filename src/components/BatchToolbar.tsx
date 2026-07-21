@@ -2,7 +2,6 @@ import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined"
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined"
-import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
 import {
   Box,
   Button,
@@ -13,22 +12,18 @@ import {
 
 interface BatchToolbarProps {
   selectedIds: string[]
-  swapMode: boolean
   onSelectAll: () => void
   onBatchDelete: () => void
   onBatchMove: () => void
   onBatchCopy: () => void
-  onSwap: () => void
 }
 
 export default function BatchToolbar({
   selectedIds,
-  swapMode,
   onSelectAll,
   onBatchDelete,
   onBatchMove,
-  onBatchCopy,
-  onSwap
+  onBatchCopy
 }: BatchToolbarProps) {
   return (
     <Box
@@ -48,24 +43,12 @@ export default function BatchToolbar({
         ✅ 已选 {selectedIds.length} 条
       </Typography>
       <Stack direction="row" spacing={1} alignItems="center">
-        {swapMode ? (
-          <Button
-            size="small"
-            variant="contained"
-            sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-            disabled={selectedIds.length !== 2}
-            onClick={onSwap}>
-            <SwapHorizRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-            交换选中
-          </Button>
-        ) : (
-          <>
-            <Button
-              size="small"
-              sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-              onClick={onSelectAll}>
-              <DoneAllRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-              全选
+        <Button
+          size="small"
+          sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
+          onClick={onSelectAll}>
+          <DoneAllRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
+          全选
             </Button>
              <Divider orientation="vertical" flexItem />
              <Button
@@ -92,12 +75,10 @@ export default function BatchToolbar({
               sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
               disabled={selectedIds.length === 0}
               onClick={onBatchDelete}>
-              <DeleteSweepRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-              删除选中
-            </Button>
-          </>
-        )}
-      </Stack>
+               <DeleteSweepRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
+               删除选中
+             </Button>
+       </Stack>
     </Box>
   )
 }

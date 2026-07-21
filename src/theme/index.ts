@@ -1,3 +1,4 @@
+import "@fontsource/lxgw-wenkai"
 import { createTheme, type PaletteMode } from "@mui/material/styles"
 
 import type { PresetName } from "../types"
@@ -62,7 +63,7 @@ export const createAppTheme = (mode: PaletteMode, preset: PresetName = "classic"
     shape: { borderRadius: 12 },
     typography: {
       fontFamily: [
-        "'Noto Serif SC'", "'Songti SC'", "'STSong'",
+        "'LXGW WenKai'", "'Noto Serif SC'", "'Songti SC'", "'STSong'",
         "Georgia", "serif", "-apple-system", "BlinkMacSystemFont"
       ].join(","),
       h5: { fontWeight: 400, letterSpacing: "0.02em" },

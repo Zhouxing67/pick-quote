@@ -1,3 +1,4 @@
+import { alpha } from "@mui/material/styles"
 import { useState } from "react"
 
 import BackupRoundedIcon from "@mui/icons-material/BackupRounded"
@@ -106,7 +107,7 @@ export default function SidebarFilters({
         "& .MuiDrawer-paper": {
           width,
           boxSizing: "border-box",
-          bgcolor: "background.default",
+          bgcolor: (theme) => alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.1 : 0.04),
           borderRight: "2px solid",
           borderColor: "primary.main",
           overflowX: "hidden"
@@ -538,60 +539,63 @@ function ProjectRow({
   }
 
   return (
-    <Stack
-      direction="row"
-      alignItems="center"
-      spacing={1}
-      sx={{
-        px: 1.5,
-        py: 0.5,
-        cursor: "pointer",
-        "&:hover": {
-          bgcolor: active ? "primary.dark" : "action.hover"
-        },
-        bgcolor: active ? "primary.main" : "transparent"
-      }}
-      onClick={active ? undefined : onOpen}>
-      <FolderOpenRoundedIcon
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
         sx={{
-          fontSize: 16,
-          color: active ? "primary.contrastText" : "text.secondary"
+          pl: 1.5,
+          pr: 1.5,
+          py: 0.5,
+          cursor: "pointer",
+          borderLeft: "3px solid",
+          borderColor: active ? "primary.main" : "transparent",
+          "&:hover": {
+            bgcolor: "action.hover"
+          },
+          bgcolor: "transparent"
         }}
-      />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          variant="body2"
-          noWrap
+        onClick={active ? undefined : onOpen}>
+        <FolderOpenRoundedIcon
           sx={{
-            fontSize: "0.8rem",
-            fontWeight: active ? 600 : 400,
-            color: active ? "primary.contrastText" : "text.primary"
-          }}>
-          {project.name}
-        </Typography>
-        {project.note && (
+            fontSize: 16,
+            color: active ? "primary.main" : "text.secondary"
+          }}
+        />
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
-            variant="caption"
+            variant="body2"
             noWrap
             sx={{
-              color: active ? "rgba(255,255,255,0.7)" : "text.secondary",
-              display: "block",
-              fontSize: "0.65rem"
+              fontSize: "0.8rem",
+              fontWeight: active ? 600 : 400,
+              color: "text.primary"
             }}>
-            {project.note}
+            {project.name}
           </Typography>
-        )}
-      </Box>
-      {active ? (
-        <Tooltip title="关闭项目">
-          <IconButton
-            size="small"
-            onClick={(e) => { e.stopPropagation(); onCloseProject() }}
-            sx={{ color: "primary.contrastText", opacity: 0.8, "&:hover": { opacity: 1 } }}>
-            <CloseRoundedIcon sx={{ fontSize: 14 }} />
-          </IconButton>
-        </Tooltip>
-      ) : (
+          {project.note && (
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                fontSize: "0.65rem"
+              }}>
+              {project.note}
+            </Typography>
+          )}
+        </Box>
+        {active ? (
+          <Tooltip title="关闭项目">
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onCloseProject() }}
+              sx={{ color: "text.secondary", opacity: 0.8, "&:hover": { opacity: 1 } }}>
+              <CloseRoundedIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Tooltip>
+        ) : (
         <Box
           sx={{ display: "flex", gap: 0.25, opacity: 0.6, "&:hover": { opacity: 1 } }}
           onClick={(e) => e.stopPropagation()}>
