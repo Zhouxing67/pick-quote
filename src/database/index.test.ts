@@ -3,7 +3,6 @@ import {
   addItem,
   deleteItem,
   deleteItems,
-  exportItems,
   searchItems,
   updateItem
 } from './index'
@@ -33,7 +32,7 @@ describe('database', () => {
       const item = createTestItem()
       await addItem(item)
 
-      const items = await exportItems()
+      const items = await searchItems({})
       expect(items).toHaveLength(1)
       expect(items[0].id).toBe(item.id)
       expect(items[0].content).toBe(item.content)
@@ -48,7 +47,7 @@ describe('database', () => {
       })
       await addItem(item)
 
-      const items = await exportItems()
+      const items = await searchItems({})
       expect(items[0].sourceSite).toBe('blog.example.com')
     })
 
@@ -57,7 +56,7 @@ describe('database', () => {
       delete item.hash
       await addItem(item)
 
-      const items = await exportItems()
+      const items = await searchItems({})
       expect(items[0].hash).toBeDefined()
       expect(items[0].hash).toHaveLength(64)
     })
@@ -67,7 +66,7 @@ describe('database', () => {
       await addItem(item)
       await addItem(item) // Try to add duplicate
 
-      const items = await exportItems()
+      const items = await searchItems({})
       expect(items).toHaveLength(1) // Should only have one item
     })
 
@@ -84,7 +83,7 @@ describe('database', () => {
       await addItem(item1)
       await addItem(item2)
 
-      const items = await exportItems()
+      const items = await searchItems({})
       expect(items).toHaveLength(2)
     })
   })
@@ -194,7 +193,7 @@ describe('database', () => {
       const updatedItem = { ...item, content: 'Updated content', note: 'Added note' }
       await updateItem(updatedItem)
 
-      const items = await exportItems()
+      const items = await searchItems({})
       expect(items).toHaveLength(1)
       expect(items[0].content).toBe('Updated content')
       expect(items[0].note).toBe('Added note')
@@ -206,12 +205,12 @@ describe('database', () => {
       const item = createTestItem()
       await addItem(item)
 
-      let items = await exportItems()
+      let items = await searchItems({})
       expect(items).toHaveLength(1)
 
       await deleteItem(item.id)
 
-      items = await exportItems()
+      items = await searchItems({})
       expect(items).toHaveLength(0)
     })
 
@@ -247,19 +246,4 @@ describe('database', () => {
     })
   })
 
-  describe('exportItems', () => {
-    it('should return all items in the database', async () => {
-      await addItem(createTestItem({ id: 'item1', content: 'Content 1' }))
-      await addItem(createTestItem({ id: 'item2', content: 'Content 2' }))
-      await addItem(createTestItem({ id: 'item3', content: 'Content 3' }))
-
-      const items = await exportItems()
-      expect(items).toHaveLength(3)
-    })
-
-    it('should return empty array when database is empty', async () => {
-      const items = await exportItems()
-      expect(items).toEqual([])
-    })
-  })
 })

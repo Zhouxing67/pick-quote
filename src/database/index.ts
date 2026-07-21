@@ -219,25 +219,6 @@ export async function updateItem(item: Item): Promise<void> {
   })
 }
 
-export async function exportItems(): Promise<Item[]> {
-  return withStore("items", "readonly", async (store) => {
-    const all: Item[] = []
-    return new Promise<Item[]>((resolve, reject) => {
-      const cursorReq = store.openCursor()
-      cursorReq.onsuccess = () => {
-        const cursor = cursorReq.result
-        if (cursor) {
-          all.push(cursor.value as Item)
-          cursor.continue()
-        } else {
-          resolve(all)
-        }
-      }
-      cursorReq.onerror = () => reject(cursorReq.error)
-    })
-  })
-}
-
 // ---- Projects ----
 
 export async function addProject(project: Project): Promise<void> {
