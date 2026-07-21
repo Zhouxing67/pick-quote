@@ -299,6 +299,10 @@ export default function ReviewSession({
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 3,
+              boxShadow: (theme) =>
+                theme.palette.mode === "light"
+                  ? "0 8px 32px rgba(0,0,0,0.06)"
+                  : "0 8px 32px rgba(0,0,0,0.25)",
               p: 5,
               display: "flex",
               flexDirection: "column",
@@ -318,17 +322,6 @@ export default function ReviewSession({
                 letterSpacing: "0.04em"
               }}
             />
-            <Box
-              component="span"
-              sx={{
-                fontSize: "2rem",
-                color: "text.disabled",
-                opacity: 0.2,
-                mb: 1,
-                lineHeight: 1
-              }}>
-              "
-            </Box>
             {current.type === "image" ? (
               <Box
                 sx={{
@@ -367,23 +360,25 @@ export default function ReviewSession({
                 {current.source.title || prettyUrl(current.source.url)}
               </Typography>
             ) : (
-              <Typography
-                sx={{
-                  fontSize: "1.15rem",
-                  lineHeight: 1.9,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  fontFamily: '"Noto Serif SC", "Songti SC", serif',
-                  color: "text.primary",
-                  textIndent: "1.5em"
-                }}>
-                {current.content}
-              </Typography>
+              <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
+                <Typography
+                  sx={{
+                    fontSize: "1.25rem",
+                    lineHeight: 1.9,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    fontFamily: '"Noto Serif SC", "Songti SC", serif',
+                    color: "text.primary",
+                    fontStyle: "italic"
+                  }}>
+                  {current.content}
+                </Typography>
+              </Box>
             )}
             <Typography
               variant="caption"
-              sx={{ mt: 2, color: "text.disabled", textAlign: "right" }}>
-              点击查看笔记
+              sx={{ mt: 2, color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em" }}>
+              ⌄ 点击翻转
             </Typography>
           </Box>
 
@@ -398,10 +393,13 @@ export default function ReviewSession({
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 3,
+              boxShadow: (theme) =>
+                theme.palette.mode === "light"
+                  ? "0 8px 32px rgba(0,0,0,0.06)"
+                  : "0 8px 32px rgba(0,0,0,0.25)",
               p: 5,
               display: "flex",
-              flexDirection: "column",
-              justifyContent: "center"
+              flexDirection: "column"
             }}>
             <Typography
               variant="subtitle2"
@@ -416,6 +414,10 @@ export default function ReviewSession({
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                   color: "text.primary",
+                  bgcolor: "action.hover",
+                  borderRadius: 1,
+                  px: 2,
+                  py: 1.5,
                   mb: 2
                 }}>
                 {current.note}
@@ -426,6 +428,10 @@ export default function ReviewSession({
                   fontSize: "0.9rem",
                   color: "text.disabled",
                   fontStyle: "italic",
+                  bgcolor: "action.hover",
+                  borderRadius: 1,
+                  px: 2,
+                  py: 1.5,
                   mb: 2
                 }}>
                 暂无笔记
@@ -458,9 +464,13 @@ export default function ReviewSession({
                   textDecoration: "none",
                   "&:hover": { textDecoration: "underline" },
                   fontSize: "0.8rem",
-                  wordBreak: "break-word"
+                  wordBreak: "break-word",
+                  mt: "auto",
+                  pt: 2,
+                  borderTop: "1px solid",
+                  borderColor: "divider"
                 }}>
-                {current.source.title || prettyUrl(current.source.url)}
+                ↗ {current.source.title || prettyUrl(current.source.url)}
               </Typography>
             )}
           </Box>
