@@ -27,12 +27,23 @@ export default function ReviewSession({
   onSave,
   onExit
 }: ReviewSessionProps) {
-  const [queue] = useState<Item[]>(() => [...items])
+  const [queue, setQueue] = useState<Item[]>([])
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [ratings, setRatings] = useState<number[]>([])
+
+  // Reset session state when items prop changes (new review set)
+  useEffect(() => {
+    setQueue([...items])
+    setIndex(0)
+    setFlipped(false)
+    setTransitioning(false)
+    setCompleted(false)
+    setRatings([])
+  }, [items])
+
   const dueCount = items.length
 
   const current = queue[index] ?? null
