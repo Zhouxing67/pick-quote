@@ -92,6 +92,7 @@ export default function OptionsPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [moveCardId, setMoveCardId] = useState<string | null>(null)
   const [copyCardId, setCopyCardId] = useState<string | null>(null)
+  const [batchAction, setBatchAction] = useState<"move" | "copy" | null>(null)
   const [snackbarMsg, setSnackbarMsg] = useState("")
 
   const ITEMS_PER_PAGE = 20
@@ -435,6 +436,30 @@ export default function OptionsPage() {
     onSearch()
   }
 
+  const handleBatchMove = () => setBatchAction("move")
+  const handleBatchCopy = () => setBatchAction("copy")
+
+  const handleBatchMoveCopy = async (targetProjectId: string) => {
+    for (const id of selectedIds) {
+      const card = allItems.find((i) => i.id === id)
+      if (!card) continue
+      if (batchAction === "move") {
+        await updateItem({ ...card, projectId: targetProjectId, order: undefined })
+      } else {
+        await addItem({
+          ...card,
+          id: crypto.randomUUID(),
+          createdAt: Date.now(),
+          projectId: targetProjectId
+        })
+      }
+    }
+    setBatchAction(null)
+    setSelectMode(false)
+    setSelectedIds([])
+    onSearch()
+  }
+
   const readingFilteredItems = allItems.filter(
     (i) => i.type === "link" && !i.read
   )
@@ -572,13 +597,13 @@ export default function OptionsPage() {
                     projects.filter((p) => exportedProjectIds.has(p.id))
                   )
                   const url = URL.createObjectURL(blob)
-                  const a = document.createElement("a")
-                  a.href = url
-                  a.download = "lime-export.json.zip"
-                  a.click()
-                  URL.revokeObjectURL(url)
+                  chrome.downloads.download({ url, filename: "lime-export.zip" })
+                  setSelectMode(false)
+                  setSelectedIds([])
                 }}
                 onBatchDelete={handleBatchDelete}
+                onBatchMove={handleBatchMove}
+                onBatchCopy={handleBatchCopy}
                 onSwap={handleSwap}
               />
             )}
@@ -915,6 +940,14 @@ export default function OptionsPage() {
               projects={projects.filter((p) => p.id !== activeProjectId)}
               onSelect={handleCopyCard}
               onClose={() => setCopyCardId(null)}
+            />
+
+            <MoveCopyCards
+              open={Boolean(batchAction)}
+              title={batchAction === "move" ? "批量移动到…" : "批量复制到…"}
+              projects={projects.filter((p) => p.id !== activeProjectId)}
+              onSelect={handleBatchMoveCopy}
+              onClose={() => setBatchAction(null)}
             />
           </Container>
         </Box>
