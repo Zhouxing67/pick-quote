@@ -111,9 +111,12 @@ export default function CardRenderer({ item, mode }: CardRendererProps) {
           <ContentBlock item={item} />
         </Box>
         {item.source?.url && (
-          <Typography variant="caption" sx={{ mt: 1, mb: 0.5, color: "text.disabled", fontSize: "0.7rem", textAlign: "center", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {item.source.title || prettyUrl(item.source.url)}
-          </Typography>
+          <>
+            <Box sx={{ mx: -5, borderTop: "1px solid", borderColor: "divider", mb: 1 }} />
+            <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.7rem", textAlign: "center", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flexShrink: 0 }}>
+              ↗ {item.source.title || prettyUrl(item.source.url)}
+            </Typography>
+          </>
         )}
         <Typography variant="caption" sx={{ mt: 0.5, color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em", flexShrink: 0 }}>
           ⌄ 点击翻转
@@ -158,7 +161,7 @@ export default function CardRenderer({ item, mode }: CardRendererProps) {
   return (
     <>
       {item.type === "text" && (
-        <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
+    <Box sx={{ pl: 2, borderLeft: "5px solid", borderLeftColor: "primary.main" }}>
           <Typography sx={{
             whiteSpace: "pre-wrap", lineHeight: 2, fontSize: "1.1rem",
             color: "text.primary",
