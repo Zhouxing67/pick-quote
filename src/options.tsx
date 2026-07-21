@@ -85,6 +85,7 @@ export default function OptionsPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [reviewMode, setReviewMode] = useState(false)
   const [reviewItems, setReviewItems] = useState<Item[]>([])
+  const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [readingFilter, setReadingFilter] = useState(false)
   const [showRandomReview, setShowRandomReview] = useState(true)
@@ -164,6 +165,11 @@ export default function OptionsPage() {
   useEffect(() => {
     onSearch()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Load unfiltered items for review (cross-project, independent of active project)
+  useEffect(() => {
+    searchItems({}).then(setAllItemsUnfiltered)
   }, [])
 
   // Immediate search for non-keyword filter changes
@@ -261,6 +267,8 @@ export default function OptionsPage() {
   const refreshAllData = useCallback(async () => {
     await loadProjects()
     await onSearch()
+    const all = await searchItems({})
+    setAllItemsUnfiltered(all)
   }, [loadProjects, onSearch])
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,9 +347,9 @@ export default function OptionsPage() {
   }, [selectedIds, swapItems])
 
   const dueCount = useMemo(() => {
-    const due = getDueItems(allItems)
+    const due = getDueItems(allItemsUnfiltered)
     return due.length
-  }, [allItems])
+  }, [allItemsUnfiltered])
 
   useEffect(() => {
     chrome.action.setBadgeText({ text: dueCount > 0 ? String(dueCount) : "" })
@@ -349,10 +357,10 @@ export default function OptionsPage() {
   }, [dueCount])
 
   const handleStartReview = useCallback(() => {
-    const due = getDueItems(allItems)
+    const due = getDueItems(allItemsUnfiltered)
     setReviewItems(due)
     setReviewMode(true)
-  }, [allItems])
+  }, [allItemsUnfiltered])
 
   const handleExitReview = useCallback(() => {
     setReviewMode(false)
