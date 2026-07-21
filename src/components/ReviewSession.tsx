@@ -52,10 +52,10 @@ export default function ReviewSession({
   const current = queue[index] ?? null
 
   const handleFlip = useCallback(() => {
-    if (!flipped && !transitioning) {
-      setFlipped(true)
+    if (!transitioning) {
+      setFlipped((prev) => !prev)
     }
-  }, [flipped, transitioning])
+  }, [transitioning])
 
   const handleRate = useCallback(
     async (rating: 1 | 2 | 3 | 4) => {
@@ -275,26 +275,21 @@ export default function ReviewSession({
           onDoubleClick={() => { /* no double click */ }}
           onClick={handleFlip}
           sx={{
-            perspective: "800px",
+            position: "relative",
+            minHeight: 520,
             cursor: "pointer",
             animation: transitioning
               ? `slideOut${slideDir === 1 ? "Left" : "Right"} 0.3s ease-in forwards`
               : `slideIn${slideDir === 1 ? "Right" : "Left"} 0.35s ease-out`
           }}>
-          <Box
-            sx={{
-              position: "relative",
-              minHeight: 520,
-              transformStyle: "preserve-3d",
-              transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-              transform: flipped ? "rotateX(-180deg)" : "rotateX(0deg)"
-            }}>
-          {/* Front */}
+          {/* Front — fades out when flipped */}
           <Box
             sx={{
               position: "absolute",
               inset: 0,
-              backfaceVisibility: "hidden",
+              opacity: flipped ? 0 : 1,
+              pointerEvents: flipped ? "none" : "auto",
+              transition: "opacity 0.3s ease",
               bgcolor: "background.paper",
               border: "1px solid",
               borderColor: "divider",
@@ -382,13 +377,14 @@ export default function ReviewSession({
             </Typography>
           </Box>
 
-          {/* Back — shows note, source, tags (not content, which was on the front) */}
+          {/* Back — fades in when flipped */}
           <Box
             sx={{
               position: "absolute",
               inset: 0,
-              backfaceVisibility: "hidden",
-              transform: "rotateX(180deg)",
+              opacity: flipped ? 1 : 0,
+              pointerEvents: flipped ? "auto" : "none",
+              transition: "opacity 0.3s ease",
               bgcolor: "background.paper",
               border: "1px solid",
               borderColor: "divider",
@@ -475,7 +471,6 @@ export default function ReviewSession({
             )}
           </Box>
         </Box>
-      </Box>
     </Box>
 
       {/* Rating buttons — visible only after flip */}
