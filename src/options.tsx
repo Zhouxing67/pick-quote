@@ -90,6 +90,7 @@ export default function OptionsPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [sidebarTab, setSidebarTab] = useState<"projects" | "review" | "backup">("projects")
   const [reviewItems, setReviewItems] = useState<Item[]>([])
+  const [reviewProgress, setReviewProgress] = useState({ current: 0, total: 0 })
   const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [readingFilter, setReadingFilter] = useState(false)
@@ -656,8 +657,18 @@ export default function OptionsPage() {
               drawerOpen={drawerOpen}
               headerHeight={headerHeight}
               onToggleDrawer={handleToggleDrawer}
-              onSettingsClick={() => setSettingsOpen(true)}>
-              {activeProject && sidebarTab !== "review" && (
+              onSettingsClick={() => setSettingsOpen(true)}
+              reviewProgress={reviewProgress}>
+              {sidebarTab === "review" ? (
+                <Tooltip title="退出复习">
+                  <IconButton
+                    size="small"
+                    onClick={handleExitReview}
+                    sx={{ color: "text.secondary", "&:hover": { color: "error.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
+                    <CloseRoundedIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+              ) : activeProject && (
                 <>
                   <Tooltip title={swapMode ? "退出交换" : "交换卡片"}>
                     <IconButton
@@ -717,6 +728,7 @@ export default function OptionsPage() {
                   await updateItem(item)
                 }}
                 onExit={handleExitReview}
+                onProgress={(c, t) => setReviewProgress({ current: c, total: t })}
               />
             ) : (
               <>

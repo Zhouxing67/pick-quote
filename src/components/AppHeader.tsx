@@ -8,6 +8,7 @@ interface AppHeaderProps {
   headerHeight: number
   onToggleDrawer: () => void
   onSettingsClick: () => void
+  reviewProgress?: { current: number; total: number }
   children?: ReactNode
 }
 
@@ -16,6 +17,7 @@ export default function AppHeader({
   headerHeight,
   onToggleDrawer,
   onSettingsClick,
+  reviewProgress,
   children
 }: AppHeaderProps) {
   return (
@@ -71,6 +73,13 @@ export default function AppHeader({
             <SettingsRoundedIcon sx={{ fontSize: 20 }} />
           </IconButton>
         </Tooltip>
+        {reviewProgress && reviewProgress.total > 0 && (
+          <Typography
+            variant="body2"
+            sx={{ color: "text.secondary", fontSize: "0.85rem", ml: 0.5 }}>
+            {reviewProgress.current}/{reviewProgress.total}
+          </Typography>
+        )}
         <Box sx={{ flexGrow: 1 }} />
         {children}
       </Stack>

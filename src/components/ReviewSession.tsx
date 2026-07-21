@@ -1,6 +1,5 @@
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import { Box, Button, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
 import { useCallback, useEffect, useState } from "react"
 
@@ -13,6 +12,7 @@ interface ReviewSessionProps {
   masteredCount: number
   onSave: (item: Item) => Promise<void>
   onExit: () => void
+  onProgress?: (current: number, total: number) => void
 }
 
 const LABELS = ["重来", "困难", "良好", "简单"]
@@ -27,7 +27,8 @@ export default function ReviewSession({
   items,
   masteredCount,
   onSave,
-  onExit
+  onExit,
+  onProgress
 }: ReviewSessionProps) {
   const [queue, setQueue] = useState<Item[]>([])
   const [index, setIndex] = useState(0)
@@ -48,6 +49,11 @@ export default function ReviewSession({
   }, [items])
 
   const dueCount = items.length
+
+  // Report progress to parent for AppHeader display
+  useEffect(() => {
+    onProgress?.(index + 1, dueCount)
+  }, [index, dueCount, onProgress])
 
   const current = queue[index] ?? null
 
@@ -221,19 +227,6 @@ export default function ReviewSession({
           to { opacity: 0; transform: translateX(60px); }
         }
       `}</style>
-
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 2, px: 1 }}>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {index + 1} / {dueCount}
-        </Typography>
-        <IconButton size="small" onClick={onExit}>
-          <CloseRoundedIcon sx={{ fontSize: 20 }} />
-        </IconButton>
-      </Stack>
 
       <Box sx={{ position: "relative", mb: 3 }}>
         <IconButton
