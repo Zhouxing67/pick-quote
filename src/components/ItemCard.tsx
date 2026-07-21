@@ -1,6 +1,8 @@
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded"
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
+import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined"
+import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined"
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
 import {
   Box,
@@ -25,6 +27,8 @@ export default function ItemCard({
   onDelete,
   onClick,
   onToggleRead,
+  onMoveToProject,
+  onCopyToProject,
   draggable,
   onDragStart,
   onDragOver,
@@ -35,6 +39,8 @@ export default function ItemCard({
   onDelete: (id: string) => void
   onClick?: () => void
   onToggleRead?: (id: string) => void
+  onMoveToProject?: (id: string) => void
+  onCopyToProject?: (id: string) => void
   draggable?: boolean
   onDragStart?: (e: React.DragEvent) => void
   onDragOver?: (e: React.DragEvent) => void
@@ -151,6 +157,32 @@ export default function ItemCard({
               <ImageOutlinedIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
+          {onMoveToProject && (
+            <Tooltip title="移动到…">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onMoveToProject(item.id)
+                }}
+                sx={{ p: 0.75 }}>
+                <DriveFileMoveOutlinedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onCopyToProject && (
+            <Tooltip title="复制到…">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCopyToProject(item.id)
+                }}
+                sx={{ p: 0.75 }}>
+                <FileCopyOutlinedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip title="删除">
             <IconButton
               size="small"

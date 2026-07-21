@@ -27,6 +27,7 @@ import CardGrid from "./components/CardGrid"
 import DeleteConfirmDialog from "./components/DeleteConfirmDialog"
 import FilterChips from "./components/FilterChips"
 import ItemDialog from "./components/ItemDialog"
+import MoveCopyCards from "./components/MoveCopyCards"
 import NewCardDialog from "./components/NewCardDialog"
 import NewProjectDialog from "./components/NewProjectDialog"
 import ReviewSession from "./components/ReviewSession"
@@ -36,6 +37,7 @@ import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
 import { getDueItems } from "./hooks/useSrs"
 import {
+  addItem,
   deleteItem,
   searchItems,
   updateItem
@@ -86,6 +88,8 @@ export default function OptionsPage() {
   const [showRandomReview, setShowRandomReview] = useState(true)
   const [refreshRandom, setRefreshRandom] = useState(0)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const [moveCardId, setMoveCardId] = useState<string | null>(null)
+  const [copyCardId, setCopyCardId] = useState<string | null>(null)
 
   const ITEMS_PER_PAGE = 20
 
@@ -372,6 +376,30 @@ export default function OptionsPage() {
     setReadingFilter((prev) => !prev)
   }
 
+  const handleMoveCard = async (targetProjectId: string) => {
+    if (!moveCardId) return
+    const card = allItems.find((i) => i.id === moveCardId)
+    if (card) await updateItem({ ...card, projectId: targetProjectId })
+    setMoveCardId(null)
+    onSearch()
+  }
+
+  const handleCopyCard = async (targetProjectId: string) => {
+    if (!copyCardId) return
+    const card = allItems.find((i) => i.id === copyCardId)
+    if (card) {
+      const newCard = {
+        ...card,
+        id: crypto.randomUUID(),
+        createdAt: Date.now(),
+        projectId: targetProjectId
+      }
+      await addItem(newCard)
+    }
+    setCopyCardId(null)
+    onSearch()
+  }
+
   const readingFilteredItems = allItems.filter(
     (i) => i.type === "link" && !i.read
   )
@@ -655,6 +683,8 @@ export default function OptionsPage() {
                   onOpenDialog={setDialogItem}
                   swapMode={swapMode}
                   onToggleRead={handleToggleRead}
+                  onMoveToProject={setMoveCardId}
+                  onCopyToProject={setCopyCardId}
                 />
               )
             ) : activeProject && randomItem && showRandomReview ? (
@@ -713,6 +743,8 @@ export default function OptionsPage() {
                 onOpenDialog={setDialogItem}
                 swapMode={swapMode}
                 onToggleRead={handleToggleRead}
+                onMoveToProject={setMoveCardId}
+                onCopyToProject={setCopyCardId}
               />
             )}
 
@@ -821,6 +853,22 @@ export default function OptionsPage() {
               onDataChange={() => refreshAllData()}
               preset={preset}
               onPresetChange={(name) => setPreset(name)}
+            />
+
+            <MoveCopyCards
+              open={Boolean(moveCardId)}
+              title="移动到…"
+              projects={projects.filter((p) => p.id !== activeProjectId)}
+              onSelect={handleMoveCard}
+              onClose={() => setMoveCardId(null)}
+            />
+
+            <MoveCopyCards
+              open={Boolean(copyCardId)}
+              title="复制到…"
+              projects={projects.filter((p) => p.id !== activeProjectId)}
+              onSelect={handleCopyCard}
+              onClose={() => setCopyCardId(null)}
             />
           </Container>
         </Box>
