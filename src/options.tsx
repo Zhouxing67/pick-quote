@@ -366,6 +366,11 @@ export default function OptionsPage() {
     setSidebarTab("review")
   }, [allItemsUnfiltered])
 
+  // Initialize review session when entering review mode
+  useEffect(() => {
+    if (sidebarTab === "review") handleStartReview()
+  }, [sidebarTab, handleStartReview])
+
   const handleExitReview = useCallback(() => {
     setReviewItems([])
     setSidebarTab("projects")
