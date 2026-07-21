@@ -92,24 +92,25 @@ async function withStore<T>(
   }
 }
 
-export async function addItem(item: Item): Promise<boolean> {
-  const normalized: Item = {
-    ...item,
-    sourceSite: item.source?.site ?? (item.source ? new URL(item.source.url).hostname : undefined),
-    hash: item.hash || (item.source ? await computeItemHash(item.content, item.source.url) : await computeItemHash(item.content, ""))
-  }
-  // simple de-dup: if same project has same hash + same url, skip
-  const exists = await withStore("items", "readonly", async (store) => {
+export async function isDuplicate(
+  hash: string,
+  projectId?: string,
+  sourceUrl?: string
+): Promise<boolean> {
+  return withStore("items", "readonly", async (store) => {
     const idx = store.index("hash")
     return new Promise<boolean>((resolve, reject) => {
-      const req = idx.openCursor(IDBKeyRange.only(normalized.hash))
+      const req = idx.openCursor(IDBKeyRange.only(hash))
       req.onsuccess = () => {
         const cursor = req.result
-        if (!cursor) { resolve(false); return }
+        if (!cursor) {
+          resolve(false)
+          return
+        }
         const val = cursor.value as Item
         if (
-          val.projectId === normalized.projectId &&
-          val.source?.url === normalized.source?.url
+          val.projectId === projectId &&
+          val.source?.url === sourceUrl
         ) {
           resolve(true)
           return
@@ -119,7 +120,23 @@ export async function addItem(item: Item): Promise<boolean> {
       req.onerror = () => reject(req.error)
     })
   })
-  if (exists) return false
+}
+
+export async function addItem(item: Item): Promise<boolean> {
+  const normalized: Item = {
+    ...item,
+    sourceSite:
+      item.source?.site ??
+      (item.source ? new URL(item.source.url).hostname : undefined),
+    hash:
+      item.hash ||
+      (item.source
+        ? await computeItemHash(item.content, item.source.url)
+        : await computeItemHash(item.content, ""))
+  }
+  if (await isDuplicate(normalized.hash, normalized.projectId, normalized.source?.url)) {
+    return false
+  }
 
   await withStore("items", "readwrite", (store) => {
     store.put(normalized)

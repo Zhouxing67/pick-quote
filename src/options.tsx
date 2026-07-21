@@ -41,6 +41,7 @@ import {
   addItem,
   deleteItem,
   deleteItems,
+  isDuplicate,
   searchItems,
   updateItem
 } from "./database"
@@ -48,7 +49,7 @@ import { toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
 import type { Item, PresetName, SearchQuery } from "./types"
-import { truncateText } from "./utils"
+import { computeItemHash, truncateText } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
 const MAX_DRAWER_WIDTH = 500
@@ -415,7 +416,15 @@ export default function OptionsPage() {
   const handleMoveCard = async (targetProjectId: string) => {
     if (!moveCardId) return
     const card = allItems.find((i) => i.id === moveCardId)
-    if (card) await updateItem({ ...card, projectId: targetProjectId, order: undefined })
+    if (card) {
+      const hash = card.hash || (card.source ? await computeItemHash(card.content, card.source.url) : await computeItemHash(card.content, ""))
+      if (await isDuplicate(hash, targetProjectId, card.source?.url)) {
+        setSnackbarMsg("目标项目已存在相同内容，跳过移动")
+        setMoveCardId(null)
+        return
+      }
+      await updateItem({ ...card, projectId: targetProjectId, order: undefined })
+    }
     setMoveCardId(null)
     onSearch()
   }
@@ -430,7 +439,13 @@ export default function OptionsPage() {
         createdAt: Date.now(),
         projectId: targetProjectId
       }
-      await addItem(newCard)
+      const saved = await addItem(newCard)
+      if (!saved) {
+        setSnackbarMsg("目标项目已存在相同内容，跳过复制")
+        setCopyCardId(null)
+        onSearch()
+        return
+      }
     }
     setCopyCardId(null)
     onSearch()
@@ -440,23 +455,32 @@ export default function OptionsPage() {
   const handleBatchCopy = () => setBatchAction("copy")
 
   const handleBatchMoveCopy = async (targetProjectId: string) => {
+    let skipped = 0
     for (const id of selectedIds) {
       const card = allItems.find((i) => i.id === id)
       if (!card) continue
       if (batchAction === "move") {
+        const hash = card.hash || (card.source ? await computeItemHash(card.content, card.source.url) : await computeItemHash(card.content, ""))
+        if (await isDuplicate(hash, targetProjectId, card.source?.url)) {
+          skipped++
+          continue
+        }
         await updateItem({ ...card, projectId: targetProjectId, order: undefined })
       } else {
-        await addItem({
+        const newCard = {
           ...card,
           id: crypto.randomUUID(),
           createdAt: Date.now(),
           projectId: targetProjectId
-        })
+        }
+        const saved = await addItem(newCard)
+        if (!saved) skipped++
       }
     }
     setBatchAction(null)
     setSelectMode(false)
     setSelectedIds([])
+    if (skipped > 0) setSnackbarMsg(`跳过 ${skipped} 条重复内容`)
     onSearch()
   }
 
