@@ -45,11 +45,13 @@ export default function ItemDialog({
   const [editing, setEditing] = useState(false)
   const [draftContent, setDraftContent] = useState(item.content)
   const [draftNote, setDraftNote] = useState(item.note ?? "")
+  const [draftTags, setDraftTags] = useState<string[]>(item.tags ?? [])
 
   useEffect(() => {
     setEditing(false)
     setDraftContent(item.content)
     setDraftNote(item.note ?? "")
+    setDraftTags(item.tags ?? [])
   }, [item.id])
 
   const {
@@ -67,7 +69,8 @@ export default function ItemDialog({
     const updated: Item = {
       ...item,
       content: draftContent,
-      note: draftNote.trim() ? draftNote.trim() : undefined
+      note: draftNote.trim() ? draftNote.trim() : undefined,
+      tags: draftTags.length > 0 ? draftTags : undefined
     }
     if (onSave) await onSave(updated)
     setEditing(false)
@@ -76,6 +79,7 @@ export default function ItemDialog({
   const handleCancel = () => {
     setDraftContent(item.content)
     setDraftNote(item.note ?? "")
+    setDraftTags(item.tags ?? [])
     setEditing(false)
   }
 
@@ -214,8 +218,10 @@ export default function ItemDialog({
           <DialogEditMode
             draftContent={draftContent}
             draftNote={draftNote}
+            draftTags={draftTags}
             onContentChange={setDraftContent}
             onNoteChange={setDraftNote}
+            onTagsChange={setDraftTags}
           />
         ) : (
           <DialogViewMode item={item} />

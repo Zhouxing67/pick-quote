@@ -7,10 +7,12 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded"
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded"
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
+import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined"
 import {
   Badge,
   Box,
   Button,
+  Chip,
   Drawer,
   IconButton,
   Stack,
@@ -29,6 +31,9 @@ interface SidebarFiltersProps {
   readingFilter: boolean
   dueCount: number
   reviewMode: boolean
+  tags: string[]
+  activeTag: string
+  onTagSelect: (tag: string) => void
   onClose: () => void
   onOpenProject: (id: string) => void
   onRenameProject: (id: string, name: string) => void
@@ -50,6 +55,9 @@ export default function SidebarFilters({
   readingFilter,
   dueCount,
   reviewMode,
+  tags,
+  activeTag,
+  onTagSelect,
   onClose,
   onOpenProject,
   onRenameProject,

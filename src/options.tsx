@@ -53,6 +53,7 @@ export default function OptionsPage() {
   const [allItems, setAllItems] = useState<Item[]>([])
   const [displayedItems, setDisplayedItems] = useState<Item[]>([])
   const [keyword, setKeyword] = useState("")
+  const [tag, setTag] = useState<string>("")
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
 
   // Navigate prev/next within the currently displayed list
@@ -95,6 +96,13 @@ export default function OptionsPage() {
     [prefersDarkMode, preset]
   )
 
+  const projectTags = useMemo(() => {
+    if (!activeProjectId) return []
+    const tagSet = new Set<string>()
+    allItems.forEach((i) => i.tags?.forEach((t) => tagSet.add(t)))
+    return Array.from(tagSet).sort()
+  }, [allItems, activeProjectId])
+
   useEffect(() => {
     chrome.storage.sync.get("preset", (data) => {
       if (data.preset) setPreset(data.preset as PresetName)
@@ -107,9 +115,10 @@ export default function OptionsPage() {
 
   const onSearch = useCallback(
     async (projectId?: string | null) => {
-      const pid = projectId ?? activeProjectId
+      const pid = projectId !== undefined ? projectId : activeProjectId
       const q: SearchQuery = {
         keyword,
+        tag: tag || undefined,
         projectId: pid ?? undefined
       }
       const list = await searchItems(q)
@@ -118,7 +127,7 @@ export default function OptionsPage() {
       setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
       setHasMore(list.length > ITEMS_PER_PAGE)
     },
-    [keyword, activeProjectId, ITEMS_PER_PAGE]
+    [keyword, tag, activeProjectId, ITEMS_PER_PAGE]
   )
 
   const {
@@ -140,6 +149,7 @@ export default function OptionsPage() {
     },
     onDeactivate: () => {
       setActiveProjectId(null)
+      setDialogItem(null)
       onSearch(null)
     }
   })
@@ -161,6 +171,7 @@ export default function OptionsPage() {
 
   const handleOpenProject = (id: string) => {
     setActiveProjectId(id)
+    setTag("")
     onSearch(id)
   }
 
@@ -390,6 +401,9 @@ export default function OptionsPage() {
           readingFilter={readingFilter}
           dueCount={dueCount}
           reviewMode={reviewMode}
+          tags={projectTags}
+          activeTag={tag}
+          onTagSelect={setTag}
           onToggleReadingFilter={handleToggleReadingFilter}
           onClose={handleToggleDrawer}
           onOpenProject={handleOpenProject}
@@ -402,6 +416,7 @@ export default function OptionsPage() {
           onNewProjectClick={() => setCreateDialogOpen(true)}
           onCloseProject={() => {
             setActiveProjectId(null)
+            setDialogItem(null)
             onSearch(null)
           }}
         />
