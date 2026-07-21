@@ -198,7 +198,7 @@ export default function ReviewSession({
   return (
     <Box
       sx={{
-        maxWidth: 640,
+        maxWidth: 832,
         mx: "auto",
         mt: 4,
         animation: transitioning
@@ -241,7 +241,7 @@ export default function ReviewSession({
           onClick={handlePrev}
           sx={{
             position: "absolute",
-            left: -48,
+            left: -64,
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 2,
@@ -258,7 +258,7 @@ export default function ReviewSession({
           onClick={handleNext}
           sx={{
             position: "absolute",
-            right: -48,
+            right: -64,
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 2,
@@ -284,7 +284,7 @@ export default function ReviewSession({
           <Box
             sx={{
               position: "relative",
-              minHeight: 400,
+              minHeight: 520,
               transformStyle: "preserve-3d",
               transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
               transform: flipped ? "rotateX(-180deg)" : "rotateX(0deg)"
