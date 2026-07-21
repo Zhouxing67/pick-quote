@@ -4,7 +4,6 @@ import {
   deleteItem,
   deleteItems,
   exportItems,
-  getRecent,
   searchItems,
   updateItem
 } from './index'
@@ -87,47 +86,6 @@ describe('database', () => {
 
       const items = await exportItems()
       expect(items).toHaveLength(2)
-    })
-  })
-
-  describe('getRecent', () => {
-    it('should return items in reverse chronological order', async () => {
-      const item1 = createTestItem({ id: 'item1', content: 'First content', createdAt: 1000 })
-      const item2 = createTestItem({ id: 'item2', content: 'Second content', createdAt: 2000 })
-      const item3 = createTestItem({ id: 'item3', content: 'Third content', createdAt: 3000 })
-
-      await addItem(item1)
-      await addItem(item2)
-      await addItem(item3)
-
-      const recent = await getRecent(10)
-      expect(recent).toHaveLength(3)
-      expect(recent[0].id).toBe('item3')
-      expect(recent[1].id).toBe('item2')
-      expect(recent[2].id).toBe('item1')
-    })
-
-    it('should respect the limit parameter', async () => {
-      for (let i = 0; i < 5; i++) {
-        await addItem(createTestItem({ id: `item${i}`, content: `Content ${i}`, createdAt: i }))
-      }
-
-      const recent = await getRecent(3)
-      expect(recent).toHaveLength(3)
-    })
-
-    it('should return empty array when database is empty', async () => {
-      const recent = await getRecent(10)
-      expect(recent).toEqual([])
-    })
-
-    it('should use default limit of 10', async () => {
-      for (let i = 0; i < 15; i++) {
-        await addItem(createTestItem({ id: `item${i}`, content: `Content ${i}`, createdAt: i }))
-      }
-
-      const recent = await getRecent()
-      expect(recent).toHaveLength(10)
     })
   })
 

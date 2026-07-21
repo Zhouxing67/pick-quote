@@ -219,26 +219,6 @@ export async function updateItem(item: Item): Promise<void> {
   })
 }
 
-export async function getRecent(limit = 10): Promise<Item[]> {
-  return withStore("items", "readonly", async (store) => {
-    const idx = store.index("createdAt")
-    const items: Item[] = []
-    return new Promise<Item[]>((resolve, reject) => {
-      const cursorReq = idx.openCursor(null, "prev")
-      cursorReq.onsuccess = () => {
-        const cursor = cursorReq.result
-        if (cursor && items.length < limit) {
-          items.push(cursor.value as Item)
-          cursor.continue()
-        } else {
-          resolve(items)
-        }
-      }
-      cursorReq.onerror = () => reject(cursorReq.error)
-    })
-  })
-}
-
 export async function exportItems(): Promise<Item[]> {
   return withStore("items", "readonly", async (store) => {
     const all: Item[] = []

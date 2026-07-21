@@ -62,8 +62,7 @@ export default function NewProjectPage() {
       dedup: !saved
     })
 
-    // Delegate badge + toast to the background SW (popup may close before
-    // any local timer fires, leaking the badge).
+    // Delegate toast to the background SW
     chrome.runtime.sendMessage({
       kind: "save-feedback",
       tabId,
@@ -74,7 +73,6 @@ export default function NewProjectPage() {
 
     chrome.storage.session.remove("pendingCapture")
     chrome.storage.session.remove("pendingTabId")
-    chrome.runtime.sendMessage({ kind: "rebuild-menus" })
     window.close()
   }
 

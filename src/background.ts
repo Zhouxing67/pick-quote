@@ -199,15 +199,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 })
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg?.kind === "rebuild-menus") {
-    rebuildProjectMenus().catch((e) =>
-      console.warn("rebuild-menus failed:", e)
-    )
-    rebuildRecentMenus().catch((e) =>
-      console.warn("rebuildRecentMenus failed:", e)
-    )
-    return true
-  }
   if (msg?.kind === "webdav") {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), 20000)
