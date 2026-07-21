@@ -1,3 +1,5 @@
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import { Box, Button, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
 import { useCallback, useEffect, useState } from "react"
@@ -63,7 +65,18 @@ export default function ReviewSession({
 
       await onSave(updated)
 
-      if (index + 1 >= queue.length) {
+      // Anki-like: rating < 3 re-queues the card for later in this session
+      if (rating < 3 && index + 1 < queue.length) {
+        setTimeout(() => {
+          setQueue((prev) => {
+            const without = prev.filter((_, i) => i !== index)
+            return [...without, updated]
+          })
+          setFlipped(false)
+          setTransitioning(false)
+          // index stays — next card shifts into current position
+        }, 350)
+      } else if (index + 1 >= queue.length) {
         setTimeout(() => {
           setCompleted(true)
           setTransitioning(false)
@@ -78,6 +91,20 @@ export default function ReviewSession({
     },
     [current, transitioning, index, queue.length, onSave]
   )
+
+  const handlePrev = useCallback(() => {
+    if (index > 0 && !transitioning) {
+      setFlipped(false)
+      setIndex((i) => i - 1)
+    }
+  }, [index, transitioning])
+
+  const handleNext = useCallback(() => {
+    if (index < queue.length - 1 && !transitioning) {
+      setFlipped(false)
+      setIndex((i) => i + 1)
+    }
+  }, [index, queue.length, transitioning])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -181,12 +208,20 @@ export default function ReviewSession({
         alignItems="center"
         justifyContent="space-between"
         sx={{ mb: 2, px: 1 }}>
+        <IconButton size="small" disabled={index === 0} onClick={handlePrev}>
+          <ChevronLeftRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {index + 1} / {dueCount}
         </Typography>
-        <IconButton size="small" onClick={onExit}>
-          <CloseRoundedIcon sx={{ fontSize: 20 }} />
-        </IconButton>
+        <Stack direction="row" spacing={0.5}>
+          <IconButton size="small" disabled={index >= queue.length - 1} onClick={handleNext}>
+            <ChevronRightRoundedIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+          <IconButton size="small" onClick={onExit}>
+            <CloseRoundedIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+        </Stack>
       </Stack>
 
       <Box
@@ -299,11 +334,11 @@ export default function ReviewSession({
             <Typography
               variant="caption"
               sx={{ mt: 2, color: "text.disabled", textAlign: "right" }}>
-              点击查看详情
+              点击查看笔记
             </Typography>
           </Box>
 
-          {/* Back */}
+          {/* Back — shows note, source, tags (not content, which was on the front) */}
           <Box
             sx={{
               position: "absolute",
@@ -316,43 +351,50 @@ export default function ReviewSession({
               borderRadius: 3,
               p: 5,
               display: "flex",
-              flexDirection: "column"
+              flexDirection: "column",
+              justifyContent: "center"
             }}>
-            {current.type === "image" ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  flex: 1,
-                  minHeight: 0,
-                  mb: 2
-                }}>
-                <img
-                  src={current.content}
-                  alt={current.source?.title || ""}
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: 300,
-                    borderRadius: 10,
-                    objectFit: "contain"
-                  }}
-                />
-              </Box>
-            ) : (
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "text.disabled", mb: 1.5, fontSize: "0.75rem", letterSpacing: "0.04em" }}>
+              笔记
+            </Typography>
+            {current.note ? (
               <Typography
                 sx={{
-                  fontSize: "1.05rem",
+                  fontSize: "1rem",
                   lineHeight: 1.8,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
-                  fontFamily: '"Noto Serif SC", "Songti SC", serif',
                   color: "text.primary",
-                  textIndent: "1.5em",
                   mb: 2
                 }}>
-                {current.content}
+                {current.note}
               </Typography>
+            ) : (
+              <Typography
+                sx={{
+                  fontSize: "0.9rem",
+                  color: "text.disabled",
+                  fontStyle: "italic",
+                  mb: 2
+                }}>
+                暂无笔记
+              </Typography>
+            )}
+
+            {current.tags && current.tags.length > 0 && (
+              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+                {current.tags.map((t) => (
+                  <Chip
+                    key={t}
+                    label={t}
+                    size="small"
+                    variant="outlined"
+                    sx={{ borderRadius: 1, fontSize: "0.7rem", height: 22 }}
+                  />
+                ))}
+              </Stack>
             )}
 
             {current.source?.url && (
@@ -366,43 +408,10 @@ export default function ReviewSession({
                   color: "primary.main",
                   textDecoration: "none",
                   "&:hover": { textDecoration: "underline" },
-                  mb: 1,
                   fontSize: "0.8rem",
                   wordBreak: "break-word"
                 }}>
                 {current.source.title || prettyUrl(current.source.url)}
-              </Typography>
-            )}
-
-            {current.note && (
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.85rem",
-                  lineHeight: 1.6,
-                  bgcolor: "action.hover",
-                  borderRadius: 1,
-                  px: 1.5,
-                  py: 1,
-                  wordBreak: "break-word"
-                }}>
-                {current.note}
-              </Typography>
-            )}
-
-            {current.context?.paragraph && (
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.8rem",
-                  lineHeight: 1.6,
-                  mt: 1,
-                  opacity: 0.6,
-                  wordBreak: "break-word"
-                }}>
-                {current.context.paragraph}
               </Typography>
             )}
           </Box>

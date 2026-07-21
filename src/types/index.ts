@@ -12,6 +12,7 @@ export interface SrsData {
   easeFactor: number
   reviewCount: number
   lastReviewDate: number
+  reviewHistory?: { date: number; rating: 1 | 2 | 3 | 4 }[]
 }
 
 export interface Item {

@@ -35,7 +35,7 @@ import SettingsDialog from "./components/SettingsDialog"
 import SidebarFilters from "./components/SidebarFilters"
 import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
-import { getDueItems } from "./hooks/useSrs"
+import { getDueItems, getReviewStats } from "./hooks/useSrs"
 import {
   addItem,
   addProject,
@@ -481,6 +481,8 @@ export default function OptionsPage() {
     return { totalItems: allItems.length, totalProjects: projects.length, recent7, topSites }
   }, [allItems, projects])
 
+  const reviewStats = useMemo(() => getReviewStats(allItemsUnfiltered), [allItemsUnfiltered])
+
   const [randomItem, setRandomItem] = useState<Item | null>(null)
 
   const refreshRandomItem = useCallback(() => {
@@ -804,6 +806,89 @@ export default function OptionsPage() {
                     </Stack>
                   </>
                 )}
+               </Box>
+             )}
+
+            {!readingFilter && !activeProject && reviewStats.totalReviews > 0 && (
+              <Box
+                sx={{
+                  mx: "auto",
+                  maxWidth: 500,
+                  textAlign: "center",
+                  mb: 6
+                }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "text.secondary", mb: 2, fontSize: "0.85rem" }}>
+                  复习统计
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={3}
+                  justifyContent="center"
+                  sx={{ mb: 2.5 }}>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: "success.main" }}>
+                      {reviewStats.streakDays}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      连续打卡
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
+                      {reviewStats.totalReviews}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      累计复习
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
+                      {Math.round(reviewStats.accuracyRate * 100)}%
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      熟悉率
+                    </Typography>
+                  </Box>
+                </Stack>
+                {reviewStats.dailyActivity.length > 0 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-end",
+                      gap: 0.5,
+                      height: 60,
+                      justifyContent: "center",
+                      mb: 1
+                    }}>
+                    {reviewStats.dailyActivity.slice(-14).map((d) => {
+                      const maxCount = Math.max(
+                        ...reviewStats.dailyActivity.slice(-14).map((x) => x.count),
+                        1
+                      )
+                      const h = Math.max(4, (d.count / maxCount) * 50)
+                      return (
+                        <Tooltip
+                          key={d.date}
+                          title={`${d.date.slice(5)}: ${d.count} 次`}>
+                          <Box
+                            sx={{
+                              width: 10,
+                              height: h,
+                              bgcolor: "primary.main",
+                              opacity: 0.7,
+                              borderRadius: 0.5
+                            }}
+                          />
+                        </Tooltip>
+                      )
+                    })}
+                  </Box>
+                )}
+                <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.65rem" }}>
+                  近 14 天复习量
+                </Typography>
               </Box>
             )}
 

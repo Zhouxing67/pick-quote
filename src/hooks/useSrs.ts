@@ -33,14 +33,18 @@ export function rateCard(item: Item, rating: 1 | 2 | 3 | 4): Item {
   interval = Math.min(365, Math.max(1, Math.round(interval)))
   easeFactor = Math.max(1.3, Math.round(easeFactor * 100) / 100)
 
+  const now = Date.now()
+  const reviewHistory = [...(srs.reviewHistory ?? []), { date: now, rating }].slice(-200)
+
   return {
     ...item,
     srs: {
       interval,
       easeFactor,
       reviewCount,
-      dueDate: Date.now() + interval * 86400000,
-      lastReviewDate: Date.now()
+      dueDate: now + interval * 86400000,
+      lastReviewDate: now,
+      reviewHistory
     }
   }
 }
@@ -51,4 +55,74 @@ export function getDueItems(items: Item[]): Item[] {
     .filter((i) => !i.srs || i.srs.dueDate <= now)
     .map((i) => ensureSrs(i))
     .sort((a, b) => (a.srs?.dueDate ?? 0) - (b.srs?.dueDate ?? 0))
+}
+
+export interface ReviewStats {
+  totalReviews: number
+  masteredCount: number
+  dueCount: number
+  streakDays: number
+  dailyActivity: { date: string; count: number; avgRating: number }[]
+  accuracyRate: number
+}
+
+const DAY_MS = 86400000
+
+function dayKey(ts: number): string {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+export function getReviewStats(items: Item[]): ReviewStats {
+  const now = Date.now()
+  let totalReviews = 0
+  let masteredCount = 0
+  let dueCount = 0
+  let goodRatings = 0
+
+  const dailyMap = new Map<string, { count: number; ratingSum: number }>()
+
+  for (const item of items) {
+    const srs = item.srs
+    if (!srs || srs.dueDate <= now) dueCount++
+    if (srs && srs.interval >= 365) masteredCount++
+    if (srs?.reviewHistory) {
+      for (const entry of srs.reviewHistory) {
+        totalReviews++
+        if (entry.rating >= 3) goodRatings++
+        const key = dayKey(entry.date)
+        const cur = dailyMap.get(key) ?? { count: 0, ratingSum: 0 }
+        cur.count++
+        cur.ratingSum += entry.rating
+        dailyMap.set(key, cur)
+      }
+    }
+  }
+
+  const dailyActivity = Array.from(dailyMap.entries())
+    .map(([date, v]) => ({ date, count: v.count, avgRating: v.count > 0 ? v.ratingSum / v.count : 0 }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-30)
+
+  // Streak: consecutive days with at least one review, ending today or yesterday
+  const todayKey = dayKey(now)
+  const yesterdayKey = dayKey(now - DAY_MS)
+  const allDays = new Set(dailyMap.keys())
+  let streakDays = 0
+  if (allDays.has(todayKey) || allDays.has(yesterdayKey)) {
+    let cursor = allDays.has(todayKey) ? now : now - DAY_MS
+    while (allDays.has(dayKey(cursor))) {
+      streakDays++
+      cursor -= DAY_MS
+    }
+  }
+
+  return {
+    totalReviews,
+    masteredCount,
+    dueCount,
+    streakDays,
+    dailyActivity,
+    accuracyRate: totalReviews > 0 ? goodRatings / totalReviews : 0
+  }
 }
