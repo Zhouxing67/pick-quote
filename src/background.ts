@@ -8,17 +8,32 @@ import {
 } from "./background/menus"
 import type { Item } from "./types"
 
-function notifyTab(tabId: number | undefined, text: string) {
-  chrome.action.setBadgeText({ text: "✓" })
-  chrome.action.setBadgeBackgroundColor({ color: "#22c55e" })
+function notifyTab(
+  tabId: number | undefined,
+  saved: boolean,
+  type?: string,
+  projectName?: string
+) {
+  const badgeText = saved ? "✓" : "✕"
+  const badgeColor = saved ? "#22c55e" : "#ef4444"
+  chrome.action.setBadgeText({ text: badgeText })
+  chrome.action.setBadgeBackgroundColor({ color: badgeColor })
   setTimeout(() => chrome.action.setBadgeText({ text: "" }), 2000)
+
+  const typeLabel = type === "text" ? "文本" : type === "image" ? "图片" : "链接"
+  const toastText = saved
+    ? projectName
+      ? `已保存${typeLabel}到 ${projectName}`
+      : `已保存${typeLabel}`
+    : "内容重复，已跳过"
+
   if (tabId) {
     chrome.tabs
-      .sendMessage(tabId, { kind: "toast", text })
-      .catch(() => notifySystem(text))
+      .sendMessage(tabId, { kind: "toast", text: toastText })
+      .catch(() => notifySystem(toastText))
     return
   }
-  notifySystem(text)
+  notifySystem(toastText)
 }
 
 function notifySystem(text: string) {
@@ -61,8 +76,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     type: Item["type"],
     content: string,
     projectId?: string,
-    message: string = "已保存到 lime"
+    projectName?: string
   ) => {
+    console.debug("[lime:save]", { type, content: content.slice(0, 60), projectId, projectName })
     const item: Item = {
       id: crypto.randomUUID(),
       type,
@@ -71,33 +87,31 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       createdAt: base.createdAt
     }
     if (projectId) item.projectId = projectId
-    await addItem(item)
-    if (projectId) {
+    const saved = await addItem(item)
+    if (saved && projectId) {
       updateRecentProjects(projectId).catch(() => {})
     }
-    notifyTab(tab?.id, message)
+    notifyTab(tab?.id, saved, type, projectName)
   }
 
   const captureAndSave = async (
     projectId?: string,
     projectName?: string
   ): Promise<void> => {
-    const message = projectName ? `已加入项目：${projectName}` : "已保存到 lime"
-
     if (info.selectionText) {
-      await saveAndNotify("text", info.selectionText, projectId, message)
+      await saveAndNotify("text", info.selectionText, projectId, projectName)
       return
     }
     if (info.srcUrl) {
-      await saveAndNotify("image", info.srcUrl, projectId, message)
+      await saveAndNotify("image", info.srcUrl, projectId, projectName)
       return
     }
     if (info.linkUrl) {
-      await saveAndNotify("link", info.linkUrl, projectId, message)
+      await saveAndNotify("link", info.linkUrl, projectId, projectName)
       return
     }
     if (tab?.url) {
-      await saveAndNotify("link", tab.url, projectId, message)
+      await saveAndNotify("link", tab.url, projectId, projectName)
     }
   }
 

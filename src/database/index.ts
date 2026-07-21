@@ -92,7 +92,7 @@ async function withStore<T>(
   }
 }
 
-export async function addItem(item: Item): Promise<void> {
+export async function addItem(item: Item): Promise<boolean> {
   const normalized: Item = {
     ...item,
     sourceSite: item.source?.site ?? (item.source ? new URL(item.source.url).hostname : undefined),
@@ -119,11 +119,12 @@ export async function addItem(item: Item): Promise<void> {
       req.onerror = () => reject(req.error)
     })
   })
-  if (exists) return
+  if (exists) return false
 
   await withStore("items", "readwrite", (store) => {
     store.put(normalized)
   })
+  return true
 }
 
 export async function searchItems(q: SearchQuery): Promise<Item[]> {
