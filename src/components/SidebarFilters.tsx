@@ -256,6 +256,30 @@ export default function SidebarFilters({
           </Box>
         )}
 
+        {!reviewMode && activeProjectId && tags.length > 0 && (
+          <Box sx={{ px: 1.5, mt: 1 }}>
+            <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.75 }}>
+              <LabelOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+              <Typography variant="caption" sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 }}>
+                标签
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+              {tags.map((t) => (
+                <Chip
+                  key={t}
+                  label={t}
+                  size="small"
+                  variant={activeTag === t ? "filled" : "outlined"}
+                  color={activeTag === t ? "primary" : "default"}
+                  onClick={() => onTagSelect(activeTag === t ? "" : t)}
+                  sx={{ borderRadius: 1, height: 22, fontSize: "0.7rem" }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
+
         {!reviewMode && (
           <Stack
             direction="row"
