@@ -1,4 +1,3 @@
-import "@fontsource/lxgw-wenkai"
 import { createTheme, type PaletteMode } from "@mui/material/styles"
 
 import type { PresetName } from "../types"

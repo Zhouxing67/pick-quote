@@ -238,7 +238,7 @@ export default function ReviewSession({
       sx={{
         maxWidth: 832,
         mx: "auto",
-        mt: 8,
+        mt: 12,
         animation: transitioning
           ? "reviewSlideOut 0.3s ease-in forwards"
           : "reviewSlideIn 0.35s ease-out"

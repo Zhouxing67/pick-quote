@@ -110,7 +110,12 @@ export default function CardRenderer({ item, mode }: CardRendererProps) {
         }}>
           <ContentBlock item={item} />
         </Box>
-        <Typography variant="caption" sx={{ mt: 2, color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em", flexShrink: 0 }}>
+        {item.source?.url && (
+          <Typography variant="caption" sx={{ mt: 1, mb: 0.5, color: "text.disabled", fontSize: "0.7rem", textAlign: "center", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.source.title || prettyUrl(item.source.url)}
+          </Typography>
+        )}
+        <Typography variant="caption" sx={{ mt: 0.5, color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em", flexShrink: 0 }}>
           ⌄ 点击翻转
         </Typography>
       </>

@@ -320,6 +320,15 @@ export default function OptionsPage() {
     chrome.action.setBadgeBackgroundColor({ color: "#dc2626" })
   }, [dueCount])
 
+  // Load LXGW WenKai font from CDN
+  useEffect(() => {
+    const link = document.createElement("link")
+    link.rel = "stylesheet"
+    link.href = "https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.1.0/style.css"
+    document.head.appendChild(link)
+    return () => link.remove()
+  }, [])
+
   const handleStartReview = useCallback(async () => {
     const all = await searchItems({})
     const due = getDueItems(all)
