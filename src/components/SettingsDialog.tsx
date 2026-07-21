@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Stack,
   TextField,
@@ -50,6 +51,7 @@ export default function SettingsDialog({
     text: string
   }>({ type: "idle", text: "" })
   const [testing, setTesting] = useState(false)
+  const [confirmDownload, setConfirmDownload] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -114,7 +116,14 @@ export default function SettingsDialog({
   const handleDownload = async () => {
     const c = cred()
     if (!c) return
-    if (!window.confirm("从云端下载将覆盖本地所有数据，确定继续吗？")) return
+    setConfirmDownload(true)
+    return
+  }
+
+  const executeDownload = async () => {
+    const c = cred()
+    if (!c) return
+    setConfirmDownload(false)
     setStatus({ type: "loading", text: "正在从云端下载……" })
     saveCredentials(username, appPassword)
     try {
@@ -303,6 +312,26 @@ export default function SettingsDialog({
           关闭
         </Button>
       </DialogActions>
+
+      <Dialog
+        open={confirmDownload}
+        onClose={() => setConfirmDownload(false)}
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
+        <DialogTitle sx={{ pb: 1 }}>确认下载</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            从云端下载将覆盖本地所有数据，确定继续吗？
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmDownload(false)} sx={{ borderRadius: 1 }}>
+            取消
+          </Button>
+          <Button variant="contained" color="warning" onClick={executeDownload} sx={{ borderRadius: 1 }}>
+            确认下载
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   )
 }

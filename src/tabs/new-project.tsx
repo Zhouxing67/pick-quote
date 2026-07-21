@@ -55,18 +55,6 @@ export default function NewProjectPage() {
     const result = await chrome.storage.session.get("pendingTabId")
     const tabId = (result as { pendingTabId?: number }).pendingTabId
 
-    const badgeText = saved ? "✓" : "✕"
-    const badgeColor = saved ? "#22c55e" : "#ef4444"
-    chrome.action.setBadgeText({ text: badgeText })
-    chrome.action.setBadgeBackgroundColor({ color: badgeColor })
-    setTimeout(() => chrome.action.setBadgeText({ text: "" }), 2000)
-
-    const typeLabel =
-      pending.type === "text" ? "文本" : pending.type === "image" ? "图片" : "链接"
-    const toastText = saved
-      ? `已保存${typeLabel}到 ${projectName}`
-      : "内容重复，已跳过"
-
     console.debug("[lime:save]", {
       type: pending.type,
       projectId,
@@ -74,11 +62,15 @@ export default function NewProjectPage() {
       dedup: !saved
     })
 
-    if (tabId) {
-      chrome.tabs
-        .sendMessage(tabId, { kind: "toast", text: toastText })
-        .catch(() => {})
-    }
+    // Delegate badge + toast to the background SW (popup may close before
+    // any local timer fires, leaking the badge).
+    chrome.runtime.sendMessage({
+      kind: "save-feedback",
+      tabId,
+      saved,
+      type: pending.type,
+      projectName
+    })
 
     chrome.storage.session.remove("pendingCapture")
     chrome.storage.session.remove("pendingTabId")

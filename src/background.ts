@@ -8,6 +8,8 @@ import {
 } from "./background/menus"
 import type { Item } from "./types"
 
+let badgeClearTimer: ReturnType<typeof setTimeout> | null = null
+
 function notifyTab(
   tabId: number | undefined,
   saved: boolean,
@@ -16,9 +18,16 @@ function notifyTab(
 ) {
   const badgeText = saved ? "✓" : "✕"
   const badgeColor = saved ? "#22c55e" : "#ef4444"
-  chrome.action.setBadgeText({ text: badgeText })
-  chrome.action.setBadgeBackgroundColor({ color: badgeColor })
-  setTimeout(() => chrome.action.setBadgeText({ text: "" }), 2000)
+  // tabId-scoped badge: save confirmation shows only on the originating tab,
+  // leaving the global dueCount badge (set by options page) untouched.
+  const tabScope = tabId !== undefined ? { tabId } : {}
+  if (badgeClearTimer) clearTimeout(badgeClearTimer)
+  chrome.action.setBadgeText({ text: badgeText, ...tabScope })
+  chrome.action.setBadgeBackgroundColor({ color: badgeColor, ...tabScope })
+  badgeClearTimer = setTimeout(() => {
+    chrome.action.setBadgeText({ text: "", ...tabScope })
+    badgeClearTimer = null
+  }, 2000)
 
   const typeLabel = type === "text" ? "文本" : type === "image" ? "图片" : "链接"
   const toastText = saved
@@ -220,6 +229,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       })
     return true
   }
+  if (msg?.kind === "save-feedback") {
+    notifyTab(msg.tabId, msg.saved, msg.type, msg.projectName)
+    return
+  }
   if (msg?.kind === "capture" && msg?.payload) {
     const senderTab = _sender?.tab
     const item: Item = {
@@ -228,16 +241,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       createdAt: Date.now()
     }
     addItem(item)
-      .then(() => {
-        const badgeColor = "#22c55e"
-        chrome.action.setBadgeText({ text: "✓" })
-        chrome.action.setBadgeBackgroundColor({ color: badgeColor })
-        setTimeout(() => chrome.action.setBadgeText({ text: "" }), 2000)
-        if (senderTab?.id) {
-          chrome.tabs
-            .sendMessage(senderTab.id, { kind: "captured", text: "已保存文本" })
-            .catch(() => {})
-        }
+      .then((saved) => {
+        notifyTab(senderTab?.id, saved, item.type)
         sendResponse({ ok: true })
       })
       .catch((e) => sendResponse({ ok: false, error: String(e) }))

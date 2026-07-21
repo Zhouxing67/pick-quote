@@ -10,9 +10,6 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.kind === "toast" && msg?.text) {
     showToast(msg.text)
   }
-  if (msg?.kind === "captured" && msg?.text) {
-    showToast(msg.text)
-  }
 })
 
 function showToast(text: string) {
@@ -43,7 +40,6 @@ document.addEventListener("keydown", (e) => {
         url: window.location.href,
         site: window.location.hostname
       },
-      sourceSite: window.location.hostname
     }
     chrome.runtime.sendMessage({ kind: "capture", payload })
   }

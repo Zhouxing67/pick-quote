@@ -13,6 +13,7 @@ import {
   Container,
   CssBaseline,
   IconButton,
+  Snackbar,
   Stack,
   Tooltip,
   Typography,
@@ -46,7 +47,7 @@ import { toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
 import type { Item, PresetName, SearchQuery } from "./types"
-import { prettyUrl, truncateText } from "./utils"
+import { truncateText } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
 const MAX_DRAWER_WIDTH = 500
@@ -90,6 +91,7 @@ export default function OptionsPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [moveCardId, setMoveCardId] = useState<string | null>(null)
   const [copyCardId, setCopyCardId] = useState<string | null>(null)
+  const [snackbarMsg, setSnackbarMsg] = useState("")
 
   const ITEMS_PER_PAGE = 20
 
@@ -315,7 +317,7 @@ export default function OptionsPage() {
 
   const handleSwap = useCallback(() => {
     if (selectedIds.length !== 2) {
-      window.alert("请选择恰好两张卡片进行交换")
+      setSnackbarMsg("请选择恰好两张卡片进行交换")
       return
     }
     const [a, b] = selectedIds
@@ -384,7 +386,7 @@ export default function OptionsPage() {
   const handleMoveCard = async (targetProjectId: string) => {
     if (!moveCardId) return
     const card = allItems.find((i) => i.id === moveCardId)
-    if (card) await updateItem({ ...card, projectId: targetProjectId })
+    if (card) await updateItem({ ...card, projectId: targetProjectId, order: undefined })
     setMoveCardId(null)
     onSearch()
   }
@@ -861,6 +863,14 @@ export default function OptionsPage() {
               onDataChange={() => refreshAllData()}
               preset={preset}
               onPresetChange={(name) => setPreset(name)}
+            />
+
+            <Snackbar
+              open={Boolean(snackbarMsg)}
+              autoHideDuration={2000}
+              onClose={() => setSnackbarMsg("")}
+              message={snackbarMsg}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
             />
 
             <MoveCopyCards
