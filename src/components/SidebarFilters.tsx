@@ -24,6 +24,7 @@ import {
   Drawer,
   FormControlLabel,
   IconButton,
+  LinearProgress,
   Stack,
   TextField,
   Tooltip,
@@ -31,6 +32,7 @@ import {
 } from "@mui/material"
 
 import type { Project } from "../types"
+import type { ReviewStats } from "../hooks/useSrs"
 
 interface SidebarFiltersProps {
   open: boolean
@@ -44,6 +46,10 @@ interface SidebarFiltersProps {
   activeTag: string
   backupSelectedIds: string[]
   syncStatus: string
+  reviewStats: ReviewStats
+  previewCount: number
+  onPreview: (count: number) => void
+  onStartReview: () => void
   onTagSelect: (tag: string) => void
   onClose: () => void
   onOpenProject: (id: string) => void
@@ -75,6 +81,10 @@ export default function SidebarFilters({
   activeTag,
   backupSelectedIds,
   syncStatus,
+  reviewStats,
+  previewCount,
+  onPreview,
+  onStartReview,
   onTagSelect,
   onClose,
   onOpenProject,
@@ -181,7 +191,7 @@ export default function SidebarFilters({
             <Tooltip title="间隔复习">
               <IconButton
                 size="small"
-                onClick={() => onSetSidebarTab("review")}
+              onClick={onStartReview}
                 sx={{
                   color: sidebarTab === "review" ? "primary.main" : "text.secondary",
                   "&:hover": { color: "primary.main" }
@@ -220,15 +230,81 @@ export default function SidebarFilters({
 
         {sidebarTab === "review" ? (
           /* Review tab content */
-          <Stack spacing={2.5} alignItems="center" sx={{ py: 2 }}>
-            <SchoolRoundedIcon sx={{ fontSize: 48, color: "primary.main", opacity: 0.6 }} />
-            <Box sx={{ textAlign: "center" }}>
-              <Typography variant="h6" sx={{ fontSize: "1rem", fontWeight: 500, mb: 0.5 }}>
-                间隔复习
+          <Stack spacing={1.5} sx={{ p: 2, pt: 3 }}>
+            <Typography variant="h6" sx={{ fontSize: "0.9rem", fontWeight: 600, textAlign: "center", mb: 0.5 }}>
+              🔄 间隔复习
+            </Typography>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => onSetSidebarTab("review")}
+              sx={{ borderRadius: 1.5, py: 1, fontSize: "0.85rem" }}>
+              ▶ 开始复习 {dueCount > 0 ? `(${dueCount})` : ""}
+            </Button>
+            {reviewStats.totalReviews > 0 && (
+              <Box sx={{ bgcolor: "action.hover", borderRadius: 1, p: 1.5 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
+                  📊 复习概况
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                  累计 {reviewStats.totalReviews} 次 · 准确率 {Math.round(reviewStats.accuracyRate * 100)}%
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                  连续打卡 {reviewStats.streakDays} 天 · 掌握 {reviewStats.masteredCount} 张
+                </Typography>
+              </Box>
+            )}
+            <Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
+                📁 卡片分布
               </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                {dueCount > 0 ? `${dueCount} 张卡片等待复习` : "没有待复习的卡片"}
+              <Stack spacing={0.5}>
+                {[
+                  { type: "文本", key: "text", color: "#4f46e5", count: reviewStats.typeDistribution.text },
+                  { type: "图片", key: "image", color: "#22c55e", count: reviewStats.typeDistribution.image },
+                  { type: "链接", key: "link", color: "#f97316", count: reviewStats.typeDistribution.link }
+                ].map(({ type, key, color, count }) => {
+                  const total = reviewStats.typeDistribution.text + reviewStats.typeDistribution.image + reviewStats.typeDistribution.link
+                  const pct = total > 0 ? (count / total) * 100 : 0
+                  return (
+                    <Box key={key} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Typography variant="caption" sx={{ fontSize: "0.7rem", width: 28, flexShrink: 0 }}>
+                        {type}
+                      </Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={pct}
+                        sx={{
+                          flex: 1, height: 6, borderRadius: 3,
+                          bgcolor: "divider",
+                          "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 3 }
+                        }}
+                      />
+                      <Typography variant="caption" sx={{ fontSize: "0.65rem", width: 20, textAlign: "right", color: "text.secondary" }}>
+                        {count}
+                      </Typography>
+                    </Box>
+                  )
+                })}
+              </Stack>
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
+                🔍 预习
               </Typography>
+              <Stack direction="row" spacing={1}>
+                {[5, 10, 15].map((n) => (
+                  <Button
+                    key={n}
+                    size="small"
+                    variant={previewCount === n ? "contained" : "outlined"}
+                    fullWidth
+                    onClick={() => onPreview(n)}
+                    sx={{ borderRadius: 1, fontSize: "0.7rem" }}>
+                    {n}张
+                  </Button>
+                ))}
+              </Stack>
             </Box>
           </Stack>
         ) : sidebarTab === "backup" ? (

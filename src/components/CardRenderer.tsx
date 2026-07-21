@@ -65,7 +65,7 @@ function ContentBlock({ item }: { item: Item }) {
     <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
       <Typography
         sx={{
-          fontSize: "1.25rem", lineHeight: 1.9, whiteSpace: "pre-wrap",
+          fontSize: "1.2rem", lineHeight: 1.9, whiteSpace: "pre-wrap",
           wordBreak: "break-word",
           fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
           color: "text.primary", fontStyle: "italic"
@@ -163,7 +163,7 @@ export default function CardRenderer({ item, mode }: CardRendererProps) {
       {item.type === "text" && (
     <Box sx={{ pl: 2, borderLeft: "5px solid", borderLeftColor: "primary.main" }}>
           <Typography sx={{
-            whiteSpace: "pre-wrap", lineHeight: 2, fontSize: "1.1rem",
+            whiteSpace: "pre-wrap", lineHeight: 2, fontSize: "1.2rem",
             color: "text.primary",
             fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
           }}>

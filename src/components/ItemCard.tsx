@@ -74,6 +74,7 @@ export default function ItemCard({
         borderRadius: 2,
         p: 2.5,
         mb: 2,
+        minHeight: 100,
         cursor: "pointer",
         bgcolor: "background.paper",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",

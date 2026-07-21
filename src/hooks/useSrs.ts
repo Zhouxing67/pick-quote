@@ -64,6 +64,7 @@ export interface ReviewStats {
   streakDays: number
   dailyActivity: { date: string; count: number; avgRating: number }[]
   accuracyRate: number
+  typeDistribution: { text: number; image: number; link: number }
 }
 
 const DAY_MS = 86400000
@@ -79,6 +80,7 @@ export function getReviewStats(items: Item[]): ReviewStats {
   let masteredCount = 0
   let dueCount = 0
   let goodRatings = 0
+  const typeDistribution = { text: 0, image: 0, link: 0 }
 
   const dailyMap = new Map<string, { count: number; ratingSum: number }>()
 
@@ -86,6 +88,9 @@ export function getReviewStats(items: Item[]): ReviewStats {
     const srs = item.srs
     if (!srs || srs.dueDate <= now) dueCount++
     if (srs && srs.interval >= 365) masteredCount++
+    if (item.type === "text") typeDistribution.text++
+    else if (item.type === "image") typeDistribution.image++
+    else if (item.type === "link") typeDistribution.link++
     if (srs?.reviewHistory) {
       for (const entry of srs.reviewHistory) {
         totalReviews++
@@ -123,6 +128,7 @@ export function getReviewStats(items: Item[]): ReviewStats {
     dueCount,
     streakDays,
     dailyActivity,
-    accuracyRate: totalReviews > 0 ? goodRatings / totalReviews : 0
+    accuracyRate: totalReviews > 0 ? goodRatings / totalReviews : 0,
+    typeDistribution
   }
 }

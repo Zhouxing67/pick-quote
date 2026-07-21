@@ -90,6 +90,8 @@ export default function OptionsPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [sidebarTab, setSidebarTab] = useState<"projects" | "review" | "backup">("projects")
   const [reviewItems, setReviewItems] = useState<Item[]>([])
+  const [previewCount, setPreviewCount] = useState(0)
+  const [previewItems, setPreviewItems] = useState<Item[]>([])
   const [reviewProgress, setReviewProgress] = useState({ current: 0, total: 0 })
   const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
@@ -330,22 +332,37 @@ export default function OptionsPage() {
   }, [])
 
   const handleStartReview = useCallback(async () => {
+    setPreviewCount(0)
+    setPreviewItems([])
     const all = await searchItems({})
     const due = getDueItems(all)
     setReviewItems(due)
     setSidebarTab("review")
   }, [])
 
-  // Initialize review session when entering review mode
-  useEffect(() => {
-    if (sidebarTab === "review") handleStartReview()
-  }, [sidebarTab])
 
   const handleExitReview = useCallback(() => {
     setReviewItems([])
     setSidebarTab("projects")
     onSearch()
   }, [onSearch])
+
+  const handlePreview = useCallback(
+    async (count: number) => {
+      if (count === previewCount) {
+        setPreviewCount(0)
+        setPreviewItems([])
+        setSidebarTab("projects")
+        return
+      }
+      setPreviewCount(count)
+      setSidebarTab("review")
+      const all = await searchItems({})
+      const due = getDueItems(all)
+      setPreviewItems(due.slice(0, count))
+    },
+    [previewCount]
+  )
 
   const getSyncCredentials = async (): Promise<SyncCredentials | null> => {
     const data = await chrome.storage.sync.get(["syncUsername", "syncPassword"])
@@ -610,6 +627,14 @@ export default function OptionsPage() {
           onImportBackup={() => backupFileInputRef.current?.click()}
           onUploadSync={handleUploadSync}
           onDownloadSync={handleDownloadSync}
+          reviewStats={reviewStats}
+          previewCount={previewCount}
+          onPreview={handlePreview}
+          onStartReview={() => {
+            setPreviewCount(0)
+            setPreviewItems([])
+            handleStartReview()
+          }}
         />
 
         <Box
@@ -688,7 +713,29 @@ export default function OptionsPage() {
 
             <Fade in key={sidebarTab} timeout={250}>
               <Box>
-                {sidebarTab === "review" ? (
+                {sidebarTab === "review" && previewCount > 0 ? (
+                  <Box>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        🔍 预习 — 接下来 {previewCount} 张卡片
+                      </Typography>
+                      <Button size="small" onClick={() => { setPreviewCount(0); setPreviewItems([]) }} sx={{ borderRadius: 1 }}>
+                        退出
+                      </Button>
+                    </Stack>
+                    <CardGrid
+                      items={previewItems}
+                      selectMode={false}
+                      selectedIds={selectedIds}
+                      onSelectItem={() => {}}
+                      onDeleteItem={() => {}}
+                      onOpenDialog={setDialogItem}
+                      onToggleRead={handleToggleRead}
+                      onMoveToProject={setMoveCardId}
+                      onCopyToProject={setCopyCardId}
+                    />
+                  </Box>
+                ) : sidebarTab === "review" ? (
                   <ReviewSession
                     items={reviewItems}
                     masteredCount={reviewItems.filter(
