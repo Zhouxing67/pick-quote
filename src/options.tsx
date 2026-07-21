@@ -12,14 +12,8 @@ import {
   Chip,
   Container,
   CssBaseline,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   IconButton,
   Stack,
-  TextField,
   Tooltip,
   Typography,
   useMediaQuery
@@ -29,9 +23,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import AppHeader from "./components/AppHeader"
 import BatchToolbar from "./components/BatchToolbar"
-import CardGrid from "./components/GroupSection"
+import CardGrid from "./components/CardGrid"
+import DeleteConfirmDialog from "./components/DeleteConfirmDialog"
 import FilterChips from "./components/FilterChips"
 import ItemDialog from "./components/ItemDialog"
+import NewCardDialog from "./components/NewCardDialog"
+import NewProjectDialog from "./components/NewProjectDialog"
 import ReviewSession from "./components/ReviewSession"
 import SettingsDialog from "./components/SettingsDialog"
 import SidebarFilters from "./components/SidebarFilters"
@@ -46,8 +43,8 @@ import {
 import { toJsonZip } from "./export"
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
-import type { Item, ItemType, PresetName, Project, SearchQuery } from "./types"
-import { prettyUrl } from "./utils"
+import type { Item, PresetName, SearchQuery } from "./types"
+import { prettyUrl, truncateText } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
 const MAX_DRAWER_WIDTH = 500
@@ -56,7 +53,6 @@ export default function OptionsPage() {
   const [allItems, setAllItems] = useState<Item[]>([])
   const [displayedItems, setDisplayedItems] = useState<Item[]>([])
   const [keyword, setKeyword] = useState("")
-  const [type, setType] = useState<string>("")
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
 
   // Navigate prev/next within the currently displayed list
@@ -114,7 +110,6 @@ export default function OptionsPage() {
       const pid = projectId ?? activeProjectId
       const q: SearchQuery = {
         keyword,
-        type: type ? (type as ItemType) : undefined,
         projectId: pid ?? undefined
       }
       const list = await searchItems(q)
@@ -123,7 +118,7 @@ export default function OptionsPage() {
       setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
       setHasMore(list.length > ITEMS_PER_PAGE)
     },
-    [keyword, type, activeProjectId, ITEMS_PER_PAGE]
+    [keyword, activeProjectId, ITEMS_PER_PAGE]
   )
 
   const {
@@ -158,7 +153,7 @@ export default function OptionsPage() {
       onSearch()
     }, 300)
     return () => clearTimeout(t)
-  }, [keyword, type])
+  }, [keyword])
 
   const handleToggleDrawer = () => {
     setDrawerOpen((prev) => !prev)
@@ -265,10 +260,7 @@ export default function OptionsPage() {
 
   const headerHeight = 52
 
-  const handleRemoveFilter = (kind: "keyword" | "type") => {
-    if (kind === "keyword") setKeyword("")
-    else setType("")
-  }
+  const handleClearKeyword = () => setKeyword("")
 
   // ---- Card swap within project (checkbox mode) ----
   const [swapMode, setSwapMode] = useState(false)
@@ -475,10 +467,8 @@ export default function OptionsPage() {
 
             <FilterChips
               keyword={keyword}
-              type={type}
               headerHeight={headerHeight}
-              onClearKeyword={() => handleRemoveFilter("keyword")}
-              onClearType={() => handleRemoveFilter("type")}
+              onClearKeyword={handleClearKeyword}
             />
 
             {(selectMode || swapMode) && (
@@ -677,9 +667,7 @@ export default function OptionsPage() {
                       sx={{ fontSize: "1.5rem", color: "text.disabled", mr: 0.5 }}>
                       "
                     </Box>
-                    {randomItem.content.length > 200
-                      ? randomItem.content.slice(0, 200) + "…"
-                      : randomItem.content}
+                    {truncateText(randomItem.content, 200)}
                   </Box>
                 </Stack>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1.5 }}>
@@ -724,7 +712,7 @@ export default function OptionsPage() {
                   color: "text.secondary",
                   userSelect: "none"
                 }}>
-                {keyword || type ? (
+                {keyword ? (
                   <>
                     <SearchOffRoundedIcon
                       sx={{ fontSize: 80, opacity: 0.12, mb: 3 }}
@@ -784,132 +772,33 @@ export default function OptionsPage() {
               }}
             />
 
-            <Dialog
+            <NewCardDialog
               open={newCardOpen}
+              content={newCardContent}
+              onContentChange={setNewCardContent}
               onClose={() => setNewCardOpen(false)}
-              maxWidth="sm"
-              fullWidth
-              slotProps={{
-                paper: { sx: { borderRadius: 3 } }
-              }}>
-              <DialogTitle sx={{ py: 2.5, px: 3, fontSize: "1rem" }}>
-                新建卡片
-              </DialogTitle>
-              <DialogContent sx={{ px: 3, py: 1 }}>
-                <TextField
-                  autoFocus
-                  multiline
-                  minRows={4}
-                  fullWidth
-                  placeholder="输入卡片内容…"
-                  value={newCardContent}
-                  onChange={(e) => setNewCardContent(e.target.value)}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1,
-                      fontSize: "1rem"
-                    }
-                  }}
-                />
-              </DialogContent>
-              <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button onClick={() => setNewCardOpen(false)}>取消</Button>
-                <Button
-                  variant="contained"
-                  disabled={!newCardContent.trim()}
-                  onClick={handleSaveNewCard}>
-                  保存
-                </Button>
-              </DialogActions>
-            </Dialog>
+              onSave={handleSaveNewCard}
+            />
 
-            <Dialog
+            <DeleteConfirmDialog
               open={Boolean(confirmDeleteId) || confirmBatchDelete}
-              onClose={() => {
+              batch={confirmBatchDelete}
+              count={selectedIds.length}
+              onCancel={() => {
                 setConfirmDeleteId(null)
                 setConfirmBatchDelete(false)
               }}
-              slotProps={{
-                paper: { sx: { borderRadius: 3 } }
-              }}>
-              <DialogTitle sx={{ pb: 1 }}>
-                {confirmBatchDelete ? "批量删除" : "确认删除"}
-              </DialogTitle>
-              <DialogContent>
-                <DialogContentText>
-                  {confirmBatchDelete
-                    ? `确定要删除选中的 ${selectedIds.length} 条收藏吗？此操作不可撤销。`
-                    : "确定要删除这条收藏吗？此操作不可撤销。"}
-                </DialogContentText>
-              </DialogContent>
-              <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button
-                  onClick={() => {
-                    setConfirmDeleteId(null)
-                    setConfirmBatchDelete(false)
-                  }}
-                  sx={{ borderRadius: 1 }}>
-                  取消
-                </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={confirmBatchDelete ? handleConfirmBatchDelete : handleConfirmDelete}
-                  sx={{ borderRadius: 1 }}>
-                  删除
-                </Button>
-              </DialogActions>
-            </Dialog>
+              onConfirm={confirmBatchDelete ? handleConfirmBatchDelete : handleConfirmDelete}
+            />
 
-            <Dialog
+            <NewProjectDialog
               open={createDialogOpen}
+              name={newProjectName}
+              error={projectError}
+              onNameChange={(v) => { setNewProjectName(v); setProjectError(null) }}
               onClose={() => { setCreateDialogOpen(false); setProjectError(null) }}
-              maxWidth="sm"
-              fullWidth
-              slotProps={{
-                paper: { sx: { borderRadius: 3 } }
-              }}>
-              <DialogTitle sx={{ py: 2.5, px: 3, fontSize: "1rem" }}>
-                新建项目
-              </DialogTitle>
-              <DialogContent sx={{ px: 3, py: 1 }}>
-                <TextField
-                  autoFocus
-                  fullWidth
-                  size="small"
-                  label="项目名称"
-                  value={newProjectName}
-                  onChange={(e) => {
-                    setNewProjectName(e.target.value)
-                    setProjectError(null)
-                  }}
-                  error={Boolean(projectError)}
-                  helperText={projectError}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1,
-                      fontSize: "0.85rem"
-                    },
-                    "& .MuiFormHelperText-root": {
-                      whiteSpace: "normal",
-                      wordBreak: "break-word"
-                    }
-                  }}
-                />
-              </DialogContent>
-              <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button onClick={() => { setCreateDialogOpen(false); setProjectError(null) }}>
-                  取消
-                </Button>
-                <Button
-                  variant="contained"
-                  disabled={!newProjectName.trim()}
-                  onClick={() => { handleCreateProject(); setCreateDialogOpen(false) }}
-                  sx={{ borderRadius: 1 }}>
-                  创建
-                </Button>
-              </DialogActions>
-            </Dialog>
+              onCreate={() => { handleCreateProject(); setCreateDialogOpen(false) }}
+            />
 
             <SettingsDialog
               open={settingsOpen}

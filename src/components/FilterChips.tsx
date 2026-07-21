@@ -2,20 +2,16 @@ import { Box, Chip, Stack } from "@mui/material"
 
 interface FilterChipsProps {
   keyword: string
-  type: string
   headerHeight: number
   onClearKeyword: () => void
-  onClearType: () => void
 }
 
 export default function FilterChips({
   keyword,
-  type,
   headerHeight,
-  onClearKeyword,
-  onClearType
+  onClearKeyword
 }: FilterChipsProps) {
-  if (!keyword && !type) return null
+  if (!keyword) return null
 
   return (
     <Box
@@ -36,14 +32,6 @@ export default function FilterChips({
             label={`搜索: ${keyword}`}
             size="small"
             onDelete={onClearKeyword}
-            sx={{ borderRadius: 1.5 }}
-          />
-        )}
-        {type && (
-          <Chip
-            label={`类型: ${type}`}
-            size="small"
-            onDelete={onClearType}
             sx={{ borderRadius: 1.5 }}
           />
         )}

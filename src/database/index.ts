@@ -2,9 +2,9 @@ import type { Item, Project, SearchQuery } from "../types"
 import { computeItemHash } from "../utils"
 
 const DB_NAME = "pickquote-db"
-const DB_VERSION = 5
+const DB_VERSION = 6
 
-type TableNames = "items" | "projects" | "categories" | "sources"
+type TableNames = "items" | "projects"
 
 function openDb(version?: number): Promise<IDBDatabase> {
   const v = version ?? DB_VERSION
@@ -44,14 +44,12 @@ function openDb(version?: number): Promise<IDBDatabase> {
         const ps = db.createObjectStore("projects", { keyPath: "id" })
         ps.createIndex("name", "name", { unique: true })
       }
-      // stub other stores for future
-      if (!db.objectStoreNames.contains("categories")) {
-        const cs = db.createObjectStore("categories", { keyPath: "id" })
-        cs.createIndex("name", "name", { unique: true })
+      // v6 migration: remove deprecated stores
+      if (db.objectStoreNames.contains("categories")) {
+        db.deleteObjectStore("categories")
       }
-      // tags store removed in v2 migration
-      if (!db.objectStoreNames.contains("sources")) {
-        db.createObjectStore("sources", { keyPath: "site" })
+      if (db.objectStoreNames.contains("sources")) {
+        db.deleteObjectStore("sources")
       }
     }
     req.onsuccess = () => resolve(req.result)
@@ -104,7 +102,7 @@ export async function addItem(item: Item): Promise<void> {
   const exists = await withStore("items", "readonly", async (store) => {
     const idx = store.index("hash")
     return new Promise<boolean>((resolve, reject) => {
-      const req = idx.openCursor(normalized.hash)
+      const req = idx.openCursor(IDBKeyRange.only(normalized.hash))
       req.onsuccess = () => {
         const cursor = req.result
         if (!cursor) { resolve(false); return }
@@ -132,8 +130,12 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
   return withStore("items", "readonly", async (store) => {
     const results: Item[] = []
     return new Promise<Item[]>((resolve, reject) => {
-      const idx = store.index("createdAt")
-      const cursorReq = idx.openCursor(null, "prev")
+      const source =
+        q.projectId
+          ? store.index("projectId")
+          : store.index("createdAt")
+      const range = q.projectId ? IDBKeyRange.only(q.projectId) : null
+      const cursorReq = source.openCursor(range, q.projectId ? undefined : "prev")
       cursorReq.onsuccess = () => {
         const cursor = cursorReq.result
         if (!cursor) {
@@ -144,7 +146,6 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
         if (
           (!q.type || item.type === q.type) &&
           (!q.site || item.sourceSite === q.site) &&
-          (!q.sites || q.sites.length === 0 || q.sites.includes(item.sourceSite)) &&
           (!q.from || item.createdAt >= q.from) &&
           (!q.to || item.createdAt <= q.to) &&
           (!q.projectId || item.projectId === q.projectId) &&
@@ -191,40 +192,6 @@ export async function getRecent(limit = 10): Promise<Item[]> {
       }
       cursorReq.onerror = () => reject(cursorReq.error)
     })
-  })
-}
-
-export async function listCategories(): Promise<
-  { id: string; name: string }[]
-> {
-  return withStore("categories", "readonly", async (store) => {
-    const all: { id: string; name: string }[] = []
-    return new Promise((resolve, reject) => {
-      const req = store.openCursor()
-      req.onsuccess = () => {
-        const c = req.result
-        if (c) {
-          all.push(c.value)
-          c.continue()
-        } else resolve(all)
-      }
-      req.onerror = () => reject(req.error)
-    })
-  })
-}
-
-export async function upsertCategory(cat: {
-  id: string
-  name: string
-}): Promise<void> {
-  await withStore("categories", "readwrite", (store) => {
-    store.put(cat)
-  })
-}
-
-export async function deleteCategory(id: string): Promise<void> {
-  await withStore("categories", "readwrite", (store) => {
-    store.delete(id)
   })
 }
 

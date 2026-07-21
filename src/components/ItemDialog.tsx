@@ -13,8 +13,6 @@ import {
   DialogTitle,
   IconButton,
   Link,
-  Menu,
-  MenuItem,
   Stack,
   Tooltip,
   Typography
@@ -26,6 +24,7 @@ import { prettyUrl } from "../utils"
 import { useExportImage } from "../utils/useExportImage"
 import DialogEditMode from "./DialogEditMode"
 import DialogViewMode from "./DialogViewMode"
+import ExportImageMenu from "./ExportImageMenu"
 import ShareCard from "./ShareCard"
 
 export default function ItemDialog({
@@ -175,17 +174,12 @@ export default function ItemDialog({
             </IconButton>
           </Tooltip>
         </Stack>
-        <Menu
+        <ExportImageMenu
           anchorEl={anchorEl}
           open={menuOpen}
-          onClose={handleCloseMenu}>
-          <MenuItem onClick={() => handleExportImage("dark")}>
-            深色主题
-          </MenuItem>
-          <MenuItem onClick={() => handleExportImage("light")}>
-            浅色主题
-          </MenuItem>
-        </Menu>
+          onClose={handleCloseMenu}
+          onExport={handleExportImage}
+        />
       </DialogTitle>
       <DialogContent
         sx={{

@@ -6,22 +6,6 @@ export const config: PlasmoCSConfig = {
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg?.kind === "request-selection") {
-    const sel = window.getSelection()?.toString().trim()
-    if (!sel) {
-      sendResponse({ ok: false, reason: "no-selection" })
-      return true // 即使是失败，也要返回 true 并调用 sendResponse
-    }
-    sendResponse({
-      ok: true,
-      data: {
-        content: sel,
-        source: { title: document.title, url: location.href, site: location.hostname }
-      }
-    })
-    return true // 必须返回 true，因为 sendResponse 可能被异步调用（虽然这里同步了，但保持好习惯）
-  }
-
   if (msg?.kind === "toast" && msg?.text) {
     showToast(msg.text)
   }

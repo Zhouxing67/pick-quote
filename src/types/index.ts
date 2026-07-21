@@ -4,8 +4,6 @@ export interface SourceMeta {
   title: string
   url: string
   site?: string
-  selector?: string
-  anchor?: string
 }
 
 export interface SrsData {
@@ -21,8 +19,6 @@ export interface Item {
   type: ItemType
   content: string
   context?: {
-    before?: string
-    after?: string
     paragraph?: string
   }
   source?: SourceMeta
@@ -43,7 +39,6 @@ export interface Item {
 export interface SearchQuery {
   keyword?: string
   site?: string
-  sites?: string[]
   type?: ItemType
   from?: number
   to?: number

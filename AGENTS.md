@@ -59,4 +59,4 @@ Cards support an optional `Item.srs?: SrsData` field for SM-2 spaced repetition 
 - `src/components/ReviewSession.tsx`: Review UI — 3D card-flip animation, 1-4 rating buttons, keyboard shortcuts (1-4 for rating, Enter/Space for flip), progress counter, completion summary with accuracy.
 - `AppHeader` shows a `<SchoolRoundedIcon>` button with a `<Badge>` counting cards due today (`dueBefore: Date.now()`).
 - `SearchQuery.dueBefore` filters items whose `srs.dueDate <= dueBefore` or have no `srs` yet.
-- DB_VERSION 5 — no new stores, just the `dueBefore` filter in `searchItems`.
+- DB_VERSION 6 — removed deprecated `categories`/`sources` stores (migrated out in v6 upgrade). No active stores besides `items` and `projects`.

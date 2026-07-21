@@ -4,10 +4,7 @@ import {
   deleteItem,
   exportItems,
   getRecent,
-  listCategories,
   searchItems,
-  upsertCategory,
-  deleteCategory,
   updateItem
 } from './index'
 
@@ -277,59 +274,6 @@ describe('database', () => {
     it('should return empty array when database is empty', async () => {
       const items = await exportItems()
       expect(items).toEqual([])
-    })
-  })
-
-  describe('categories', () => {
-    describe('upsertCategory', () => {
-      it('should add a new category', async () => {
-        await upsertCategory({ id: 'cat1', name: 'Category 1' })
-
-        const categories = await listCategories()
-        expect(categories).toHaveLength(1)
-        expect(categories[0].id).toBe('cat1')
-        expect(categories[0].name).toBe('Category 1')
-      })
-
-      it('should update an existing category', async () => {
-        await upsertCategory({ id: 'cat1', name: 'Original Name' })
-        await upsertCategory({ id: 'cat1', name: 'Updated Name' })
-
-        const categories = await listCategories()
-        expect(categories).toHaveLength(1)
-        expect(categories[0].name).toBe('Updated Name')
-      })
-    })
-
-    describe('listCategories', () => {
-      it('should return all categories', async () => {
-        await upsertCategory({ id: 'cat1', name: 'Category 1' })
-        await upsertCategory({ id: 'cat2', name: 'Category 2' })
-
-        const categories = await listCategories()
-        expect(categories).toHaveLength(2)
-      })
-
-      it('should return empty array when no categories exist', async () => {
-        const categories = await listCategories()
-        expect(categories).toEqual([])
-      })
-    })
-
-    describe('deleteCategory', () => {
-      it('should remove a category', async () => {
-        await upsertCategory({ id: 'cat1', name: 'Category 1' })
-        let categories = await listCategories()
-        expect(categories).toHaveLength(1)
-
-        await deleteCategory('cat1')
-        categories = await listCategories()
-        expect(categories).toHaveLength(0)
-      })
-
-      it('should not throw error when deleting non-existent category', async () => {
-        await expect(deleteCategory('non-existent')).resolves.not.toThrow()
-      })
     })
   })
 })

@@ -7,8 +7,6 @@ import {
   Chip,
   IconButton,
   Link,
-  Menu,
-  MenuItem,
   Paper,
   Stack,
   Tooltip,
@@ -17,8 +15,9 @@ import {
 import { useState } from "react"
 
 import type { Item } from "../types"
-import { prettyUrl } from "../utils"
+import { prettyUrl, truncateText } from "../utils"
 import { useExportImage } from "../utils/useExportImage"
+import ExportImageMenu from "./ExportImageMenu"
 import ShareCard from "./ShareCard"
 
 export default function ItemCard({
@@ -181,18 +180,12 @@ export default function ItemCard({
             </Tooltip>
           )}
         </Stack>
-        <Menu
+        <ExportImageMenu
           anchorEl={anchorEl}
           open={menuOpen}
           onClose={handleCloseMenu}
-          onClick={(e) => e.stopPropagation()}>
-          <MenuItem onClick={() => handleExportImage("dark")}>
-            深色主题
-          </MenuItem>
-          <MenuItem onClick={() => handleExportImage("light")}>
-            浅色主题
-          </MenuItem>
-        </Menu>
+          onExport={handleExportImage}
+        />
       </Stack>
 
       <Box sx={{ mb: 2 }}>
@@ -221,9 +214,7 @@ export default function ItemCard({
                 fontSize: "0.95rem",
                 fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif'
               }}>
-              {item.content.length > 160
-                ? item.content.slice(0, 160) + "…"
-                : item.content}
+              {truncateText(item.content, 160)}
             </Typography>
           </Box>
         )}
