@@ -93,6 +93,8 @@ export default function SidebarFilters({
   onDownloadSync
 }: SidebarFiltersProps) {
   return (
+    <>
+    <style>{`@keyframes sidebarFadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
     <Drawer
       variant="persistent"
       anchor="left"
@@ -424,6 +426,7 @@ export default function SidebarFilters({
         )}
       </Stack>
     </Drawer>
+    </>
   )
 }
 

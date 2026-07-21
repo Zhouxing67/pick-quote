@@ -11,6 +11,7 @@ import {
   Chip,
   Container,
   CssBaseline,
+  Fade,
   IconButton,
   Snackbar,
   Stack,
@@ -729,10 +730,12 @@ export default function OptionsPage() {
               />
             )}
 
-            {sidebarTab === "review" ? (
-              <ReviewSession
-                items={reviewItems}
-                masteredCount={reviewItems.filter(
+            <Fade in key={sidebarTab} timeout={250}>
+              <Box>
+                {sidebarTab === "review" ? (
+                  <ReviewSession
+                    items={reviewItems}
+                    masteredCount={reviewItems.filter(
                   (i) => (i.srs?.reviewCount ?? 0) >= 3 && (i.srs?.easeFactor ?? 0) >= 2.5
                 ).length}
                 onSave={async (item) => {
@@ -882,27 +885,30 @@ export default function OptionsPage() {
                       display: "flex",
                       alignItems: "flex-end",
                       gap: 0.5,
-                      height: 60,
+                      height: 80,
                       justifyContent: "center",
-                      mb: 1
+                      mb: 0.5
                     }}>
                     {reviewStats.dailyActivity.slice(-14).map((d) => {
                       const maxCount = Math.max(
                         ...reviewStats.dailyActivity.slice(-14).map((x) => x.count),
                         1
                       )
-                      const h = Math.max(4, (d.count / maxCount) * 50)
+                      const h = Math.max(6, (d.count / maxCount) * 68)
                       return (
                         <Tooltip
                           key={d.date}
                           title={`${d.date.slice(5)}: ${d.count} 次`}>
                           <Box
                             sx={{
-                              width: 10,
+                              width: 12,
                               height: h,
-                              bgcolor: "primary.main",
-                              opacity: 0.7,
-                              borderRadius: 0.5
+                              borderRadius: "6px 6px 2px 2px",
+                              background: (theme) =>
+                                `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                              opacity: 0.85,
+                              transition: "all 0.2s",
+                              "&:hover": { opacity: 1, transform: "scaleY(1.05)" }
                             }}
                           />
                         </Tooltip>
@@ -1078,6 +1084,8 @@ export default function OptionsPage() {
             )}
               </>
             )}
+              </Box>
+            </Fade>
 
             <ItemDialog
               item={dialogItem}

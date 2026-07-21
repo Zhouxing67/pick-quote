@@ -148,34 +148,70 @@ export default function ReviewSession({
         ? ratings.reduce((s, r) => s + r, 0) / ratings.length
         : 0
     const goodCount = ratings.filter((r) => r >= 3).length
+    const accuracy = dueCount > 0 ? goodCount / dueCount : 0
     return (
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          py: 10
+          justifyContent: "center",
+          py: 10,
+          maxWidth: 400,
+          mx: "auto"
         }}>
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: 500 }}>
-          复习完成！
+        <Typography sx={{ fontSize: "4rem", mb: 2, lineHeight: 1 }}>
+          {accuracy >= 0.8 ? "🎉" : accuracy >= 0.5 ? "👍" : "💪"}
         </Typography>
-        <Box sx={{ mb: 4, textAlign: "center" }}>
-          <Typography variant="body1" sx={{ color: "text.secondary" }}>
-            本次复习 {dueCount} 张卡片
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5 }}>
-            熟悉率 {Math.round((goodCount / dueCount) * 100)}%（{goodCount}/{dueCount}）
+        <Typography variant="h5" sx={{ mb: 4, fontWeight: 500, letterSpacing: "0.04em" }}>
+          复习完成
+        </Typography>
+        <Box
+          sx={{
+            width: "100%",
+            bgcolor: "action.hover",
+            borderRadius: 2,
+            p: 3,
+            mb: 3
+          }}>
+          <Stack direction="row" justifyContent="space-around">
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: 600, color: "success.main" }}>
+                {Math.round(accuracy * 100)}%
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                准确率
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: 600, color: "primary.main" }}>
+                {dueCount}
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                复习卡片
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: 600, color: "secondary.main" }}>
+                {masteredCount}
+              </Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                已掌握
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
+        <Stack spacing={0.5} sx={{ mb: 3, textAlign: "center" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            熟悉率 {goodCount}/{dueCount} · 平均评分 {avgRating.toFixed(1)}
           </Typography>
           {masteredCount > 0 && (
-            <Typography variant="body1" sx={{ color: "success.main", mt: 0.5, fontWeight: 500 }}>
-              已掌握 {masteredCount} 张
+            <Typography variant="body2" sx={{ color: "success.main", fontWeight: 500 }}>
+              累计已掌握 {masteredCount} 张卡片
             </Typography>
           )}
-          <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5 }}>
-            平均评分 {avgRating.toFixed(1)}
-          </Typography>
-        </Box>
-        <Button variant="outlined" onClick={onExit} sx={{ borderRadius: 1 }}>
+        </Stack>
+        <Button variant="outlined" onClick={onExit} sx={{ borderRadius: 1, px: 4 }}>
           退出复习
         </Button>
       </Box>
