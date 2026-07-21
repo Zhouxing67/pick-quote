@@ -116,10 +116,9 @@ export default function ItemDialog({
               boxShadow: 2,
               "&:hover": { bgcolor: "action.hover" }
             }}>
-            <ChevronLeftRoundedIcon />
+            <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
           </IconButton>
           <IconButton
-            size="small"
             onClick={() => onNavigate("next")}
             sx={{
               position: "fixed",
@@ -133,7 +132,7 @@ export default function ItemDialog({
               boxShadow: 2,
               "&:hover": { bgcolor: "action.hover" }
             }}>
-            <ChevronRightRoundedIcon />
+            <ChevronRightRoundedIcon sx={{ fontSize: 28 }} />
           </IconButton>
         </>
       )}

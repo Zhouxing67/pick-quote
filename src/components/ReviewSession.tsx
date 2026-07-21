@@ -206,23 +206,51 @@ export default function ReviewSession({
       <Stack
         direction="row"
         alignItems="center"
-        justifyContent="space-between"
+        justifyContent="center"
         sx={{ mb: 2, px: 1 }}>
-        <IconButton size="small" disabled={index === 0} onClick={handlePrev}>
-          <ChevronLeftRoundedIcon sx={{ fontSize: 20 }} />
-        </IconButton>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {index + 1} / {dueCount}
         </Typography>
-        <Stack direction="row" spacing={0.5}>
-          <IconButton size="small" disabled={index >= queue.length - 1} onClick={handleNext}>
-            <ChevronRightRoundedIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-          <IconButton size="small" onClick={onExit}>
-            <CloseRoundedIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        </Stack>
+        <IconButton size="small" onClick={onExit} sx={{ position: "absolute", right: 8 }}>
+          <CloseRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
       </Stack>
+
+      {/* Side navigation arrows */}
+      <IconButton
+        disabled={index === 0}
+        onClick={handlePrev}
+        sx={{
+          position: "fixed",
+          left: 24,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: (theme) => theme.zIndex.modal + 1,
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
+          boxShadow: 2,
+          "&:hover": { bgcolor: "action.hover" }
+        }}>
+        <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
+      </IconButton>
+      <IconButton
+        disabled={index >= queue.length - 1}
+        onClick={handleNext}
+        sx={{
+          position: "fixed",
+          right: 24,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: (theme) => theme.zIndex.modal + 1,
+          bgcolor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
+          boxShadow: 2,
+          "&:hover": { bgcolor: "action.hover" }
+        }}>
+        <ChevronRightRoundedIcon sx={{ fontSize: 28 }} />
+      </IconButton>
 
       <Box
         onDoubleClick={() => { /* no double click */ }}

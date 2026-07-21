@@ -34,6 +34,9 @@ export function rateCard(item: Item, rating: 1 | 2 | 3 | 4): Item {
   easeFactor = Math.max(1.3, Math.round(easeFactor * 100) / 100)
 
   const now = Date.now()
+  // rating < 3 keeps the card due immediately so it re-appears intra-session
+  // and the badge / review count doesn't decrease prematurely
+  const dueDate = rating < 3 ? now : now + interval * 86400000
   const reviewHistory = [...(srs.reviewHistory ?? []), { date: now, rating }].slice(-200)
 
   return {
@@ -42,7 +45,7 @@ export function rateCard(item: Item, rating: 1 | 2 | 3 | 4): Item {
       interval,
       easeFactor,
       reviewCount,
-      dueDate: now + interval * 86400000,
+      dueDate,
       lastReviewDate: now,
       reviewHistory
     }
