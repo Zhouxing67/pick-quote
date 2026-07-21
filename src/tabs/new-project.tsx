@@ -50,14 +50,38 @@ export default function NewProjectPage() {
       createdAt: Date.now(),
       projectId
     }
-    await addItem(item)
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icon128.png",
-      title: "lime",
-      message: `已加入项目：${projectName}`
+    const saved = await addItem(item)
+
+    const result = await chrome.storage.session.get("pendingTabId")
+    const tabId = (result as { pendingTabId?: number }).pendingTabId
+
+    const badgeText = saved ? "✓" : "✕"
+    const badgeColor = saved ? "#22c55e" : "#ef4444"
+    chrome.action.setBadgeText({ text: badgeText })
+    chrome.action.setBadgeBackgroundColor({ color: badgeColor })
+    setTimeout(() => chrome.action.setBadgeText({ text: "" }), 2000)
+
+    const typeLabel =
+      pending.type === "text" ? "文本" : pending.type === "image" ? "图片" : "链接"
+    const toastText = saved
+      ? `已保存${typeLabel}到 ${projectName}`
+      : "内容重复，已跳过"
+
+    console.debug("[lime:save]", {
+      type: pending.type,
+      projectId,
+      content: pending.content.slice(0, 60),
+      dedup: !saved
     })
+
+    if (tabId) {
+      chrome.tabs
+        .sendMessage(tabId, { kind: "toast", text: toastText })
+        .catch(() => {})
+    }
+
     chrome.storage.session.remove("pendingCapture")
+    chrome.storage.session.remove("pendingTabId")
     chrome.runtime.sendMessage({ kind: "rebuild-menus" })
     window.close()
   }

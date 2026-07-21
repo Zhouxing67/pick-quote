@@ -142,7 +142,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             type: captureType,
             content: captureContent,
             source: base.source
-          }
+          },
+          pendingTabId: tab?.id
         },
         () => resolve()
       )
