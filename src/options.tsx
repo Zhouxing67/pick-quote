@@ -5,7 +5,6 @@ import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded"
-import UnarchiveRoundedIcon from "@mui/icons-material/UnarchiveRounded"
 import {
   Box,
   Button,
@@ -39,6 +38,9 @@ import { useProjects } from "./hooks/useProjects"
 import { getDueItems } from "./hooks/useSrs"
 import {
   addItem,
+  addProject,
+  clearAllItems,
+  clearAllProjects,
   deleteItem,
   deleteItems,
   isDuplicate,
@@ -47,8 +49,10 @@ import {
 } from "./database"
 import { toJsonZip } from "./export"
 import { importFromZip } from "./import"
+import { downloadRemote, runSync } from "./utils/sync"
 import { createAppTheme } from "./theme"
 import type { Item, PresetName, SearchQuery } from "./types"
+import type { SyncCredentials } from "./utils/sync"
 import { computeItemHash, truncateText } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
@@ -84,7 +88,7 @@ export default function OptionsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [preset, setPreset] = useState<PresetName>("classic")
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [reviewMode, setReviewMode] = useState(false)
+  const [sidebarTab, setSidebarTab] = useState<"projects" | "review" | "backup">("projects")
   const [reviewItems, setReviewItems] = useState<Item[]>([])
   const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
@@ -95,6 +99,9 @@ export default function OptionsPage() {
   const [copyCardId, setCopyCardId] = useState<string | null>(null)
   const [batchAction, setBatchAction] = useState<"move" | "copy" | null>(null)
   const [snackbarMsg, setSnackbarMsg] = useState("")
+  const [backupSelectedIds, setBackupSelectedIds] = useState<string[]>([])
+  const [syncStatus, setSyncStatus] = useState("")
+  const backupFileInputRef = useRef<HTMLInputElement>(null)
 
   const ITEMS_PER_PAGE = 20
 
@@ -263,9 +270,6 @@ export default function OptionsPage() {
     onSearch()
   }
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [importing, setImporting] = useState(false)
-
   const refreshAllData = useCallback(async () => {
     await loadProjects()
     await onSearch()
@@ -273,12 +277,11 @@ export default function OptionsPage() {
     setAllItemsUnfiltered(all)
   }, [loadProjects, onSearch])
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportBackupFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setImporting(true)
     try {
-      const result = await importFromZip(file)
+      const result = await importFromZip(file, backupSelectedIds.length > 0 ? backupSelectedIds : undefined)
       const msg = `导入完成：成功 ${result.imported} 条`
       const skipMsg = result.skipped > 0 ? `，跳过 ${result.skipped} 条` : ""
       if (result.errors.length > 0) {
@@ -289,9 +292,8 @@ export default function OptionsPage() {
     } catch (err) {
       setSnackbarMsg(`导入失败：${err}`)
     } finally {
-      setImporting(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
+      if (backupFileInputRef.current) {
+        backupFileInputRef.current.value = ""
       }
     }
   }
@@ -361,14 +363,77 @@ export default function OptionsPage() {
   const handleStartReview = useCallback(() => {
     const due = getDueItems(allItemsUnfiltered)
     setReviewItems(due)
-    setReviewMode(true)
+    setSidebarTab("review")
   }, [allItemsUnfiltered])
 
   const handleExitReview = useCallback(() => {
-    setReviewMode(false)
     setReviewItems([])
+    setSidebarTab("projects")
     onSearch()
   }, [onSearch])
+
+  const getSyncCredentials = async (): Promise<SyncCredentials | null> => {
+    const data = await chrome.storage.sync.get(["syncUsername", "syncPassword"])
+    const u = data.syncUsername as string | undefined
+    const p = data.syncPassword as string | undefined
+    return u && p ? { username: u, appPassword: p } : null
+  }
+
+  const handleExportBackup = async () => {
+    const items = allItemsUnfiltered.filter(
+      (i) => i.projectId && backupSelectedIds.includes(i.projectId)
+    )
+    const selectedProjects = projects.filter((p) => backupSelectedIds.includes(p.id))
+    const blob = await toJsonZip(items, selectedProjects)
+    const url = URL.createObjectURL(blob)
+    await chrome.downloads.download({ url, filename: "lime-backup.zip" })
+    URL.revokeObjectURL(url)
+  }
+
+  const handleUploadSync = async () => {
+    setSyncStatus("正在上传…")
+    try {
+      const cred = await getSyncCredentials()
+      if (!cred) { setSyncStatus("请先在设置中配置坚果云"); return }
+      const result = await runSync(cred, allItemsUnfiltered, projects)
+      setSyncStatus(result.message)
+    } catch (e) {
+      setSnackbarMsg(`同步失败：${e}`)
+      setSyncStatus("同步失败")
+    }
+  }
+
+  const handleDownloadSync = async () => {
+    setSyncStatus("正在下载…")
+    try {
+      const cred = await getSyncCredentials()
+      if (!cred) { setSyncStatus("请先在设置中配置坚果云"); return }
+      const remote = await downloadRemote(cred, allItemsUnfiltered, projects)
+      if (!remote.success) {
+        setSyncStatus(remote.message || "下载失败")
+        return
+      }
+      if (remote.direction === "noop") {
+        setSyncStatus("云端无变化")
+        return
+      }
+      if (remote.payload) {
+        await clearAllItems()
+        await clearAllProjects()
+        for (const p of remote.payload.projects) {
+          await addProject(p)
+        }
+        for (const item of remote.payload.items) {
+          await addItem(item)
+        }
+        setSyncStatus("下载完成")
+        await refreshAllData()
+      }
+    } catch (e) {
+      setSnackbarMsg(`下载失败：${e}`)
+      setSyncStatus("下载失败")
+    }
+  }
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
 
@@ -512,9 +577,11 @@ export default function OptionsPage() {
           activeProjectId={activeProjectId}
           readingFilter={readingFilter}
           dueCount={dueCount}
-          reviewMode={reviewMode}
+          sidebarTab={sidebarTab}
           tags={projectTags}
           activeTag={tag}
+          backupSelectedIds={backupSelectedIds}
+          syncStatus={syncStatus}
           onTagSelect={setTag}
           onToggleReadingFilter={handleToggleReadingFilter}
           onClose={handleToggleDrawer}
@@ -523,14 +590,27 @@ export default function OptionsPage() {
           onUpdateNote={handleUpdateNote}
           onDeleteProject={handleDeleteProject}
           onWidthChange={(w) => setDrawerWidth(w)}
-          onStartReview={handleStartReview}
-          onExitReview={handleExitReview}
+          onSetSidebarTab={setSidebarTab}
           onNewProjectClick={() => setCreateDialogOpen(true)}
           onCloseProject={() => {
             setActiveProjectId(null)
             setDialogItem(null)
             onSearch(null)
           }}
+          onToggleBackup={(id) =>
+            setBackupSelectedIds((prev) =>
+              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+            )
+          }
+          onToggleBackupAll={() =>
+            setBackupSelectedIds((prev) =>
+              prev.length === projects.length ? [] : projects.map((p) => p.id)
+            )
+          }
+          onExportBackup={handleExportBackup}
+          onImportBackup={() => backupFileInputRef.current?.click()}
+          onUploadSync={handleUploadSync}
+          onDownloadSync={handleDownloadSync}
         />
 
         <Box
@@ -546,24 +626,8 @@ export default function OptionsPage() {
               headerHeight={headerHeight}
               onToggleDrawer={handleToggleDrawer}
               onSettingsClick={() => setSettingsOpen(true)}>
-              {activeProject && !reviewMode && (
+              {activeProject && sidebarTab !== "review" && (
                 <>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    hidden
-                    accept=".zip"
-                    onChange={handleImport}
-                  />
-                  <Tooltip title="导入 ZIP">
-                    <IconButton
-                      size="small"
-                      component="label"
-                      disabled={importing}
-                      sx={{ color: "text.secondary", "&:hover": { color: "primary.main" }, "&.Mui-focusVisible": { outline: "none" } }}>
-                      <UnarchiveRoundedIcon sx={{ fontSize: 20 }} />
-                    </IconButton>
-                  </Tooltip>
                   <Tooltip title={swapMode ? "退出交换" : "交换卡片"}>
                     <IconButton
                       size="small"
@@ -605,26 +669,6 @@ export default function OptionsPage() {
                 onSelectAll={() =>
                   setSelectedIds(displayedItems.map((i) => i.id))
                 }
-                onExportJson={async () => {
-                  const items = allItems.filter(
-                    (i) =>
-                      selectedIds.includes(i.id) &&
-                      (!activeProjectId || i.projectId === activeProjectId)
-                  )
-                  const exportedProjectIds = new Set(
-                    items
-                      .map((i) => i.projectId)
-                      .filter((id): id is string => Boolean(id))
-                  )
-                  const blob = await toJsonZip(
-                    items,
-                    projects.filter((p) => exportedProjectIds.has(p.id))
-                  )
-                  const url = URL.createObjectURL(blob)
-                  chrome.downloads.download({ url, filename: "lime-export.zip" })
-                  setSelectMode(false)
-                  setSelectedIds([])
-                }}
                 onBatchDelete={handleBatchDelete}
                 onBatchMove={handleBatchMove}
                 onBatchCopy={handleBatchCopy}
@@ -632,7 +676,7 @@ export default function OptionsPage() {
               />
             )}
 
-            {reviewMode ? (
+            {sidebarTab === "review" ? (
               <ReviewSession
                 items={reviewItems}
                 masteredCount={reviewItems.filter(
@@ -972,6 +1016,13 @@ export default function OptionsPage() {
               projects={projects.filter((p) => p.id !== activeProjectId)}
               onSelect={handleBatchMoveCopy}
               onClose={() => setBatchAction(null)}
+            />
+            <input
+              ref={backupFileInputRef}
+              type="file"
+              hidden
+              accept=".zip"
+              onChange={handleImportBackupFile}
             />
           </Container>
         </Box>

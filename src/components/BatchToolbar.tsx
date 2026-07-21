@@ -1,4 +1,3 @@
-import CodeRoundedIcon from "@mui/icons-material/CodeRounded"
 import DeleteSweepRoundedIcon from "@mui/icons-material/DeleteSweepRounded"
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined"
@@ -16,7 +15,6 @@ interface BatchToolbarProps {
   selectedIds: string[]
   swapMode: boolean
   onSelectAll: () => void
-  onExportJson: () => void
   onBatchDelete: () => void
   onBatchMove: () => void
   onBatchCopy: () => void
@@ -27,7 +25,6 @@ export default function BatchToolbar({
   selectedIds,
   swapMode,
   onSelectAll,
-  onExportJson,
   onBatchDelete,
   onBatchMove,
   onBatchCopy,
@@ -70,15 +67,6 @@ export default function BatchToolbar({
               <DoneAllRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
               全选
             </Button>
-            <Divider orientation="vertical" flexItem />
-            <Button
-              size="small"
-              sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-              disabled={selectedIds.length === 0}
-              onClick={onExportJson}>
-              <CodeRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-               导出 JSON
-             </Button>
              <Divider orientation="vertical" flexItem />
              <Button
                size="small"

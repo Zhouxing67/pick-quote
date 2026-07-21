@@ -70,7 +70,10 @@ function validateItem(raw: unknown, index: number): { item: Item } | { error: st
   return { item }
 }
 
-export async function importFromZip(file: File): Promise<ImportResult> {
+export async function importFromZip(
+  file: File,
+  projectIds?: string[]
+): Promise<ImportResult> {
   const result: ImportResult = { imported: 0, skipped: 0, errors: [] }
 
   let zip: JSZip
@@ -122,6 +125,7 @@ export async function importFromZip(file: File): Promise<ImportResult> {
   // ---- project id remapping ----
   const projectIdMap = new Map<string, string>()
   for (const p of importedProjects) {
+    if (projectIds && !projectIds.includes(p.id)) continue
     const existing = await getProjectByName(p.name)
     if (existing) {
       // reuse existing project id
@@ -159,6 +163,10 @@ export async function importFromZip(file: File): Promise<ImportResult> {
   }
 
   for (const item of validItems) {
+    if (projectIds && !item.projectId) {
+      result.skipped++
+      continue
+    }
     try {
       await addItem(item)
       result.imported++

@@ -1,9 +1,14 @@
 import { useState } from "react"
 
+import BackupRoundedIcon from "@mui/icons-material/BackupRounded"
 import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded"
+import CloudDownloadRoundedIcon from "@mui/icons-material/CloudDownloadRounded"
+import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
+import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded"
+import FileUploadRoundedIcon from "@mui/icons-material/FileUploadRounded"
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded"
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
@@ -12,8 +17,11 @@ import {
   Badge,
   Box,
   Button,
+  Checkbox,
   Chip,
+  Divider,
   Drawer,
+  FormControlLabel,
   IconButton,
   Stack,
   TextField,
@@ -30,9 +38,11 @@ interface SidebarFiltersProps {
   activeProjectId: string | null
   readingFilter: boolean
   dueCount: number
-  reviewMode: boolean
+  sidebarTab: "projects" | "review" | "backup"
   tags: string[]
   activeTag: string
+  backupSelectedIds: string[]
+  syncStatus: string
   onTagSelect: (tag: string) => void
   onClose: () => void
   onOpenProject: (id: string) => void
@@ -41,10 +51,15 @@ interface SidebarFiltersProps {
   onDeleteProject: (id: string) => void
   onWidthChange: (w: number) => void
   onToggleReadingFilter: () => void
-  onStartReview: () => void
-  onExitReview: () => void
+  onSetSidebarTab: (tab: "projects" | "review" | "backup") => void
   onNewProjectClick: () => void
   onCloseProject: () => void
+  onToggleBackup: (id: string) => void
+  onToggleBackupAll: () => void
+  onExportBackup: () => void
+  onImportBackup: () => void
+  onUploadSync: () => void
+  onDownloadSync: () => void
 }
 
 export default function SidebarFilters({
@@ -54,9 +69,11 @@ export default function SidebarFilters({
   activeProjectId,
   readingFilter,
   dueCount,
-  reviewMode,
+  sidebarTab,
   tags,
   activeTag,
+  backupSelectedIds,
+  syncStatus,
   onTagSelect,
   onClose,
   onOpenProject,
@@ -65,10 +82,15 @@ export default function SidebarFilters({
   onDeleteProject,
   onWidthChange,
   onToggleReadingFilter,
-  onStartReview,
-  onExitReview,
+  onSetSidebarTab,
   onNewProjectClick,
-  onCloseProject
+  onCloseProject,
+  onToggleBackup,
+  onToggleBackupAll,
+  onExportBackup,
+  onImportBackup,
+  onUploadSync,
+  onDownloadSync
 }: SidebarFiltersProps) {
   return (
     <Drawer
@@ -134,14 +156,14 @@ export default function SidebarFilters({
           </IconButton>
         </Stack>
 
-        {/* Row 2: navigation icons — 📂 left, 📚 centered */}
-        <Box sx={{ position: "relative", display: "flex", alignItems: "center" }}>
+        {/* Row 2: navigation icons — 📂 left, 📚 centered, 💾 right */}
+        <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Tooltip title="项目管理">
             <IconButton
               size="small"
-              onClick={() => { if (reviewMode) onExitReview() }}
+              onClick={() => onSetSidebarTab("projects")}
               sx={{
-                color: reviewMode ? "text.secondary" : "primary.main",
+                color: sidebarTab === "projects" ? "primary.main" : "text.secondary",
                 "&:hover": { color: "primary.main" }
               }}>
               <FolderOpenRoundedIcon sx={{ fontSize: 22 }} />
@@ -156,9 +178,9 @@ export default function SidebarFilters({
             <Tooltip title="间隔复习">
               <IconButton
                 size="small"
-                onClick={() => { if (!reviewMode) onStartReview() }}
+                onClick={() => onSetSidebarTab("review")}
                 sx={{
-                  color: reviewMode ? "primary.main" : "text.secondary",
+                  color: sidebarTab === "review" ? "primary.main" : "text.secondary",
                   "&:hover": { color: "primary.main" }
                 }}>
                 <Badge
@@ -171,6 +193,17 @@ export default function SidebarFilters({
               </IconButton>
             </Tooltip>
           </Box>
+          <Tooltip title="备份与同步">
+            <IconButton
+              size="small"
+              onClick={() => onSetSidebarTab("backup")}
+              sx={{
+                color: sidebarTab === "backup" ? "primary.main" : "text.secondary",
+                "&:hover": { color: "primary.main" }
+              }}>
+              <BackupRoundedIcon sx={{ fontSize: 22 }} />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         {/* Thick divider */}
@@ -182,7 +215,7 @@ export default function SidebarFilters({
           }}
         />
 
-        {reviewMode ? (
+        {sidebarTab === "review" ? (
           /* Review tab content */
           <Stack spacing={2.5} alignItems="center" sx={{ py: 2 }}>
             <SchoolRoundedIcon sx={{ fontSize: 48, color: "primary.main", opacity: 0.6 }} />
@@ -195,6 +228,91 @@ export default function SidebarFilters({
               </Typography>
             </Box>
           </Stack>
+        ) : sidebarTab === "backup" ? (
+          /* Backup & Sync tab content */
+          <Box sx={{ py: 1 }}>
+            <Typography
+              variant="caption"
+              sx={{ px: 1, mb: 1, display: "block", fontSize: "0.7rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.04em" }}>
+              本地备份
+            </Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={backupSelectedIds.length === projects.length && projects.length > 0}
+                  indeterminate={backupSelectedIds.length > 0 && backupSelectedIds.length < projects.length}
+                  onChange={onToggleBackupAll}
+                />
+              }
+              label={<Typography variant="body2" sx={{ fontSize: "0.8rem" }}>全选（{projects.length} 个项目）</Typography>}
+              sx={{ mx: 0, width: "100%", px: 1 }}
+            />
+            <Box sx={{ maxHeight: 180, overflowY: "auto", px: 1, mb: 1.5 }}>
+              {projects.map((p) => (
+                <FormControlLabel
+                  key={p.id}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={backupSelectedIds.includes(p.id)}
+                      onChange={() => onToggleBackup(p.id)}
+                    />
+                  }
+                  label={<Typography variant="body2" noWrap sx={{ fontSize: "0.8rem" }}>{p.name}</Typography>}
+                  sx={{ mx: 0, width: "100%" }}
+                />
+              ))}
+            </Box>
+            <Stack direction="row" spacing={1} sx={{ px: 1, mb: 2 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FileDownloadRoundedIcon />}
+                disabled={backupSelectedIds.length === 0}
+                onClick={onExportBackup}
+                fullWidth>
+                导出备份
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FileUploadRoundedIcon />}
+                onClick={onImportBackup}
+                fullWidth>
+                导入备份
+              </Button>
+            </Stack>
+
+            <Divider sx={{ mx: 1 }} />
+
+            <Typography
+              variant="caption"
+              sx={{ px: 1, my: 1.5, display: "block", fontSize: "0.7rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.04em" }}>
+              坚果云同步
+            </Typography>
+            <Typography variant="caption" sx={{ px: 1, display: "block", color: "text.secondary", mb: 1 }}>
+              {syncStatus || "未同步"}
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ px: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CloudUploadRoundedIcon />}
+                onClick={onUploadSync}
+                fullWidth>
+                上传
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CloudDownloadRoundedIcon />}
+                onClick={onDownloadSync}
+                fullWidth>
+                下载
+              </Button>
+            </Stack>
+          </Box>
         ) : (
           /* Project tab content */
           <Box
@@ -256,7 +374,7 @@ export default function SidebarFilters({
           </Box>
         )}
 
-        {!reviewMode && activeProjectId && tags.length > 0 && (
+        {sidebarTab === "projects" && activeProjectId && tags.length > 0 && (
           <Box sx={{ px: 1.5, mt: 1 }}>
             <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.75 }}>
               <LabelOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
@@ -280,7 +398,7 @@ export default function SidebarFilters({
           </Box>
         )}
 
-        {!reviewMode && (
+        {sidebarTab === "projects" && (
           <Stack
             direction="row"
             alignItems="center"
