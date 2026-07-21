@@ -25,7 +25,10 @@ function notifyTab(
   if (tabId) {
     chrome.tabs
       .sendMessage(tabId, { kind: "toast", text: toastText })
-      .catch(() => notifySystem(toastText))
+      .catch((e) => {
+        console.warn("[lime] toast to tab failed, falling back to system notification:", e)
+        notifySystem(toastText)
+      })
     return
   }
   notifySystem(toastText)
@@ -33,9 +36,11 @@ function notifyTab(
 
 function notifySystem(text: string) {
   try {
+    const icons = chrome.runtime.getManifest().icons as Record<string, string> | undefined
+    const iconUrl = icons ? chrome.runtime.getURL(icons["128"] || icons["48"] || "") : undefined
     chrome.notifications.create({
       type: "basic",
-      iconUrl: "icon128.png",
+      iconUrl: iconUrl || chrome.runtime.getURL("icon128.plasmo.3c1ed2d2.png"),
       title: "lime",
       message: text
     })
