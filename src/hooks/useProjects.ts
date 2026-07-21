@@ -73,7 +73,6 @@ export function useProjects({
     setNewProjectName("")
     setProjectError(null)
     onActivate(project.id)
-    chrome.runtime.sendMessage({ kind: "rebuild-menus" })
   }, [newProjectName, loadProjects, onActivate])
 
   const handleRenameProject = useCallback(
@@ -86,7 +85,6 @@ export function useProjects({
       }
       await updateProject({ ...proj, name })
       await loadProjects()
-      chrome.runtime.sendMessage({ kind: "rebuild-menus" })
     },
     [projects, loadProjects]
   )
@@ -106,7 +104,6 @@ export function useProjects({
       await deleteProject(id)
       await loadProjects()
       onDeactivate()
-      chrome.runtime.sendMessage({ kind: "rebuild-menus" })
     },
     [loadProjects, onDeactivate]
   )

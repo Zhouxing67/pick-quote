@@ -7,7 +7,8 @@ const DB_VERSION = 6
 type TableNames = "items" | "projects"
 
 // ---- Change notification (Pub/Sub) ----
-type DbListener = () => void
+export type DbChangeType = "item" | "project"
+type DbListener = (type: DbChangeType) => void
 const dbListeners = new Set<DbListener>()
 
 /** Subscribe to data changes. Returns an unsubscribe function. */
@@ -16,8 +17,12 @@ export function subscribeDb(fn: DbListener): () => void {
   return () => dbListeners.delete(fn)
 }
 
-function notifyDb(): void {
-  dbListeners.forEach((fn) => fn())
+function notifyDb(type: DbChangeType): void {
+  dbListeners.forEach((fn) => fn(type))
+  // Cross-context: project changes must also reach the background SW
+  if (type === "project") {
+    chrome.runtime?.sendMessage({ kind: "rebuild-menus" }).catch(() => {})
+  }
 }
 // ---- End change notification ----
 
@@ -156,7 +161,7 @@ export async function addItem(item: Item): Promise<boolean> {
   await withStore("items", "readwrite", (store) => {
     store.put(normalized)
   })
-  notifyDb()
+  notifyDb("item")
   return true
 }
 
@@ -202,23 +207,24 @@ export async function deleteItem(id: string): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.delete(id)
   })
-  notifyDb()
+  notifyDb("item")
 }
 
 export async function deleteItems(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
   await withStore("items", "readwrite", (store) => {
     for (const id of ids) {
       store.delete(id)
     }
   })
-  notifyDb()
+  notifyDb("item")
 }
 
 export async function updateItem(item: Item): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.put(item)
   })
-  notifyDb()
+  notifyDb("item")
 }
 
 export async function getRecent(limit = 10): Promise<Item[]> {
@@ -266,7 +272,7 @@ export async function addProject(project: Project): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.put(project)
   })
-  notifyDb()
+  notifyDb("project")
 }
 
 export async function listProjects(): Promise<Project[]> {
@@ -306,38 +312,45 @@ export async function updateProject(project: Project): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.put(project)
   })
-  notifyDb()
+  notifyDb("project")
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  // Cascade: remove the project record and all its cards
-  await withStore("items", "readwrite", (store) => {
+  // Cascade: collect all item ids for this project, delete them, then delete the project record
+  const itemIds: string[] = []
+  await withStore("items", "readonly", (store) => {
     const idx = store.index("projectId")
     const range = IDBKeyRange.only(id)
-    idx.openCursor(range).onsuccess = (e) => {
-      const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result
-      if (cursor) {
-        cursor.delete()
-        cursor.continue()
+    return new Promise<void>((resolve) => {
+      const req = idx.openCursor(range)
+      req.onsuccess = () => {
+        const cursor = req.result
+        if (cursor) {
+          itemIds.push(cursor.primaryKey as string)
+          cursor.continue()
+        } else {
+          resolve()
+        }
       }
-    }
+    })
   })
+  if (itemIds.length > 0) await deleteItems(itemIds)
   await withStore("projects", "readwrite", (store) => {
     store.delete(id)
   })
-  notifyDb()
+  notifyDb("project")
 }
 
 export async function clearAllItems(): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.clear()
   })
-  notifyDb()
+  notifyDb("item")
 }
 
 export async function clearAllProjects(): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.clear()
   })
-  notifyDb()
+  notifyDb("project")
 }
