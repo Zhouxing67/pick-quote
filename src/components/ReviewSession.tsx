@@ -242,7 +242,7 @@ export default function ReviewSession({
       sx={{
         maxWidth: 832,
         mx: "auto",
-        mt: 4,
+        mt: 8,
         animation: transitioning
           ? "reviewSlideOut 0.3s ease-in forwards"
           : "reviewSlideIn 0.35s ease-out"
@@ -316,7 +316,7 @@ export default function ReviewSession({
             sx={{
               position: "absolute",
               inset: 0,
-              overflow: "hidden",
+              overflow: "auto",
               opacity: flipped ? 0 : 1,
               pointerEvents: flipped ? "none" : "auto",
               transition: "opacity 0.3s ease",
@@ -412,7 +412,7 @@ export default function ReviewSession({
             sx={{
               position: "absolute",
               inset: 0,
-              overflow: "hidden",
+              overflow: "auto",
               opacity: flipped ? 1 : 0,
               pointerEvents: flipped ? "auto" : "none",
               transition: "opacity 0.3s ease",

@@ -626,7 +626,7 @@ export default function OptionsPage() {
               headerHeight={headerHeight}
               onToggleDrawer={handleToggleDrawer}
               onSettingsClick={() => setSettingsOpen(true)}
-              reviewProgress={reviewProgress}
+              reviewProgress={sidebarTab === "review" ? reviewProgress : undefined}
               activeProjectName={activeProject?.name}>
               {sidebarTab === "review" ? (
                 <Tooltip title="退出复习">
