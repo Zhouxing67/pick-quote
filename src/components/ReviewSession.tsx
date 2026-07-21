@@ -316,7 +316,7 @@ export default function ReviewSession({
             sx={{
               position: "absolute",
               inset: 0,
-              overflow: "auto",
+              overflow: "hidden",
               opacity: flipped ? 0 : 1,
               pointerEvents: flipped ? "none" : "auto",
               transition: "opacity 0.3s ease",
@@ -330,11 +330,7 @@ export default function ReviewSession({
                   : "0 8px 32px rgba(0,0,0,0.25)",
               p: 5,
               display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-start",
-              "&::-webkit-scrollbar": { width: 4 },
-              "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 },
-              "&::-webkit-scrollbar-track": { bgcolor: "transparent" }
+              flexDirection: "column"
             }}>
             <Chip
               label={TYPE_LABEL[current.type] ?? "文本"}
@@ -350,62 +346,63 @@ export default function ReviewSession({
                 letterSpacing: "0.04em"
               }}
             />
-            {current.type === "image" ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  flex: 1,
-                  minHeight: 0
-                }}>
-                <img
-                  src={current.content}
-                  alt={current.source?.title || ""}
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: 340,
-                    borderRadius: 10,
-                    objectFit: "contain"
-                  }}
-                />
-              </Box>
-            ) : current.type === "link" && current.source?.url ? (
-              <Typography
-                component="a"
-                href={current.source.url}
-                target="_blank"
-                onClick={(e) => e.stopPropagation()}
-                sx={{
-                  fontSize: "1.1rem",
-                  lineHeight: 1.8,
-                  wordBreak: "break-word",
-                  color: "primary.main",
-                  textDecoration: "none",
-                  "&:hover": { textDecoration: "underline" },
-                  mb: 1
-                }}>
-                {current.source.title || prettyUrl(current.source.url)}
-              </Typography>
-            ) : (
-              <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
-                <Typography
+            <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 }, "&::-webkit-scrollbar-track": { bgcolor: "transparent" } }}>
+              {current.type === "image" ? (
+                <Box
                   sx={{
-                    fontSize: "1.25rem",
-                    lineHeight: 1.9,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
-                    color: "text.primary",
-                    fontStyle: "italic"
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: 200
                   }}>
-                  {current.content}
+                  <img
+                    src={current.content}
+                    alt={current.source?.title || ""}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: 340,
+                      borderRadius: 10,
+                      objectFit: "contain"
+                    }}
+                  />
+                </Box>
+              ) : current.type === "link" && current.source?.url ? (
+                <Typography
+                  component="a"
+                  href={current.source.url}
+                  target="_blank"
+                  onClick={(e) => e.stopPropagation()}
+                  sx={{
+                    fontSize: "1.1rem",
+                    lineHeight: 1.8,
+                    wordBreak: "break-word",
+                    color: "primary.main",
+                    textDecoration: "none",
+                    "&:hover": { textDecoration: "underline" },
+                    mb: 1
+                  }}>
+                  {current.source.title || prettyUrl(current.source.url)}
                 </Typography>
-              </Box>
-            )}
+              ) : (
+                <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
+                  <Typography
+                    sx={{
+                      fontSize: "1.25rem",
+                      lineHeight: 1.9,
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
+                      color: "text.primary",
+                      fontStyle: "italic"
+                    }}>
+                    {current.content}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
             <Typography
               variant="caption"
-              sx={{ mt: "auto", color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em" }}>
+              sx={{ mt: 2, color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em", flexShrink: 0 }}>
               ⌄ 点击翻转
             </Typography>
           </Box>
