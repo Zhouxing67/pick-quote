@@ -37,7 +37,7 @@ export async function exportToImage(
       URL.revokeObjectURL(url)
     }, "image/png")
   } catch (error) {
-    console.error("Error exporting image:", error)
+    console.error("[lime] Export image failed:", (error as Error).message)
     throw error
   }
 }

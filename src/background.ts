@@ -9,6 +9,9 @@ import {
 import type { Item } from "./types"
 
 function notifyTab(tabId: number | undefined, text: string) {
+  chrome.action.setBadgeText({ text: "✓" })
+  chrome.action.setBadgeBackgroundColor({ color: "#22c55e" })
+  setTimeout(() => chrome.action.setBadgeText({ text: "" }), 2000)
   if (tabId) {
     chrome.tabs
       .sendMessage(tabId, { kind: "toast", text })

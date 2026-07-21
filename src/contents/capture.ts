@@ -5,7 +5,8 @@ export const config: PlasmoCSConfig = {
   all_frames: true
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg) => {
+  console.debug("[lime:capture] received message:", msg?.kind)
   if (msg?.kind === "toast" && msg?.text) {
     showToast(msg.text)
   }
