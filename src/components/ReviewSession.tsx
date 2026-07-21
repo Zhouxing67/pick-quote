@@ -1,10 +1,11 @@
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded"
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
-import { Box, Button, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material"
+import { Box, Button, IconButton, Stack, Tooltip, Typography } from "@mui/material"
 import { useCallback, useEffect, useState } from "react"
 
 import { rateCard } from "../hooks/useSrs"
 import type { Item } from "../types"
+import CardRenderer from "./CardRenderer"
 import { prettyUrl } from "../utils"
 
 interface ReviewSessionProps {
@@ -17,11 +18,6 @@ interface ReviewSessionProps {
 
 const LABELS = ["重来", "困难", "良好", "简单"]
 const COLORS = ["#ef4444", "#f97316", "#22c55e", "#3b82f6"]
-const TYPE_LABEL: Record<string, string> = {
-  text: "文本",
-  image: "图片",
-  link: "链接"
-}
 
 export default function ReviewSession({
   items,
@@ -332,79 +328,7 @@ export default function ReviewSession({
               display: "flex",
               flexDirection: "column"
             }}>
-            <Chip
-              label={TYPE_LABEL[current.type] ?? "文本"}
-              size="small"
-              variant="outlined"
-              sx={{
-                position: "absolute",
-                top: 12,
-                right: 12,
-                height: 20,
-                fontSize: "0.65rem",
-                fontWeight: 500,
-                letterSpacing: "0.04em"
-              }}
-            />
-            <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 }, "&::-webkit-scrollbar-track": { bgcolor: "transparent" } }}>
-              {current.type === "image" ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    minHeight: 200
-                  }}>
-                  <img
-                    src={current.content}
-                    alt={current.source?.title || ""}
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: 340,
-                      borderRadius: 10,
-                      objectFit: "contain"
-                    }}
-                  />
-                </Box>
-              ) : current.type === "link" && current.source?.url ? (
-                <Typography
-                  component="a"
-                  href={current.source.url}
-                  target="_blank"
-                  onClick={(e) => e.stopPropagation()}
-                  sx={{
-                    fontSize: "1.1rem",
-                    lineHeight: 1.8,
-                    wordBreak: "break-word",
-                    color: "primary.main",
-                    textDecoration: "none",
-                    "&:hover": { textDecoration: "underline" },
-                    mb: 1
-                  }}>
-                  {current.source.title || prettyUrl(current.source.url)}
-                </Typography>
-              ) : (
-                <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
-                  <Typography
-                    sx={{
-                      fontSize: "1.25rem",
-                      lineHeight: 1.9,
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word",
-                      fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
-                      color: "text.primary",
-                      fontStyle: "italic"
-                    }}>
-                    {current.content}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-            <Typography
-              variant="caption"
-              sx={{ mt: 2, color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em", flexShrink: 0 }}>
-              ⌄ 点击翻转
-            </Typography>
+            <CardRenderer item={current} mode="front" />
           </Box>
 
           {/* Back — fades in when flipped */}
@@ -431,78 +355,7 @@ export default function ReviewSession({
               "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 },
               "&::-webkit-scrollbar-track": { bgcolor: "transparent" }
             }}>
-            <Typography
-              variant="subtitle2"
-              sx={{ color: "text.disabled", mb: 1.5, fontSize: "0.75rem", letterSpacing: "0.04em" }}>
-              笔记
-            </Typography>
-            {current.note ? (
-              <Typography
-                sx={{
-                  fontSize: "1rem",
-                  lineHeight: 1.8,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  color: "text.primary",
-                  bgcolor: "action.hover",
-                  borderRadius: 1,
-                  px: 2,
-                  py: 1.5,
-                  mb: 2
-                }}>
-                {current.note}
-              </Typography>
-            ) : (
-              <Typography
-                sx={{
-                  fontSize: "0.9rem",
-                  color: "text.disabled",
-                  fontStyle: "italic",
-                  bgcolor: "action.hover",
-                  borderRadius: 1,
-                  px: 2,
-                  py: 1.5,
-                  mb: 2
-                }}>
-                暂无笔记
-              </Typography>
-            )}
-
-            {current.tags && current.tags.length > 0 && (
-              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
-                {current.tags.map((t) => (
-                  <Chip
-                    key={t}
-                    label={t}
-                    size="small"
-                    variant="outlined"
-                    sx={{ borderRadius: 1, fontSize: "0.7rem", height: 22 }}
-                  />
-                ))}
-              </Stack>
-            )}
-
-            {current.source?.url && (
-              <Typography
-                variant="body2"
-                component="a"
-                href={current.source.url}
-                target="_blank"
-                onClick={(e) => e.stopPropagation()}
-                sx={{
-                  color: "primary.main",
-                  textDecoration: "none",
-                  "&:hover": { textDecoration: "underline" },
-                  fontSize: "0.8rem",
-                  wordBreak: "break-word",
-                  mt: "auto",
-                  pt: 2,
-                  borderTop: "1px solid",
-                  borderColor: "divider"
-                }}>
-                ↗ {current.source.title || prettyUrl(current.source.url)}
-              </Typography>
-            )}
+            <CardRenderer item={current} mode="back" />
           </Box>
         </Box>
     </Box>

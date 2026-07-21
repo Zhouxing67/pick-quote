@@ -21,7 +21,7 @@ import type { Item } from "../types"
 import { prettyUrl } from "../utils"
 import { useExportImage } from "../utils/useExportImage"
 import DialogEditMode from "./DialogEditMode"
-import DialogViewMode from "./DialogViewMode"
+import CardRenderer from "./CardRenderer"
 import ExportImageMenu from "./ExportImageMenu"
 import ShareCard from "./ShareCard"
 
@@ -281,7 +281,18 @@ export default function ItemDialog({
               onTagsChange={setDraftTags}
             />
           ) : (
-            <DialogViewMode item={item} />
+            <Box
+              sx={{
+                flex: 1,
+                maxWidth: "680px",
+                mx: "auto",
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center"
+              }}>
+              <CardRenderer item={item} mode="full" />
+            </Box>
           )}
         </Box>
       </DialogContent>
