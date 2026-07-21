@@ -6,6 +6,21 @@ const DB_VERSION = 6
 
 type TableNames = "items" | "projects"
 
+// ---- Change notification (Pub/Sub) ----
+type DbListener = () => void
+const dbListeners = new Set<DbListener>()
+
+/** Subscribe to data changes. Returns an unsubscribe function. */
+export function subscribeDb(fn: DbListener): () => void {
+  dbListeners.add(fn)
+  return () => dbListeners.delete(fn)
+}
+
+function notifyDb(): void {
+  dbListeners.forEach((fn) => fn())
+}
+// ---- End change notification ----
+
 function openDb(version?: number): Promise<IDBDatabase> {
   const v = version ?? DB_VERSION
   return new Promise((resolve, reject) => {
@@ -141,6 +156,7 @@ export async function addItem(item: Item): Promise<boolean> {
   await withStore("items", "readwrite", (store) => {
     store.put(normalized)
   })
+  notifyDb()
   return true
 }
 
@@ -186,6 +202,7 @@ export async function deleteItem(id: string): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.delete(id)
   })
+  notifyDb()
 }
 
 export async function deleteItems(ids: string[]): Promise<void> {
@@ -194,12 +211,14 @@ export async function deleteItems(ids: string[]): Promise<void> {
       store.delete(id)
     }
   })
+  notifyDb()
 }
 
 export async function updateItem(item: Item): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.put(item)
   })
+  notifyDb()
 }
 
 export async function getRecent(limit = 10): Promise<Item[]> {
@@ -247,6 +266,7 @@ export async function addProject(project: Project): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.put(project)
   })
+  notifyDb()
 }
 
 export async function listProjects(): Promise<Project[]> {
@@ -286,6 +306,7 @@ export async function updateProject(project: Project): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.put(project)
   })
+  notifyDb()
 }
 
 export async function deleteProject(id: string): Promise<void> {
@@ -304,16 +325,19 @@ export async function deleteProject(id: string): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.delete(id)
   })
+  notifyDb()
 }
 
 export async function clearAllItems(): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.clear()
   })
+  notifyDb()
 }
 
 export async function clearAllProjects(): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.clear()
   })
+  notifyDb()
 }

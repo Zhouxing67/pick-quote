@@ -8,27 +8,12 @@ import {
 } from "./background/menus"
 import type { Item } from "./types"
 
-let badgeClearTimer: ReturnType<typeof setTimeout> | null = null
-
 function notifyTab(
   tabId: number | undefined,
   saved: boolean,
   type?: string,
   projectName?: string
 ) {
-  const badgeText = saved ? "✓" : "✕"
-  const badgeColor = saved ? "#22c55e" : "#ef4444"
-  // tabId-scoped badge: save confirmation shows only on the originating tab,
-  // leaving the global dueCount badge (set by options page) untouched.
-  const tabScope = tabId !== undefined ? { tabId } : {}
-  if (badgeClearTimer) clearTimeout(badgeClearTimer)
-  chrome.action.setBadgeText({ text: badgeText, ...tabScope })
-  chrome.action.setBadgeBackgroundColor({ color: badgeColor, ...tabScope })
-  badgeClearTimer = setTimeout(() => {
-    chrome.action.setBadgeText({ text: "", ...tabScope })
-    badgeClearTimer = null
-  }, 2000)
-
   const typeLabel = type === "text" ? "文本" : type === "image" ? "图片" : "链接"
   const toastText = saved
     ? projectName
@@ -203,7 +188,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     rebuildRecentMenus().catch((e) =>
       console.warn("rebuildRecentMenus failed:", e)
     )
-    return
+    return true
   }
   if (msg?.kind === "webdav") {
     const controller = new AbortController()

@@ -45,6 +45,7 @@ import {
   deleteItems,
   isDuplicate,
   searchItems,
+  subscribeDb,
   updateItem
 } from "./database"
 import { toJsonZip } from "./export"
@@ -179,6 +180,15 @@ export default function OptionsPage() {
   // Load unfiltered items for review (cross-project, independent of active project)
   useEffect(() => {
     searchItems({}).then(setAllItemsUnfiltered)
+  }, [])
+
+  // Subscribe to database changes: refresh allItemsUnfiltered badge + review count
+  useEffect(() => {
+    const refreshBadge = async () => {
+      const all = await searchItems({})
+      setAllItemsUnfiltered(all)
+    }
+    return subscribeDb(refreshBadge)
   }, [])
 
   // Immediate search for non-keyword filter changes
