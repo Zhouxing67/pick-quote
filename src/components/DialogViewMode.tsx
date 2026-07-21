@@ -35,19 +35,19 @@ export default function DialogViewMode({ item }: { item: Item }) {
         justifyContent: "center"
       }}>
       {item.type === "text" && (
-        <Typography
-          variant="body1"
-          sx={{
-            whiteSpace: "pre-wrap",
-            lineHeight: 2,
-            textIndent: "2em",
-            fontSize: "1.05rem",
-            color: "text.primary",
-            textAlign: "justify",
-            fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif'
-          }}>
-          {item.content}
-        </Typography>
+        <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
+          <Typography
+            variant="body1"
+            sx={{
+              whiteSpace: "pre-wrap",
+              lineHeight: 2,
+              fontSize: "1.1rem",
+              color: "text.primary",
+              fontFamily: '"Noto Serif SC", "Songti SC", "STSong", serif'
+            }}>
+            {item.content}
+          </Typography>
+        </Box>
       )}
       {item.type === "image" && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
@@ -110,16 +110,18 @@ export default function DialogViewMode({ item }: { item: Item }) {
             }}>
             所在段落
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              whiteSpace: "pre-wrap",
-              lineHeight: 1.9,
-              color: "text.secondary",
-              fontSize: "0.9rem"
-            }}>
-            {item.context.paragraph}
-          </Typography>
+          <Box sx={{ pl: 1.5, borderLeft: "2px solid", borderColor: "divider" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                whiteSpace: "pre-wrap",
+                lineHeight: 1.9,
+                color: "text.secondary",
+                fontSize: "0.9rem"
+              }}>
+              {item.context.paragraph}
+            </Typography>
+          </Box>
         </Box>
       )}
 
@@ -142,12 +144,16 @@ export default function DialogViewMode({ item }: { item: Item }) {
               whiteSpace: "pre-wrap",
               lineHeight: 1.9,
               color: "text.secondary",
-              fontSize: "0.9rem"
+              fontSize: "0.9rem",
+              bgcolor: "action.hover",
+              borderRadius: 1,
+              px: 2,
+              py: 1.5
             }}>
             {item.note}
           </Typography>
         ) : (
-          <Typography variant="body2" sx={{ color: "text.disabled", fontSize: "0.85rem" }}>
+          <Typography variant="body2" sx={{ color: "text.disabled", fontSize: "0.85rem", fontStyle: "italic", bgcolor: "action.hover", borderRadius: 1, px: 2, py: 1.5 }}>
             暂无备注
           </Typography>
         )}
