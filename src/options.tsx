@@ -402,6 +402,7 @@ export default function OptionsPage() {
       const cred = await getSyncCredentials()
       if (!cred) { setSyncStatus("请先在设置中配置坚果云"); return }
       const result = await runSync(cred, allItemsUnfiltered, projects)
+      if (result.success) chrome.storage.local.set({ lastSyncTime: Date.now() })
       setSyncStatus(result.message)
     } catch (e) {
       setSnackbarMsg(`同步失败：${e}`)
@@ -432,6 +433,7 @@ export default function OptionsPage() {
         for (const item of remote.payload.items) {
           await addItem(item)
         }
+        chrome.storage.local.set({ lastSyncTime: Date.now() })
         setSyncStatus("下载完成")
         await refreshAllData()
       }
@@ -458,6 +460,10 @@ export default function OptionsPage() {
   }, [])
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? null
+  const otherProjects = useMemo(
+    () => projects.filter((p) => p.id !== activeProjectId),
+    [projects, activeProjectId]
+  )
 
   const stats = useMemo(() => {
     const now = Date.now()
@@ -1003,7 +1009,6 @@ export default function OptionsPage() {
             <SettingsDialog
               open={settingsOpen}
               onClose={() => setSettingsOpen(false)}
-              onDataChange={() => refreshAllData()}
               preset={preset}
               onPresetChange={(name) => setPreset(name)}
             />
@@ -1019,7 +1024,7 @@ export default function OptionsPage() {
             <MoveCopyCards
               open={Boolean(moveCardId)}
               title="移动到…"
-              projects={projects.filter((p) => p.id !== activeProjectId)}
+              projects={otherProjects}
               onSelect={handleMoveCard}
               onClose={() => setMoveCardId(null)}
             />
@@ -1027,7 +1032,7 @@ export default function OptionsPage() {
             <MoveCopyCards
               open={Boolean(copyCardId)}
               title="复制到…"
-              projects={projects.filter((p) => p.id !== activeProjectId)}
+              projects={otherProjects}
               onSelect={handleCopyCard}
               onClose={() => setCopyCardId(null)}
             />
@@ -1035,7 +1040,7 @@ export default function OptionsPage() {
             <MoveCopyCards
               open={Boolean(batchAction)}
               title={batchAction === "move" ? "批量移动到…" : "批量复制到…"}
-              projects={projects.filter((p) => p.id !== activeProjectId)}
+              projects={otherProjects}
               onSelect={handleBatchMoveCopy}
               onClose={() => setBatchAction(null)}
             />

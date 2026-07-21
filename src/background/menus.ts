@@ -46,7 +46,7 @@ async function rebuildRecentMenus() {
   }
   // Read recent project IDs from storage
   const result = await chrome.storage.local.get("recentProjectIds")
-  const recentIds: string[] = (result as any).recentProjectIds ?? []
+  const recentIds: string[] = (result as { recentProjectIds?: string[] }).recentProjectIds ?? []
   if (recentIds.length === 0) return
   const projects = await listProjects()
   const recentProjects = recentIds
@@ -66,7 +66,7 @@ async function rebuildRecentMenus() {
 
 export async function updateRecentProjects(projectId: string) {
   const result = await chrome.storage.local.get("recentProjectIds")
-  const recentIds: string[] = (result as any).recentProjectIds ?? []
+  const recentIds: string[] = (result as { recentProjectIds?: string[] }).recentProjectIds ?? []
   const updated = [projectId, ...recentIds.filter((id) => id !== projectId)].slice(0, 3)
   await chrome.storage.local.set({ recentProjectIds: updated })
   await rebuildRecentMenus()

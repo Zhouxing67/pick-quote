@@ -2,7 +2,7 @@ import type { PlasmoCSConfig } from "plasmo"
 
 export const config: PlasmoCSConfig = {
   matches: ["https://*/*", "http://*/*"],
-  all_frames: true
+  all_frames: false
 }
 
 chrome.runtime.onMessage.addListener((msg) => {

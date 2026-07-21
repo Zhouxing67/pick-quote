@@ -23,8 +23,7 @@ export function useExportImage(item: Item) {
         const filename = `pickquote-${item.id.slice(0, 8)}-${Date.now()}`
         await exportToImage(shareCardRef.current, filename)
       } catch (error) {
-        console.error("导出图片失败:", error)
-        alert("导出图片失败，请重试")
+        console.error("[lime] 导出图片失败:", error)
       } finally {
         setIsExporting(false)
       }

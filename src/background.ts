@@ -176,7 +176,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   ) {
     const idx = parseInt(menuItemId.slice("pickquote-recent-".length), 10)
     const result = await chrome.storage.local.get("recentProjectIds")
-    const recentIds: string[] = (result as any).recentProjectIds ?? []
+    const recentIds: string[] = (result as { recentProjectIds?: string[] }).recentProjectIds ?? []
     const projectId = recentIds[idx]
     if (!projectId) return
     const projects = await listProjects()

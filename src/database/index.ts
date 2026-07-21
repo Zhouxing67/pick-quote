@@ -37,10 +37,7 @@ function openDb(version?: number): Promise<IDBDatabase> {
         try {
           const tx = req.transaction as IDBTransaction
           const store = tx.objectStore("items")
-          if (
-            store.indexNames &&
-            (store.indexNames as any).contains?.("tags")
-          ) {
+          if (Array.from(store.indexNames).includes("tags")) {
             store.deleteIndex("tags")
           }
         } catch {}
@@ -48,7 +45,7 @@ function openDb(version?: number): Promise<IDBDatabase> {
         try {
           const tx = req.transaction as IDBTransaction
           const store = tx.objectStore("items")
-          if (!(store.indexNames as any).contains?.("projectId")) {
+          if (!Array.from(store.indexNames).includes("projectId")) {
             store.createIndex("projectId", "projectId", { unique: false })
           }
         } catch {}
