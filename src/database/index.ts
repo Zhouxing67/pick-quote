@@ -171,6 +171,14 @@ export async function deleteItem(id: string): Promise<void> {
   })
 }
 
+export async function deleteItems(ids: string[]): Promise<void> {
+  await withStore("items", "readwrite", (store) => {
+    for (const id of ids) {
+      store.delete(id)
+    }
+  })
+}
+
 export async function updateItem(item: Item): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.put(item)

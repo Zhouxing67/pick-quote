@@ -40,6 +40,7 @@ import { getDueItems } from "./hooks/useSrs"
 import {
   addItem,
   deleteItem,
+  deleteItems,
   searchItems,
   updateItem
 } from "./database"
@@ -87,7 +88,6 @@ export default function OptionsPage() {
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [readingFilter, setReadingFilter] = useState(false)
   const [showRandomReview, setShowRandomReview] = useState(true)
-  const [refreshRandom, setRefreshRandom] = useState(0)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [moveCardId, setMoveCardId] = useState<string | null>(null)
   const [copyCardId, setCopyCardId] = useState<string | null>(null)
@@ -160,10 +160,18 @@ export default function OptionsPage() {
     }
   })
 
+  // Mount: initial load
   useEffect(() => {
     onSearch()
-  }, [onSearch])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
+  // Immediate search for non-keyword filter changes
+  useEffect(() => {
+    onSearch()
+  }, [tag, activeProjectId])
+
+  // Debounced search for keyword (avoids per-keystroke queries)
   useEffect(() => {
     const t = setTimeout(() => {
       onSearch()
@@ -209,11 +217,16 @@ export default function OptionsPage() {
     setHasMore(nextItems.length < allItems.length)
   }, [allItems, displayedItems.length, hasMore, ITEMS_PER_PAGE])
 
+  // Keep a stable ref to the latest loadMore function so the observer
+  // effect doesn't need to re-create the IntersectionObserver on every data change.
+  const loadMoreRefCallback = useRef(loadMore)
+  loadMoreRefCallback.current = loadMore
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          loadMore()
+          loadMoreRefCallback.current()
         }
       },
       { threshold: 0.1 }
@@ -227,7 +240,7 @@ export default function OptionsPage() {
         observer.unobserve(currentRef)
       }
     }
-  }, [loadMore, hasMore])
+  }, [hasMore])
 
   const handleBatchDelete = () => {
     if (selectedIds.length === 0) return
@@ -235,9 +248,7 @@ export default function OptionsPage() {
   }
 
   const handleConfirmBatchDelete = async () => {
-    for (const id of selectedIds) {
-      await deleteItem(id)
-    }
+    await deleteItems(selectedIds)
     setSelectMode(false)
     setSelectedIds([])
     setConfirmBatchDelete(false)
@@ -263,10 +274,10 @@ export default function OptionsPage() {
       if (result.errors.length > 0) {
         console.warn("导入跳过/失败的条目：", result.errors)
       }
-      alert(msg + skipMsg)
+      setSnackbarMsg(msg + skipMsg)
       await refreshAllData()
     } catch (err) {
-      alert(`导入失败：${err}`)
+      setSnackbarMsg(`导入失败：${err}`)
     } finally {
       setImporting(false)
       if (fileInputRef.current) {
@@ -366,11 +377,20 @@ export default function OptionsPage() {
     return { totalItems: allItems.length, totalProjects: projects.length, recent7, topSites }
   }, [allItems, projects])
 
-  const randomItem = useMemo(() => {
-    if (!activeProject || allItems.length === 0) return null
-    return allItems[Math.floor(Math.random() * allItems.length)]
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeProject, allItems, refreshRandom])
+  const [randomItem, setRandomItem] = useState<Item | null>(null)
+
+  const refreshRandomItem = useCallback(() => {
+    if (!activeProject || allItems.length === 0) {
+      setRandomItem(null)
+      return
+    }
+    setRandomItem(allItems[Math.floor(Math.random() * allItems.length)])
+  }, [activeProject, allItems])
+
+  // Refresh random item when project changes
+  useEffect(() => {
+    refreshRandomItem()
+  }, [refreshRandomItem])
 
   const handleToggleRead = async (id: string) => {
     const item = allItems.find((i) => i.id === id)
@@ -732,7 +752,7 @@ export default function OptionsPage() {
                   <Button
                     size="small"
                     variant="outlined"
-                    onClick={() => setRefreshRandom((prev) => prev + 1)}>
+                    onClick={refreshRandomItem}>
                     下一条
                   </Button>
                 </Stack>

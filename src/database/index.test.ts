@@ -2,6 +2,7 @@ import type { Item, SearchQuery } from '../types'
 import {
   addItem,
   deleteItem,
+  deleteItems,
   exportItems,
   getRecent,
   searchItems,
@@ -258,6 +259,33 @@ describe('database', () => {
 
     it('should not throw error when deleting non-existent item', async () => {
       await expect(deleteItem('non-existent-id')).resolves.not.toThrow()
+    })
+  })
+
+  describe("deleteItems", () => {
+    it("should delete multiple items in a single transaction", async () => {
+      const item1: Item = {
+        id: "batch1", type: "text", content: "batch test A",
+        source: { title: "Page A", url: "https://example.com/a" }, createdAt: 100
+      }
+      const item2: Item = {
+        id: "batch2", type: "text", content: "batch test B",
+        source: { title: "Page B", url: "https://example.com/b" }, createdAt: 200
+      }
+      await addItem(item1)
+      await addItem(item2)
+
+      // Confirm both exist
+      const before = await searchItems({})
+      expect(before.find((i) => i.id === "batch1")).toBeTruthy()
+      expect(before.find((i) => i.id === "batch2")).toBeTruthy()
+
+      // Batch delete
+      await deleteItems(["batch1", "batch2"])
+
+      const after = await searchItems({})
+      expect(after.find((i) => i.id === "batch1")).toBeFalsy()
+      expect(after.find((i) => i.id === "batch2")).toBeFalsy()
     })
   })
 
