@@ -331,7 +331,10 @@ export default function ReviewSession({
               p: 5,
               display: "flex",
               flexDirection: "column",
-              justifyContent: "center"
+              justifyContent: "flex-start",
+              "&::-webkit-scrollbar": { width: 4 },
+              "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 },
+              "&::-webkit-scrollbar-track": { bgcolor: "transparent" }
             }}>
             <Chip
               label={TYPE_LABEL[current.type] ?? "文本"}
@@ -402,7 +405,7 @@ export default function ReviewSession({
             )}
             <Typography
               variant="caption"
-              sx={{ mt: 2, color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em" }}>
+              sx={{ mt: "auto", color: "text.disabled", textAlign: "center", fontSize: "0.7rem", letterSpacing: "0.04em" }}>
               ⌄ 点击翻转
             </Typography>
           </Box>
@@ -426,7 +429,10 @@ export default function ReviewSession({
                   : "0 8px 32px rgba(0,0,0,0.25)",
               p: 5,
               display: "flex",
-              flexDirection: "column"
+              flexDirection: "column",
+              "&::-webkit-scrollbar": { width: 4 },
+              "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 },
+              "&::-webkit-scrollbar-track": { bgcolor: "transparent" }
             }}>
             <Typography
               variant="subtitle2"
