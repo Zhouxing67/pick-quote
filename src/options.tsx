@@ -330,6 +330,11 @@ export default function OptionsPage() {
     return due.length
   }, [allItems])
 
+  useEffect(() => {
+    chrome.action.setBadgeText({ text: dueCount > 0 ? String(dueCount) : "" })
+    chrome.action.setBadgeBackgroundColor({ color: "#dc2626" })
+  }, [dueCount])
+
   const handleStartReview = useCallback(() => {
     const due = getDueItems(allItems)
     setReviewItems(due)
@@ -551,6 +556,9 @@ export default function OptionsPage() {
             {reviewMode ? (
               <ReviewSession
                 items={reviewItems}
+                masteredCount={reviewItems.filter(
+                  (i) => (i.srs?.reviewCount ?? 0) >= 3 && (i.srs?.easeFactor ?? 0) >= 2.5
+                ).length}
                 onSave={async (item) => {
                   await updateItem(item)
                 }}

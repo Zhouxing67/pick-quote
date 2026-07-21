@@ -8,6 +8,7 @@ import { prettyUrl } from "../utils"
 
 interface ReviewSessionProps {
   items: Item[]
+  masteredCount: number
   onSave: (item: Item) => Promise<void>
   onExit: () => void
 }
@@ -22,6 +23,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 export default function ReviewSession({
   items,
+  masteredCount,
   onSave,
   onExit
 }: ReviewSessionProps) {
@@ -108,6 +110,11 @@ export default function ReviewSession({
           <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5 }}>
             熟悉率 {Math.round((goodCount / dueCount) * 100)}%（{goodCount}/{dueCount}）
           </Typography>
+          {masteredCount > 0 && (
+            <Typography variant="body1" sx={{ color: "success.main", mt: 0.5, fontWeight: 500 }}>
+              已掌握 {masteredCount} 张
+            </Typography>
+          )}
           <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5 }}>
             平均评分 {avgRating.toFixed(1)}
           </Typography>
