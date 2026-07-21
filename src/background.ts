@@ -232,22 +232,55 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     notifyTab(msg.tabId, msg.saved, msg.type, msg.projectName)
     return
   }
+  if (msg?.kind === "set-recent-project" && msg?.projectId) {
+    updateRecentProjects(msg.projectId).catch(() => {})
+    return
+  }
   if (msg?.kind === "capture" && msg?.payload) {
-    const senderTab = _sender?.tab
-    const item: Item = {
-      id: crypto.randomUUID(),
-      ...msg.payload,
-      createdAt: Date.now()
-    }
-    addItem(item)
-      .then((saved) => {
-        notifyTab(senderTab?.id, saved, item.type)
-        sendResponse({ ok: true })
-      })
-      .catch((e) => sendResponse({ ok: false, error: String(e) }))
+    handleCapture(msg.payload, _sender?.tab, sendResponse)
     return true
   }
 })
+
+async function handleCapture(
+  payload: any,
+  senderTab: chrome.tabs.Tab | undefined,
+  sendResponse: (response: any) => void
+) {
+  const result = await chrome.storage.local.get("recentProjectIds")
+  const recentIds: string[] = (result as { recentProjectIds?: string[] }).recentProjectIds ?? []
+
+  if (recentIds.length > 0) {
+    const item: Item = {
+      id: crypto.randomUUID(),
+      ...payload,
+      projectId: recentIds[0],
+      createdAt: Date.now()
+    }
+    const saved = await addItem(item)
+    if (saved) updateRecentProjects(recentIds[0]).catch(() => {})
+    notifyTab(senderTab?.id, saved, item.type)
+    sendResponse({ ok: true })
+    return
+  }
+
+  // No recent projects: open the new-project popup (reuses right-click flow)
+  await chrome.storage.session.set({
+    pendingCapture: {
+      type: payload.type,
+      content: payload.content,
+      source: payload.source
+    },
+    pendingTabId: senderTab?.id
+  })
+  chrome.windows.create({
+    url: chrome.runtime.getURL("tabs/new-project.html"),
+    type: "popup",
+    width: 480,
+    height: 460
+  })
+  sendResponse({ ok: true })
+}
 
 chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage()

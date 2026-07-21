@@ -202,6 +202,7 @@ export default function OptionsPage() {
     setActiveProjectId(id)
     setTag("")
     onSearch(id)
+    chrome.runtime.sendMessage({ kind: "set-recent-project", projectId: id })
   }
 
   const {
