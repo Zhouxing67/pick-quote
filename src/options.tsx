@@ -360,16 +360,17 @@ export default function OptionsPage() {
     chrome.action.setBadgeBackgroundColor({ color: "#dc2626" })
   }, [dueCount])
 
-  const handleStartReview = useCallback(() => {
-    const due = getDueItems(allItemsUnfiltered)
+  const handleStartReview = useCallback(async () => {
+    const all = await searchItems({})
+    const due = getDueItems(all)
     setReviewItems(due)
     setSidebarTab("review")
-  }, [allItemsUnfiltered])
+  }, [])
 
   // Initialize review session when entering review mode
   useEffect(() => {
     if (sidebarTab === "review") handleStartReview()
-  }, [sidebarTab, handleStartReview])
+  }, [sidebarTab])
 
   const handleExitReview = useCallback(() => {
     setReviewItems([])
