@@ -221,13 +221,25 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true
   }
   if (msg?.kind === "capture" && msg?.payload) {
+    const senderTab = _sender?.tab
     const item: Item = {
       id: crypto.randomUUID(),
       ...msg.payload,
       createdAt: Date.now()
     }
     addItem(item)
-      .then(() => sendResponse({ ok: true }))
+      .then(() => {
+        const badgeColor = "#22c55e"
+        chrome.action.setBadgeText({ text: "✓" })
+        chrome.action.setBadgeBackgroundColor({ color: badgeColor })
+        setTimeout(() => chrome.action.setBadgeText({ text: "" }), 2000)
+        if (senderTab?.id) {
+          chrome.tabs
+            .sendMessage(senderTab.id, { kind: "captured", text: "已保存文本" })
+            .catch(() => {})
+        }
+        sendResponse({ ok: true })
+      })
       .catch((e) => sendResponse({ ok: false, error: String(e) }))
     return true
   }

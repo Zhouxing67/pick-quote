@@ -10,6 +10,9 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.kind === "toast" && msg?.text) {
     showToast(msg.text)
   }
+  if (msg?.kind === "captured" && msg?.text) {
+    showToast(msg.text)
+  }
 })
 
 function showToast(text: string) {
@@ -23,3 +26,25 @@ function showToast(text: string) {
   document.body.appendChild(toast)
   setTimeout(() => toast.remove(), 2000)
 }
+
+document.addEventListener("keydown", (e) => {
+  if (e.altKey && e.key === "s") {
+    e.preventDefault()
+    const sel = window.getSelection()
+    const text = sel?.toString().trim()
+    if (!text) return
+    console.debug("[lime:capture] Alt+S:", text.slice(0, 60))
+
+    const payload = {
+      type: "text" as const,
+      content: text,
+      source: {
+        title: document.title,
+        url: window.location.href,
+        site: window.location.hostname
+      },
+      sourceSite: window.location.hostname
+    }
+    chrome.runtime.sendMessage({ kind: "capture", payload })
+  }
+})
