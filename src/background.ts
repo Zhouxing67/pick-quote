@@ -1,12 +1,11 @@
-import { addItem, listProjects, searchItems } from "./database"
+import { addItem, getRecentProjects, listProjects, searchItems, touchProject } from "./database"
 import {
   createMenus,
   ensureMenusReady,
   rebuildProjectMenus,
-  rebuildRecentMenus,
-  updateRecentProjects
+  rebuildRecentMenus
 } from "./background/menus"
-import type { Item } from "./types"
+import type { Item, SourceMeta } from "./types"
 import { getDueItems } from "./hooks/useSrs"
 
 function notifyTab(
@@ -46,6 +45,17 @@ function notifySystem(text: string) {
     })
   } catch {
     // notifications API unavailable
+  }
+}
+
+function createItem(data: { type: Item["type"]; content: string; source?: SourceMeta; projectId?: string }): Item {
+  return {
+    id: crypto.randomUUID(),
+    type: data.type,
+    content: data.content,
+    source: data.source,
+    createdAt: Date.now(),
+    projectId: data.projectId
   }
 }
 
@@ -96,17 +106,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     projectName?: string
   ) => {
     console.debug("[lime:save]", { type, content: content.slice(0, 60), projectId, projectName })
-    const item: Item = {
-      id: crypto.randomUUID(),
-      type,
-      content,
-      source: base.source,
-      createdAt: base.createdAt
-    }
-    if (projectId) item.projectId = projectId
+    const item = createItem({ type, content, source: base.source, projectId })
     const saved = await addItem(item)
     if (saved && projectId) {
-      updateRecentProjects(projectId).catch(() => {})
+      touchProject(projectId).catch(() => {})
     }
     notifyTab(tab?.id, saved, type, projectName)
   }
@@ -180,13 +183,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     menuItemId.startsWith("pickquote-recent-")
   ) {
     const idx = parseInt(menuItemId.slice("pickquote-recent-".length), 10)
-    const result = await chrome.storage.local.get("recentProjectIds")
-    const recentIds: string[] = (result as { recentProjectIds?: string[] }).recentProjectIds ?? []
-    const projectId = recentIds[idx]
-    if (!projectId) return
-    const projects = await listProjects()
-    const project = projects.find((p) => p.id === projectId)
-    await captureAndSave(projectId, project?.name ?? "未知项目")
+    const recent = await getRecentProjects(3)
+    const project = recent[idx]
+    if (!project) return
+    await captureAndSave(project.id, project.name)
     return
   }
 
@@ -233,7 +233,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return
   }
   if (msg?.kind === "set-recent-project" && msg?.projectId) {
-    updateRecentProjects(msg.projectId).catch(() => {})
+    touchProject(msg.projectId).catch(() => {})
     return
   }
   if (msg?.kind === "capture" && msg?.payload) {
@@ -247,27 +247,16 @@ async function handleCapture(
   senderTab: chrome.tabs.Tab | undefined,
   sendResponse: (response: any) => void
 ) {
-  const result = await chrome.storage.local.get("recentProjectIds")
-  const recentIds: string[] = (result as { recentProjectIds?: string[] }).recentProjectIds ?? []
+  const recent = await getRecentProjects(1)
+  const targetProject = recent[0]
 
-  if (recentIds.length > 0) {
-    const projects = await listProjects()
-    const targetProject = projects.find((p) => p.id === recentIds[0])
-    if (targetProject) {
-      const item: Item = {
-        id: crypto.randomUUID(),
-        ...payload,
-        projectId: targetProject.id,
-        createdAt: Date.now()
-      }
-      const saved = await addItem(item)
-      if (saved) updateRecentProjects(targetProject.id).catch(() => {})
-      notifyTab(senderTab?.id, saved, item.type)
-      sendResponse({ ok: true })
-      return
-    }
-    // Stale reference — clean it and fall through to popup
-    await chrome.storage.local.set({ recentProjectIds: [] })
+  if (targetProject) {
+    const item = createItem({ type: payload.type, content: payload.content, source: payload.source, projectId: targetProject.id })
+    const saved = await addItem(item)
+    if (saved) touchProject(targetProject.id).catch(() => {})
+    notifyTab(senderTab?.id, saved, item.type)
+    sendResponse({ ok: true })
+    return
   }
 
   // No recent projects: open the new-project popup (reuses right-click flow)

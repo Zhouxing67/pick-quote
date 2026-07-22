@@ -55,6 +55,7 @@ export interface Project {
   name: string
   createdAt: number
   note?: string
+  lastOpened?: number
 }
 
 export type PresetName = "classic" | "indigo-crimson" | "forest" | "terracotta"

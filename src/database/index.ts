@@ -288,6 +288,20 @@ export async function deleteProject(id: string): Promise<void> {
   })
 }
 
+export async function touchProject(id: string): Promise<void> {
+  const projects = await listProjects()
+  const project = projects.find((p) => p.id === id)
+  if (project) {
+    project.lastOpened = Date.now()
+    await updateProject(project)
+  }
+}
+
+export async function getRecentProjects(limit = 3): Promise<Project[]> {
+  const projects = await listProjects()
+  return projects.sort((a, b) => (b.lastOpened ?? 0) - (a.lastOpened ?? 0)).slice(0, limit)
+}
+
 export async function clearAllItems(): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.clear()
