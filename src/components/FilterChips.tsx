@@ -1,4 +1,4 @@
-import { Box, Chip, Stack } from "@mui/material"
+import { Box, Chip, Stack, alpha } from "@mui/material"
 
 interface FilterChipsProps {
   keyword: string
@@ -11,26 +11,24 @@ export default function FilterChips({
   headerHeight,
   onClearKeyword
 }: FilterChipsProps) {
-  if (!keyword) return null
-
   return (
       <Box
-        sx={{
+        sx={(theme) => ({
           position: "sticky",
           top: headerHeight,
           zIndex: 1050,
           py: 1,
           px: 2,
-          bgcolor: "action.hover",
+          bgcolor: alpha(theme.palette.primary.main, 0.03),
           borderBottom: "1px solid",
           borderColor: "divider"
-        }}>
+        })}>
       <Stack
         direction="row"
         spacing={1}
         flexWrap="wrap"
         useFlexGap
-        sx={{ bgcolor: "background.default" }}>
+        sx={{ bgcolor: "transparent" }}>
         {keyword && (
           <Chip
             label={`搜索: ${keyword}`}

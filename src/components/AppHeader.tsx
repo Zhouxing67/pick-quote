@@ -1,6 +1,6 @@
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded"
 import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded"
-import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material"
+import { Box, IconButton, Stack, Tooltip, Typography, alpha } from "@mui/material"
 import type { ReactNode } from "react"
 
 interface AppHeaderProps {
@@ -23,15 +23,12 @@ export default function AppHeader({
   children
 }: AppHeaderProps) {
   return (
-    <Box
+      <Box
       sx={(theme) => ({
         position: "sticky",
         top: 0,
         zIndex: 1100,
-        bgcolor:
-          theme.palette.mode === "dark"
-            ? "rgba(18, 18, 18, 0.92)"
-            : "rgba(255, 255, 255, 0.92)",
+        bgcolor: alpha(theme.palette.background.default, 0.85),
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
         borderBottom: "2px solid",

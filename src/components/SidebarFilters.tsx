@@ -121,7 +121,7 @@ export default function SidebarFilters({
         "& .MuiDrawer-paper": {
           width,
           boxSizing: "border-box",
-          bgcolor: (theme) => alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.1 : 0.04),
+          bgcolor: (theme) => alpha(theme.palette.primary.main, theme.palette.mode === "dark" ? 0.18 : 0.08),
           borderRight: "2px solid",
           borderColor: "primary.main",
           overflowX: "hidden"
