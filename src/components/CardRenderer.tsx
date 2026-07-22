@@ -16,6 +16,7 @@ interface CardRendererProps {
   item: Item
   mode: "front" | "back" | "full" | "preview" | "export"
   truncateTo?: number
+  contentAlign?: "top" | "center"
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -92,7 +93,7 @@ function NoteBlock({ note }: { note?: string }) {
   )
 }
 
-export default function CardRenderer({ item, mode, truncateTo }: CardRendererProps) {
+export default function CardRenderer({ item, mode, truncateTo, contentAlign }: CardRendererProps) {
   if (mode === "preview") {
     return (
       <Box sx={{ mb: 2 }}>
@@ -218,12 +219,14 @@ export default function CardRenderer({ item, mode, truncateTo }: CardRendererPro
             height: 20, fontSize: "0.65rem", fontWeight: 500, letterSpacing: "0.04em"
           }}
         />
-        <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center",
+        <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, display: "flex", flexDirection: "column",
           "&::-webkit-scrollbar": { width: 4 },
           "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 },
           "&::-webkit-scrollbar-track": { bgcolor: "transparent" }
         }}>
-          <ContentBlock item={item} />
+          <Box sx={(contentAlign ?? "center") === "center" ? { marginTop: "auto", marginBottom: "auto" } : undefined}>
+            <ContentBlock item={item} />
+          </Box>
         </Box>
         {item.source?.url && (
           <>
