@@ -25,6 +25,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import AppHeader from "./components/AppHeader"
 import BatchToolbar from "./components/BatchToolbar"
 import CardGrid from "./components/CardGrid"
+import DateRangeFilter from "./components/DateRangeFilter"
 import DeleteConfirmDialog from "./components/DeleteConfirmDialog"
 import EmptyState from "./components/EmptyState"
 import FilterChips from "./components/FilterChips"
@@ -94,6 +95,7 @@ export default function OptionsPage() {
   const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [readingFilter, setReadingFilter] = useState(false)
+  const [dateRange, setDateRange] = useState<{ from?: number; to?: number } | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [moveCardId, setMoveCardId] = useState<string | null>(null)
   const [copyCardId, setCopyCardId] = useState<string | null>(null)
@@ -134,7 +136,9 @@ export default function OptionsPage() {
       const q: SearchQuery = {
         keyword,
         tag: tag || undefined,
-        projectId: pid ?? undefined
+        projectId: pid ?? undefined,
+        from: dateRange?.from,
+        to: dateRange?.to
       }
       const list = await searchItems(q)
       list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || b.createdAt - a.createdAt)
@@ -142,7 +146,7 @@ export default function OptionsPage() {
       setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
       setHasMore(list.length > ITEMS_PER_PAGE)
     },
-    [keyword, tag, activeProjectId, ITEMS_PER_PAGE]
+    [keyword, tag, activeProjectId, dateRange, ITEMS_PER_PAGE]
   )
 
   const {
@@ -593,6 +597,7 @@ export default function OptionsPage() {
                       <DoneAllRoundedIcon sx={{ fontSize: 20 }} />
                     </IconButton>
                   </Tooltip>
+                  <DateRangeFilter value={dateRange} onChange={setDateRange} />
                 </>
               )}
             </AppHeader>
