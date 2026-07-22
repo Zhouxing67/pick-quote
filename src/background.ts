@@ -251,17 +251,23 @@ async function handleCapture(
   const recentIds: string[] = (result as { recentProjectIds?: string[] }).recentProjectIds ?? []
 
   if (recentIds.length > 0) {
-    const item: Item = {
-      id: crypto.randomUUID(),
-      ...payload,
-      projectId: recentIds[0],
-      createdAt: Date.now()
+    const projects = await listProjects()
+    const targetProject = projects.find((p) => p.id === recentIds[0])
+    if (targetProject) {
+      const item: Item = {
+        id: crypto.randomUUID(),
+        ...payload,
+        projectId: targetProject.id,
+        createdAt: Date.now()
+      }
+      const saved = await addItem(item)
+      if (saved) updateRecentProjects(targetProject.id).catch(() => {})
+      notifyTab(senderTab?.id, saved, item.type)
+      sendResponse({ ok: true })
+      return
     }
-    const saved = await addItem(item)
-    if (saved) updateRecentProjects(recentIds[0]).catch(() => {})
-    notifyTab(senderTab?.id, saved, item.type)
-    sendResponse({ ok: true })
-    return
+    // Stale reference — clean it and fall through to popup
+    await chrome.storage.local.set({ recentProjectIds: [] })
   }
 
   // No recent projects: open the new-project popup (reuses right-click flow)
