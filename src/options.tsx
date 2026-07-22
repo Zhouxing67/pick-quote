@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Container,
   CssBaseline,
   Fade,
@@ -33,26 +34,21 @@ import NewProjectDialog from "./components/NewProjectDialog"
 import ReviewSession from "./components/ReviewSession"
 import SettingsDialog from "./components/SettingsDialog"
 import SidebarFilters from "./components/SidebarFilters"
+import { useBackupSync } from "./hooks/useBackupSync"
 import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
-import { getDueItems, getRecentItems, getReviewStats } from "./hooks/useSrs"
+import { useReview } from "./hooks/useReview"
 import {
   addItem,
-  addProject,
-  clearAllItems,
-  clearAllProjects,
   deleteItem,
   deleteItems,
   isDuplicate,
   searchItems,
   updateItem
 } from "./database"
-import { toJsonZip } from "./export"
 import { importFromZip } from "./import"
-import { downloadRemote, runSync } from "./utils/sync"
 import { createAppTheme } from "./theme"
 import type { Item, PresetName, SearchQuery } from "./types"
-import type { SyncCredentials } from "./utils/sync"
 import { computeItemHash, truncateText } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
@@ -105,7 +101,6 @@ export default function OptionsPage() {
   const [snackbarMsg, setSnackbarMsg] = useState("")
   const [backupSelectedIds, setBackupSelectedIds] = useState<string[]>([])
   const [syncStatus, setSyncStatus] = useState("")
-  const backupFileInputRef = useRef<HTMLInputElement>(null)
 
   const ITEMS_PER_PAGE = 20
 
@@ -172,6 +167,28 @@ export default function OptionsPage() {
       setDialogItem(null)
       onSearch(null)
     }
+  })
+
+  const {
+    dueCount,
+    reviewStats,
+    recentDates,
+    reviewDateItems,
+    handleStartReview,
+    handleExitReview,
+    handlePreview,
+    handleReviewDateClick
+  } = useReview({
+    allItemsUnfiltered,
+    searchItems,
+    onSearch,
+    sidebarTab,
+    setSidebarTab,
+    reviewItems, setReviewItems,
+    previewCount, setPreviewCount,
+    previewItems, setPreviewItems,
+    reviewDateFilter, setReviewDateFilter,
+    reviewProgress, setReviewProgress
   })
 
   // Mount: initial load
@@ -282,6 +299,22 @@ export default function OptionsPage() {
     setAllItemsUnfiltered(all)
   }, [loadProjects, onSearch])
 
+  const {
+    backupFileInputRef,
+    handleExportBackup,
+    handleUploadSync,
+    handleDownloadSync
+  } = useBackupSync({
+    projects,
+    allItemsUnfiltered,
+    backupSelectedIds,
+    setBackupSelectedIds,
+    syncStatus,
+    setSyncStatus,
+    refreshAllData,
+    setSnackbarMsg
+  })
+
   const handleImportBackupFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -313,16 +346,6 @@ export default function OptionsPage() {
     setSelectMode((prev) => !prev)
   }, [])
 
-  const dueCount = useMemo(() => {
-    const due = getDueItems(allItemsUnfiltered)
-    return due.length
-  }, [allItemsUnfiltered])
-
-  useEffect(() => {
-    chrome.action.setBadgeText({ text: dueCount > 0 ? String(dueCount) : "" })
-    chrome.action.setBadgeBackgroundColor({ color: "#dc2626" })
-  }, [dueCount])
-
   // Load LXGW WenKai font from CDN
   useEffect(() => {
     const link = document.createElement("link")
@@ -331,110 +354,6 @@ export default function OptionsPage() {
     document.head.appendChild(link)
     return () => link.remove()
   }, [])
-
-  const handleStartReview = useCallback(async () => {
-    setPreviewCount(0)
-    setPreviewItems([])
-    const all = await searchItems({})
-    const due = getDueItems(all)
-    setReviewItems(due)
-    setSidebarTab("review")
-  }, [])
-
-  useEffect(() => {
-    if (sidebarTab === "review" && !reviewDateFilter) {
-      handleStartReview()
-    }
-  }, [sidebarTab, reviewDateFilter, handleStartReview])
-
-  const handleExitReview = useCallback(() => {
-    setReviewItems([])
-    setSidebarTab("projects")
-    onSearch()
-  }, [onSearch])
-
-  const handlePreview = useCallback(
-    async (count: number) => {
-      if (count === previewCount) {
-        setPreviewCount(0)
-        setPreviewItems([])
-        setSidebarTab("projects")
-        return
-      }
-      setPreviewCount(count)
-      setReviewDateFilter(null)
-      setSidebarTab("review")
-      const all = await searchItems({})
-      const due = getDueItems(all)
-      setPreviewItems(due.slice(0, count))
-    },
-    [previewCount]
-  )
-
-  const getSyncCredentials = async (): Promise<SyncCredentials | null> => {
-    const data = await chrome.storage.sync.get(["syncUsername", "syncPassword"])
-    const u = data.syncUsername as string | undefined
-    const p = data.syncPassword as string | undefined
-    return u && p ? { username: u, appPassword: p } : null
-  }
-
-  const handleExportBackup = async () => {
-    const items = allItemsUnfiltered.filter(
-      (i) => i.projectId && backupSelectedIds.includes(i.projectId)
-    )
-    const selectedProjects = projects.filter((p) => backupSelectedIds.includes(p.id))
-    const blob = await toJsonZip(items, selectedProjects)
-    const url = URL.createObjectURL(blob)
-    await chrome.downloads.download({ url, filename: "lime-backup.zip" })
-    URL.revokeObjectURL(url)
-  }
-
-  const handleUploadSync = async () => {
-    setSyncStatus("正在上传…")
-    try {
-      const cred = await getSyncCredentials()
-      if (!cred) { setSyncStatus("请先在设置中配置坚果云"); return }
-      const result = await runSync(cred, allItemsUnfiltered, projects)
-      if (result.success) chrome.storage.local.set({ lastSyncTime: Date.now() })
-      setSyncStatus(result.message)
-    } catch (e) {
-      setSnackbarMsg(`同步失败：${e}`)
-      setSyncStatus("同步失败")
-    }
-  }
-
-  const handleDownloadSync = async () => {
-    setSyncStatus("正在下载…")
-    try {
-      const cred = await getSyncCredentials()
-      if (!cred) { setSyncStatus("请先在设置中配置坚果云"); return }
-      const remote = await downloadRemote(cred, allItemsUnfiltered, projects)
-      if (!remote.success) {
-        setSyncStatus(remote.message || "下载失败")
-        return
-      }
-      if (remote.direction === "noop") {
-        setSyncStatus("云端无变化")
-        return
-      }
-      if (remote.payload) {
-        await clearAllItems()
-        await clearAllProjects()
-        for (const p of remote.payload.projects) {
-          await addProject(p)
-        }
-        for (const item of remote.payload.items) {
-          await addItem(item)
-        }
-        chrome.storage.local.set({ lastSyncTime: Date.now() })
-        setSyncStatus("下载完成")
-        await refreshAllData()
-      }
-    } catch (e) {
-      setSnackbarMsg(`下载失败：${e}`)
-      setSyncStatus("下载失败")
-    }
-  }
 
   // Subscribe to database changes via storage broadcast
   const refreshRef = useRef(refreshAllData)
@@ -472,37 +391,6 @@ export default function OptionsPage() {
       .map(([site, count]) => ({ site, count }))
     return { totalItems: allItems.length, totalProjects: projects.length, recent7, topSites }
   }, [allItems, projects])
-
-  const reviewStats = useMemo(() => getReviewStats(allItemsUnfiltered), [allItemsUnfiltered])
-  const recentItems = useMemo(() => getRecentItems(allItemsUnfiltered, 3), [allItemsUnfiltered])
-
-  const recentDates = useMemo(() => {
-    const now = Date.now()
-    const DAY_MS = 86400000
-    const result: { key: string; label: string; count: number }[] = []
-    for (let i = 0; i < 3; i++) {
-      const d = new Date(now - i * DAY_MS)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-      const label = i === 0 ? "（今天）" : i === 1 ? "（昨天）" : "（前天）"
-      const group = recentItems.find((g) => g.date === key)
-      if (group) {
-        result.push({ key, label: `${d.getMonth() + 1}月${d.getDate()}日${label}`, count: group.items.length })
-      }
-    }
-    return result
-  }, [recentItems])
-
-  const reviewDateItems = useMemo(() => {
-    if (!reviewDateFilter) return []
-    return recentItems.find((g) => g.date === reviewDateFilter)?.items ?? []
-  }, [reviewDateFilter, recentItems])
-
-  const handleReviewDateClick = useCallback((dateKey: string | null) => {
-    setReviewDateFilter(dateKey)
-    setPreviewCount(0)
-    setPreviewItems([])
-    if (dateKey) setSidebarTab("review")
-  }, [])
 
   const [randomItem, setRandomItem] = useState<Item | null>(null)
 
@@ -609,10 +497,6 @@ export default function OptionsPage() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <style>{`
-        @keyframes skeletonPulse {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.6; }
-        }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb {
@@ -1083,20 +967,8 @@ export default function OptionsPage() {
             )}
 
             {hasMore && activeProject && !readingFilter && (
-              <Box ref={loadMoreRef} sx={{ py: 2 }}>
-                {[0, 1, 2].map((i) => (
-                  <Box
-                    key={i}
-                    sx={{
-                      borderRadius: 2.5,
-                      height: 120,
-                      mb: 1.5,
-                      bgcolor: "action.hover",
-                      animation: "skeletonPulse 1.4s ease-in-out infinite",
-                      animationDelay: `${i * 0.2}s`
-                    }}
-                  />
-                ))}
+              <Box ref={loadMoreRef} sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress size={24} />
               </Box>
             )}
               </>

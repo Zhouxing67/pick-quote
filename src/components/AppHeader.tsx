@@ -30,12 +30,12 @@ export default function AppHeader({
         zIndex: 1100,
         bgcolor:
           theme.palette.mode === "dark"
-            ? "rgba(18, 18, 18, 0.85)"
-            : "rgba(255, 255, 255, 0.85)",
+            ? "rgba(18, 18, 18, 0.92)"
+            : "rgba(255, 255, 255, 0.92)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
-        borderBottom: "1px solid",
-        borderColor: "divider",
+        borderBottom: "2px solid",
+        borderColor: "primary.main",
         transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
         height: headerHeight,
         display: "flex",
@@ -60,8 +60,8 @@ export default function AppHeader({
         </Tooltip>
         <Typography
           sx={{
-            fontSize: "1.35rem",
-            fontWeight: 600,
+            fontSize: "1.5rem",
+            fontWeight: 700,
             letterSpacing: "0.04em",
             lineHeight: 1
           }}>

@@ -6,9 +6,11 @@ import {
   Box,
   Button,
   Divider,
+  type ButtonOwnProps,
   Stack,
   Typography
 } from "@mui/material"
+import { Fragment, type ReactElement, useMemo } from "react"
 
 interface BatchToolbarProps {
   selectedIds: string[]
@@ -18,6 +20,16 @@ interface BatchToolbarProps {
   onBatchCopy: () => void
 }
 
+interface ButtonConfig {
+  label: string
+  icon: ReactElement
+  onClick: () => void
+  dividerBefore?: boolean
+  disabled?: boolean
+  variant?: ButtonOwnProps["variant"]
+  color?: ButtonOwnProps["color"]
+}
+
 export default function BatchToolbar({
   selectedIds,
   onSelectAll,
@@ -25,6 +37,41 @@ export default function BatchToolbar({
   onBatchMove,
   onBatchCopy
 }: BatchToolbarProps) {
+  const hasSelection = selectedIds.length > 0
+
+  const buttons = useMemo<ButtonConfig[]>(
+    () => [
+      {
+        label: "全选",
+        icon: <DoneAllRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />,
+        onClick: onSelectAll
+      },
+      {
+        label: "移动到",
+        icon: <DriveFileMoveOutlinedIcon sx={{ fontSize: 16, mr: 0.5 }} />,
+        onClick: onBatchMove,
+        dividerBefore: true,
+        disabled: !hasSelection
+      },
+      {
+        label: "复制到",
+        icon: <FileCopyOutlinedIcon sx={{ fontSize: 16, mr: 0.5 }} />,
+        onClick: onBatchCopy,
+        disabled: !hasSelection
+      },
+      {
+        label: "删除选中",
+        icon: <DeleteSweepRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />,
+        onClick: onBatchDelete,
+        dividerBefore: true,
+        disabled: !hasSelection,
+        variant: "contained",
+        color: "error"
+      }
+    ],
+    [onSelectAll, onBatchMove, onBatchCopy, onBatchDelete, hasSelection]
+  )
+
   return (
     <Box
       sx={{
@@ -43,42 +90,22 @@ export default function BatchToolbar({
         ✅ 已选 {selectedIds.length} 条
       </Typography>
       <Stack direction="row" spacing={1} alignItems="center">
-        <Button
-          size="small"
-          sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-          onClick={onSelectAll}>
-          <DoneAllRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-          全选
-            </Button>
-             <Divider orientation="vertical" flexItem />
-             <Button
-               size="small"
-               sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-               disabled={selectedIds.length === 0}
-               onClick={onBatchMove}>
-               <DriveFileMoveOutlinedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-               移动到
-             </Button>
-             <Button
-               size="small"
-               sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-               disabled={selectedIds.length === 0}
-               onClick={onBatchCopy}>
-               <FileCopyOutlinedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-               复制到
-             </Button>
-             <Divider orientation="vertical" flexItem />
-             <Button
-               size="small"
-               variant="contained"
-               color="error"
+        {buttons.map((btn) => (
+          <Fragment key={btn.label}>
+            {btn.dividerBefore && <Divider orientation="vertical" flexItem />}
+            <Button
+              size="small"
+              variant={btn.variant ?? "text"}
+              color={btn.color ?? "primary"}
               sx={{ borderRadius: 1, fontSize: "0.75rem", whiteSpace: "nowrap" }}
-              disabled={selectedIds.length === 0}
-              onClick={onBatchDelete}>
-               <DeleteSweepRoundedIcon sx={{ fontSize: 16, mr: 0.5 }} />
-               删除选中
-             </Button>
-       </Stack>
+              disabled={btn.disabled}
+              onClick={btn.onClick}>
+              {btn.icon}
+              {btn.label}
+            </Button>
+          </Fragment>
+        ))}
+      </Stack>
     </Box>
   )
 }
