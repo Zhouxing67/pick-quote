@@ -3,15 +3,12 @@ import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded"
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
 import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined"
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined"
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
-import { Box, IconButton, Stack, Tooltip } from "@mui/material"
+import { IconButton, Stack, Tooltip } from "@mui/material"
 import { useState } from "react"
 
 import type { Item } from "../types"
 import { prettyUrl } from "../utils"
-import { useExportImage } from "../utils/useExportImage"
-import ExportImageMenu from "./ExportImageMenu"
-import ShareCard from "./ShareCard"
+import ExportButton from "./ExportButton"
 
 interface ItemCardOperationsProps {
   item: Item
@@ -28,23 +25,7 @@ export default function ItemCardOperations({
   onCopyToProject,
   onToggleRead
 }: ItemCardOperationsProps) {
-  const {
-    shareCardRef,
-    isExporting,
-    selectedTheme,
-    anchorEl,
-    menuOpen,
-    handleExportClick: rawExportClick,
-    handleCloseMenu,
-    handleExportImage
-  } = useExportImage(item)
-
   const [copied, setCopied] = useState(false)
-
-  const handleExportClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation()
-    rawExportClick(e)
-  }
 
   return (
     <Stack
@@ -73,15 +54,7 @@ export default function ItemCardOperations({
           <ContentCopyRoundedIcon sx={{ fontSize: 16 }} />
         </IconButton>
       </Tooltip>
-      <Tooltip title="导出为图片">
-        <IconButton
-          size="small"
-          onClick={handleExportClick}
-          disabled={isExporting}
-          sx={{ p: 0.75 }}>
-          <ImageOutlinedIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Tooltip>
+      <ExportButton item={item} />
       {onMoveToProject && (
         <Tooltip title="移动到…">
           <IconButton
@@ -136,15 +109,6 @@ export default function ItemCardOperations({
           </IconButton>
         </Tooltip>
       )}
-      <ExportImageMenu
-        anchorEl={anchorEl}
-        open={menuOpen}
-        onClose={handleCloseMenu}
-        onExport={handleExportImage}
-      />
-      <Box sx={{ position: "fixed", top: -10000, left: -10000, zIndex: -1 }}>
-        <ShareCard ref={shareCardRef} item={item} theme={selectedTheme} />
-      </Box>
     </Stack>
   )
 }

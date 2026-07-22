@@ -4,7 +4,6 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded"
 import EditRoundedIcon from "@mui/icons-material/EditRounded"
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
 import {
   Box,
   Dialog,
@@ -18,11 +17,9 @@ import { useEffect, useState } from "react"
 
 import type { Item } from "../types"
 import { prettyUrl } from "../utils"
-import { useExportImage } from "../utils/useExportImage"
-import DialogEditMode from "./DialogEditMode"
 import CardRenderer from "./CardRenderer"
-import ExportImageMenu from "./ExportImageMenu"
-import ShareCard from "./ShareCard"
+import DialogEditMode from "./DialogEditMode"
+import ExportButton from "./ExportButton"
 
 export default function ItemDialog({
   item,
@@ -52,17 +49,6 @@ export default function ItemDialog({
   }, [item.id])
 
   const [animDir, setAnimDir] = useState<"prev" | "next" | null>(null)
-
-  const {
-    shareCardRef,
-    isExporting,
-    selectedTheme,
-    anchorEl,
-    menuOpen,
-    handleExportClick,
-    handleCloseMenu,
-    handleExportImage
-  } = useExportImage(item)
 
   const handleSave = async () => {
     const updated: Item = {
@@ -187,14 +173,7 @@ export default function ItemDialog({
               </IconButton>
             </Tooltip>
           )}
-          <Tooltip title="导出为图片">
-            <IconButton
-              size="small"
-              onClick={handleExportClick}
-              disabled={isExporting}>
-              <ImageOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <ExportButton item={item} />
           <Tooltip title="复制引用">
             <IconButton
               size="small"
@@ -208,12 +187,6 @@ export default function ItemDialog({
             </IconButton>
           </Tooltip>
         </Stack>
-        <ExportImageMenu
-          anchorEl={anchorEl}
-          open={menuOpen}
-          onClose={handleCloseMenu}
-          onExport={handleExportImage}
-        />
       </DialogTitle>
       <DialogContent
         sx={{
@@ -274,15 +247,6 @@ export default function ItemDialog({
         </Box>
       </DialogContent>
 
-      <Box
-        sx={{
-          position: "fixed",
-          top: -10000,
-          left: -10000,
-          zIndex: -1
-        }}>
-        <ShareCard ref={shareCardRef} item={item} theme={selectedTheme} />
-      </Box>
-    </Dialog>
+      </Dialog>
   )
 }

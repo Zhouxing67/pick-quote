@@ -1,11 +1,6 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField
-} from "@mui/material"
+import { TextField } from "@mui/material"
+
+import DialogShell from "./DialogShell"
 
 interface NewProjectDialogProps {
   open: boolean
@@ -25,47 +20,29 @@ export default function NewProjectDialog({
   onCreate
 }: NewProjectDialogProps) {
   return (
-    <Dialog
+    <DialogShell
       open={open}
       onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 2 } } }}>
-      <DialogTitle sx={{ py: 2.5, px: 3, fontSize: "1rem" }}>
-        新建项目
-      </DialogTitle>
-      <DialogContent sx={{ px: 3, py: 1 }}>
-        <TextField
-          autoFocus
-          fullWidth
-          size="small"
-          label="项目名称"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-          error={Boolean(error)}
-          helperText={error}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
-              fontSize: "0.85rem"
-            },
-            "& .MuiFormHelperText-root": {
-              whiteSpace: "normal",
-              wordBreak: "break-word"
-            }
-          }}
-        />
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose}>取消</Button>
-        <Button
-          variant="contained"
-          disabled={!name.trim()}
-          onClick={onCreate}
-          sx={{ borderRadius: 1 }}>
-          创建
-        </Button>
-      </DialogActions>
-    </Dialog>
+      title="新建项目"
+      confirmLabel="创建"
+      onConfirm={onCreate}
+      confirmDisabled={!name.trim()}>
+      <TextField
+        autoFocus
+        fullWidth
+        placeholder="输入项目名称"
+        value={name}
+        error={Boolean(error)}
+        helperText={error}
+        onChange={(e) => onNameChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && name.trim()) onCreate()
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": { borderRadius: 1 },
+          "& .MuiFormHelperText-root": { whiteSpace: "normal" }
+        }}
+      />
+    </DialogShell>
   )
 }

@@ -26,6 +26,7 @@ import AppHeader from "./components/AppHeader"
 import BatchToolbar from "./components/BatchToolbar"
 import CardGrid from "./components/CardGrid"
 import DeleteConfirmDialog from "./components/DeleteConfirmDialog"
+import EmptyState from "./components/EmptyState"
 import FilterChips from "./components/FilterChips"
 import ItemDialog from "./components/ItemDialog"
 import MoveCopyCards from "./components/MoveCopyCards"
@@ -827,27 +828,11 @@ export default function OptionsPage() {
 
             {readingFilter ? (
               readingFilteredItems.length === 0 ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    py: 10,
-                    color: "text.secondary",
-                    userSelect: "none"
-                  }}>
-                  <SearchOffRoundedIcon
-                    className="empty-icon"
-                    sx={{ fontSize: 80, mb: 3 }}
-                  />
-                  <Typography variant="body1" sx={{ opacity: 0.7 }}>
-                    阅读清单已清空
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.5, mt: 0.5 }}>
-                    所有链接都已标记为已读
-                  </Typography>
-                </Box>
+                <EmptyState
+                  icon={<SearchOffRoundedIcon className="empty-icon" sx={{ fontSize: 80, mb: 3 }} />}
+                  title="阅读清单已清空"
+                  subtitle="所有链接都已标记为已读"
+                />
               ) : (
                 <CardGrid
                   items={readingFilteredItems}
@@ -926,44 +911,19 @@ export default function OptionsPage() {
             )}
 
             {!readingFilter && activeProject && !hasMore && allItems.length === 0 && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  py: 10,
-                  color: "text.secondary",
-                  userSelect: "none"
-                }}>
-                {keyword ? (
-                  <>
-                    <SearchOffRoundedIcon
-                      className="empty-icon"
-                      sx={{ fontSize: 80, mb: 3 }}
-                    />
-                    <Typography variant="body1" sx={{ opacity: 0.7 }}>
-                      没有找到匹配的卡片
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.5, mt: 0.5 }}>
-                      试试其他关键词
-                    </Typography>
-                  </>
-                ) : (
-                  <>
-                    <NoteAddRoundedIcon
-                      className="empty-icon"
-                      sx={{ fontSize: 80, mb: 3 }}
-                    />
-                    <Typography variant="body1" sx={{ opacity: 0.7 }}>
-                      此项目暂无卡片
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.5, mt: 0.5 }}>
-                      点击顶部 ＋ 按钮新建一张卡片
-                    </Typography>
-                  </>
-                )}
-              </Box>
+              keyword ? (
+                <EmptyState
+                  icon={<SearchOffRoundedIcon className="empty-icon" sx={{ fontSize: 80, mb: 3 }} />}
+                  title="没有找到匹配的卡片"
+                  subtitle="试试其他关键词"
+                />
+              ) : (
+                <EmptyState
+                  icon={<NoteAddRoundedIcon className="empty-icon" sx={{ fontSize: 80, mb: 3 }} />}
+                  title="此项目暂无卡片"
+                  subtitle="点击顶部 ＋ 按钮新建一张卡片"
+                />
+              )
             )}
 
             {hasMore && activeProject && !readingFilter && (
