@@ -92,6 +92,7 @@ export default function OptionsPage() {
   const [reviewItems, setReviewItems] = useState<Item[]>([])
   const [previewCount, setPreviewCount] = useState(0)
   const [previewItems, setPreviewItems] = useState<Item[]>([])
+  const [reviewDateFilter, setReviewDateFilter] = useState<string | null>(null)
   const [reviewProgress, setReviewProgress] = useState({ current: 0, total: 0 })
   const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
@@ -469,6 +470,34 @@ export default function OptionsPage() {
   const reviewStats = useMemo(() => getReviewStats(allItemsUnfiltered), [allItemsUnfiltered])
   const recentItems = useMemo(() => getRecentItems(allItemsUnfiltered, 3), [allItemsUnfiltered])
 
+  const recentDates = useMemo(() => {
+    const now = Date.now()
+    const DAY_MS = 86400000
+    const result: { key: string; label: string; count: number }[] = []
+    for (let i = 0; i < 3; i++) {
+      const d = new Date(now - i * DAY_MS)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+      const label = i === 0 ? "（今天）" : i === 1 ? "（昨天）" : "（前天）"
+      const group = recentItems.find((g) => g.date === key)
+      if (group) {
+        result.push({ key, label: `${d.getMonth() + 1}月${d.getDate()}日${label}`, count: group.items.length })
+      }
+    }
+    return result
+  }, [recentItems])
+
+  const reviewDateItems = useMemo(() => {
+    if (!reviewDateFilter) return []
+    return recentItems.find((g) => g.date === reviewDateFilter)?.items ?? []
+  }, [reviewDateFilter, recentItems])
+
+  const handleReviewDateClick = useCallback((dateKey: string | null) => {
+    setReviewDateFilter(dateKey)
+    setPreviewCount(0)
+    setPreviewItems([])
+    if (dateKey) setSidebarTab("review")
+  }, [])
+
   const [randomItem, setRandomItem] = useState<Item | null>(null)
 
   const refreshRandomItem = useCallback(() => {
@@ -631,6 +660,9 @@ export default function OptionsPage() {
           reviewStats={reviewStats}
           previewCount={previewCount}
           onPreview={handlePreview}
+          recentDates={recentDates}
+          reviewDateFilter={reviewDateFilter}
+          onReviewDateClick={handleReviewDateClick}
         />
 
         <Box
@@ -709,7 +741,29 @@ export default function OptionsPage() {
 
             <Fade in key={sidebarTab} timeout={250}>
               <Box>
-                {sidebarTab === "review" && previewCount > 0 ? (
+                {sidebarTab === "review" && reviewDateFilter ? (
+                  <Box>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        回顾：{recentDates.find((d) => d.key === reviewDateFilter)?.label ?? reviewDateFilter}
+                      </Typography>
+                      <Button size="small" onClick={() => setReviewDateFilter(null)} sx={{ borderRadius: 1 }}>
+                        退出
+                      </Button>
+                    </Stack>
+                    <CardGrid
+                      items={reviewDateItems}
+                      selectMode={false}
+                      selectedIds={selectedIds}
+                      onSelectItem={() => {}}
+                      onDeleteItem={() => {}}
+                      onOpenDialog={setDialogItem}
+                      onToggleRead={handleToggleRead}
+                      onMoveToProject={setMoveCardId}
+                      onCopyToProject={setCopyCardId}
+                    />
+                  </Box>
+                ) : sidebarTab === "review" && previewCount > 0 ? (
                   <Box>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                       <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -878,56 +932,6 @@ export default function OptionsPage() {
                     </Typography>
                   </Box>
                 </Stack>
-              </Box>
-            )}
-
-            {!readingFilter && !activeProject && recentItems.length > 0 && (
-              <Box sx={{ mx: "auto", maxWidth: 500, mb: 6 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ color: "text.secondary", mb: 2, fontSize: "0.85rem", textAlign: "center" }}>
-                  近期回顾
-                </Typography>
-                {recentItems.map((group) => {
-                  const d = new Date(group.date)
-                  const label = `${d.getMonth() + 1}月${d.getDate()}日`
-                  return (
-                    <Box key={group.date} sx={{ mb: 2 }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 1 }}>
-                        {label} · {group.items.length} 张
-                      </Typography>
-                      <Stack spacing={1}>
-                        {group.items.map((item) => (
-                          <Box
-                            key={item.id}
-                            onClick={() => setDialogItem(item)}
-                            sx={{
-                              p: 1.5,
-                              borderRadius: 1,
-                              bgcolor: "background.paper",
-                              border: "1px solid",
-                              borderColor: "divider",
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                              "&:hover": {
-                                borderColor: "primary.main",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
-                              }
-                            }}>
-                            <Typography variant="body2" noWrap sx={{ fontSize: "0.8rem" }}>
-                              {item.content}
-                            </Typography>
-                            {item.source?.title && (
-                              <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.65rem" }}>
-                                ↗ {item.source.title}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Box>
-                  )
-                })}
               </Box>
             )}
 

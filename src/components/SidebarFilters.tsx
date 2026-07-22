@@ -49,6 +49,9 @@ interface SidebarFiltersProps {
   reviewStats: ReviewStats
   previewCount: number
   onPreview: (count: number) => void
+  recentDates: { key: string; label: string; count: number }[]
+  reviewDateFilter: string | null
+  onReviewDateClick: (dateKey: string | null) => void
   onTagSelect: (tag: string) => void
   onClose: () => void
   onOpenProject: (id: string) => void
@@ -83,6 +86,9 @@ export default function SidebarFilters({
   reviewStats,
   previewCount,
   onPreview,
+  recentDates,
+  reviewDateFilter,
+  onReviewDateClick,
   onTagSelect,
   onClose,
   onOpenProject,
@@ -306,6 +312,26 @@ export default function SidebarFilters({
                 ))}
               </Stack>
             </Box>
+            {recentDates.length > 0 && (
+              <Box>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
+                  📖 近期回顾
+                </Typography>
+                <Stack spacing={0.5}>
+                  {recentDates.map((item) => (
+                    <Button
+                      key={item.key}
+                      size="small"
+                      variant={reviewDateFilter === item.key ? "contained" : "outlined"}
+                      fullWidth
+                      onClick={() => onReviewDateClick(reviewDateFilter === item.key ? null : item.key)}
+                      sx={{ borderRadius: 1, fontSize: "0.75rem", justifyContent: "flex-start" }}>
+                      {item.label} · {item.count} 张
+                    </Button>
+                  ))}
+                </Stack>
+              </Box>
+            )}
           </Stack>
         ) : sidebarTab === "backup" ? (
           /* Backup & Sync tab content */
