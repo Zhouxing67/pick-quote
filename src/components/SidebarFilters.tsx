@@ -49,7 +49,6 @@ interface SidebarFiltersProps {
   reviewStats: ReviewStats
   previewCount: number
   onPreview: (count: number) => void
-  onStartReview: () => void
   onTagSelect: (tag: string) => void
   onClose: () => void
   onOpenProject: (id: string) => void
@@ -84,7 +83,6 @@ export default function SidebarFilters({
   reviewStats,
   previewCount,
   onPreview,
-  onStartReview,
   onTagSelect,
   onClose,
   onOpenProject,
@@ -191,7 +189,7 @@ export default function SidebarFilters({
             <Tooltip title="间隔复习">
               <IconButton
                 size="small"
-              onClick={onStartReview}
+              onClick={() => onSetSidebarTab("review")}
                 sx={{
                   color: sidebarTab === "review" ? "primary.main" : "text.secondary",
                   "&:hover": { color: "primary.main" }
@@ -234,13 +232,11 @@ export default function SidebarFilters({
             <Typography variant="h6" sx={{ fontSize: "0.9rem", fontWeight: 600, textAlign: "center", mb: 0.5 }}>
               🔄 间隔复习
             </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={() => onSetSidebarTab("review")}
-              sx={{ borderRadius: 1.5, py: 1, fontSize: "0.85rem" }}>
-              ▶ 开始复习 {dueCount > 0 ? `(${dueCount})` : ""}
-            </Button>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
+                待复习 {dueCount} 张 · 掌握 {reviewStats.masteredCount} 张
+              </Typography>
+            </Box>
             {reviewStats.totalReviews > 0 && (
               <Box sx={{ bgcolor: "action.hover", borderRadius: 1, p: 1.5 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
@@ -250,26 +246,30 @@ export default function SidebarFilters({
                   累计 {reviewStats.totalReviews} 次 · 准确率 {Math.round(reviewStats.accuracyRate * 100)}%
                 </Typography>
                 <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                  连续打卡 {reviewStats.streakDays} 天 · 掌握 {reviewStats.masteredCount} 张
+                  连续打卡 {reviewStats.streakDays} 天
                 </Typography>
               </Box>
             )}
             <Box>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
-                📁 卡片分布
+                📊 今日评分
               </Typography>
               <Stack spacing={0.5}>
-                {[
-                  { type: "文本", key: "text", color: "#4f46e5", count: reviewStats.typeDistribution.text },
-                  { type: "图片", key: "image", color: "#22c55e", count: reviewStats.typeDistribution.image },
-                  { type: "链接", key: "link", color: "#f97316", count: reviewStats.typeDistribution.link }
-                ].map(({ type, key, color, count }) => {
-                  const total = reviewStats.typeDistribution.text + reviewStats.typeDistribution.image + reviewStats.typeDistribution.link
+                {(
+                  [
+                    { label: "重来", color: "#ef4444" },
+                    { label: "困难", color: "#f97316" },
+                    { label: "良好", color: "#22c55e" },
+                    { label: "简单", color: "#3b82f6" }
+                  ] as const
+                ).map(({ label, color }, i) => {
+                  const count = reviewStats.todayRatingDistribution[i]
+                  const total = reviewStats.todayRatingDistribution.reduce((a, b) => a + b, 0)
                   const pct = total > 0 ? (count / total) * 100 : 0
                   return (
-                    <Box key={key} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                       <Typography variant="caption" sx={{ fontSize: "0.7rem", width: 28, flexShrink: 0 }}>
-                        {type}
+                        {label}
                       </Typography>
                       <LinearProgress
                         variant="determinate"

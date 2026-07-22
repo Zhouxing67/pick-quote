@@ -35,7 +35,7 @@ import SettingsDialog from "./components/SettingsDialog"
 import SidebarFilters from "./components/SidebarFilters"
 import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
-import { getDueItems, getReviewStats } from "./hooks/useSrs"
+import { getDueItems, getRecentItems, getReviewStats } from "./hooks/useSrs"
 import {
   addItem,
   addProject,
@@ -467,6 +467,7 @@ export default function OptionsPage() {
   }, [allItems, projects])
 
   const reviewStats = useMemo(() => getReviewStats(allItemsUnfiltered), [allItemsUnfiltered])
+  const recentItems = useMemo(() => getRecentItems(allItemsUnfiltered, 3), [allItemsUnfiltered])
 
   const [randomItem, setRandomItem] = useState<Item | null>(null)
 
@@ -630,11 +631,6 @@ export default function OptionsPage() {
           reviewStats={reviewStats}
           previewCount={previewCount}
           onPreview={handlePreview}
-          onStartReview={() => {
-            setPreviewCount(0)
-            setPreviewItems([])
-            handleStartReview()
-          }}
         />
 
         <Box
@@ -882,46 +878,56 @@ export default function OptionsPage() {
                     </Typography>
                   </Box>
                 </Stack>
-                {reviewStats.dailyActivity.length > 0 && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "flex-end",
-                      gap: 0.5,
-                      height: 80,
-                      justifyContent: "center",
-                      mb: 0.5
-                    }}>
-                    {reviewStats.dailyActivity.slice(-14).map((d) => {
-                      const maxCount = Math.max(
-                        ...reviewStats.dailyActivity.slice(-14).map((x) => x.count),
-                        1
-                      )
-                      const h = Math.max(6, (d.count / maxCount) * 68)
-                      return (
-                        <Tooltip
-                          key={d.date}
-                          title={`${d.date.slice(5)}: ${d.count} 次`}>
-                          <Box
-                            sx={{
-                              width: 12,
-                              height: h,
-                              borderRadius: "6px 6px 2px 2px",
-                              background: (theme) =>
-                                `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                              opacity: 0.85,
-                              transition: "all 0.2s",
-                              "&:hover": { opacity: 1, transform: "scaleY(1.05)" }
-                            }}
-                          />
-                        </Tooltip>
-                      )
-                    })}
-                  </Box>
-                )}
-                <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.65rem" }}>
-                  近 14 天复习量
+              </Box>
+            )}
+
+            {!readingFilter && !activeProject && recentItems.length > 0 && (
+              <Box sx={{ mx: "auto", maxWidth: 500, mb: 6 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "text.secondary", mb: 2, fontSize: "0.85rem", textAlign: "center" }}>
+                  近期回顾
                 </Typography>
+                {recentItems.map((group) => {
+                  const d = new Date(group.date)
+                  const label = `${d.getMonth() + 1}月${d.getDate()}日`
+                  return (
+                    <Box key={group.date} sx={{ mb: 2 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 1 }}>
+                        {label} · {group.items.length} 张
+                      </Typography>
+                      <Stack spacing={1}>
+                        {group.items.map((item) => (
+                          <Box
+                            key={item.id}
+                            onClick={() => setDialogItem(item)}
+                            sx={{
+                              p: 1.5,
+                              borderRadius: 1,
+                              bgcolor: "background.paper",
+                              border: "1px solid",
+                              borderColor: "divider",
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                              "&:hover": {
+                                borderColor: "primary.main",
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+                              }
+                            }}>
+                            <Typography variant="body2" noWrap sx={{ fontSize: "0.8rem" }}>
+                              {item.content}
+                            </Typography>
+                            {item.source?.title && (
+                              <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.65rem" }}>
+                                ↗ {item.source.title}
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )
+                })}
               </Box>
             )}
 

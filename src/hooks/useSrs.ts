@@ -64,7 +64,7 @@ export interface ReviewStats {
   streakDays: number
   dailyActivity: { date: string; count: number; avgRating: number }[]
   accuracyRate: number
-  typeDistribution: { text: number; image: number; link: number }
+  todayRatingDistribution: [number, number, number, number]
 }
 
 const DAY_MS = 86400000
@@ -80,7 +80,9 @@ export function getReviewStats(items: Item[]): ReviewStats {
   let masteredCount = 0
   let dueCount = 0
   let goodRatings = 0
-  const typeDistribution = { text: 0, image: 0, link: 0 }
+  const todayRatings: [number, number, number, number] = [0, 0, 0, 0]
+
+  const todayKey = dayKey(now)
 
   const dailyMap = new Map<string, { count: number; ratingSum: number }>()
 
@@ -88,14 +90,14 @@ export function getReviewStats(items: Item[]): ReviewStats {
     const srs = item.srs
     if (!srs || srs.dueDate <= now) dueCount++
     if (srs && srs.interval >= 365) masteredCount++
-    if (item.type === "text") typeDistribution.text++
-    else if (item.type === "image") typeDistribution.image++
-    else if (item.type === "link") typeDistribution.link++
     if (srs?.reviewHistory) {
       for (const entry of srs.reviewHistory) {
         totalReviews++
         if (entry.rating >= 3) goodRatings++
         const key = dayKey(entry.date)
+        if (key === todayKey) {
+          todayRatings[entry.rating - 1]++
+        }
         const cur = dailyMap.get(key) ?? { count: 0, ratingSum: 0 }
         cur.count++
         cur.ratingSum += entry.rating
@@ -110,7 +112,6 @@ export function getReviewStats(items: Item[]): ReviewStats {
     .slice(-30)
 
   // Streak: consecutive days with at least one review, ending today or yesterday
-  const todayKey = dayKey(now)
   const yesterdayKey = dayKey(now - DAY_MS)
   const allDays = new Set(dailyMap.keys())
   let streakDays = 0
@@ -129,6 +130,23 @@ export function getReviewStats(items: Item[]): ReviewStats {
     streakDays,
     dailyActivity,
     accuracyRate: totalReviews > 0 ? goodRatings / totalReviews : 0,
-    typeDistribution
+    todayRatingDistribution: todayRatings
   }
+}
+
+export function getRecentItems(items: Item[], days = 3): { date: string; items: Item[] }[] {
+  const cutoff = Date.now() - days * DAY_MS
+  const map = new Map<string, Item[]>()
+  for (const item of items) {
+    const lrd = item.srs?.lastReviewDate
+    if (lrd && lrd >= cutoff) {
+      const key = dayKey(lrd)
+      const arr = map.get(key) ?? []
+      arr.push(item)
+      map.set(key, arr)
+    }
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([date, cardItems]) => ({ date, items: cardItems }))
 }
