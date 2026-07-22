@@ -341,6 +341,11 @@ export default function OptionsPage() {
     setSidebarTab("review")
   }, [])
 
+  useEffect(() => {
+    if (sidebarTab === "review" && !reviewDateFilter) {
+      handleStartReview()
+    }
+  }, [sidebarTab, reviewDateFilter, handleStartReview])
 
   const handleExitReview = useCallback(() => {
     setReviewItems([])
