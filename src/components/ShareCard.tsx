@@ -2,7 +2,8 @@ import { Box, Stack, Typography } from "@mui/material"
 import { forwardRef } from "react"
 
 import type { Item } from "../types"
-import { prettyUrl, truncateText } from "../utils"
+import { prettyUrl } from "../utils"
+import CardRenderer from "./CardRenderer"
 
 interface ShareCardProps {
   item: Item
@@ -32,7 +33,6 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
     }
 
     const currentTheme = themes[theme]
-    const maxLength = 280
 
     return (
       <Box
@@ -91,54 +91,7 @@ const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
           }}>
           {/* 内容主体 */}
           <Box sx={{ flex: 1, display: "flex", alignItems: "center" }}>
-            {item.type === "text" ? (
-              <Typography
-                sx={{
-                  fontSize: "32px",
-                  lineHeight: 2,
-                  color: currentTheme.text,
-                  fontWeight: 400,
-                  letterSpacing: "0.05em",
-                  textAlign: "justify",
-                  textIndent: "2em",
-                  wordBreak: "break-word",
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif"
-                }}>
-                {truncateText(item.content, maxLength)}
-              </Typography>
-            ) : item.type === "image" ? (
-              <Box
-                sx={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center"
-                }}>
-                <img
-                  src={item.content}
-                  alt="content"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "400px",
-                    borderRadius: "12px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)"
-                  }}
-                />
-              </Box>
-            ) : (
-              <Typography
-                sx={{
-                  fontSize: "28px",
-                  lineHeight: 1.8,
-                  color: currentTheme.text,
-                  fontWeight: 400,
-                  letterSpacing: "0.05em",
-                  fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'Songti SC', serif"
-                }}>
-                {truncateText(item.content, maxLength)}
-              </Typography>
-            )}
+            <CardRenderer item={item} mode="export" truncateTo={280} />
           </Box>
 
           {/* 分隔线 */}

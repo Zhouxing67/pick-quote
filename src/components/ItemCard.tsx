@@ -1,27 +1,9 @@
-import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded"
-import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded"
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
-import DriveFileMoveOutlinedIcon from "@mui/icons-material/DriveFileMoveOutlined"
-import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined"
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined"
-import {
-  Box,
-  Chip,
-  IconButton,
-  Link,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography
-} from "@mui/material"
-import { useState } from "react"
+import { Box, Chip, Link, Paper, Stack, Typography } from "@mui/material"
 
 import type { Item } from "../types"
 import { prettyUrl } from "../utils"
-import { useExportImage } from "../utils/useExportImage"
 import CardRenderer from "./CardRenderer"
-import ExportImageMenu from "./ExportImageMenu"
-import ShareCard from "./ShareCard"
+import ItemCardOperations from "./ItemCardOperations"
 
 export default function ItemCard({
   item,
@@ -48,24 +30,6 @@ export default function ItemCard({
   onDrop?: (e: React.DragEvent) => void
   onDragEnd?: () => void
 }) {
-  const {
-    shareCardRef,
-    isExporting,
-    selectedTheme,
-    anchorEl,
-    menuOpen,
-    handleExportClick: rawExportClick,
-    handleCloseMenu,
-    handleExportImage
-  } = useExportImage(item)
-
-  const [copied, setCopied] = useState(false)
-
-  const handleExportClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation()
-    rawExportClick(e)
-  }
-
   return (
     <Paper
       elevation={0}
@@ -128,100 +92,12 @@ export default function ItemCard({
             })}
           </Typography>
         </Stack>
-        <Stack
-          direction="row"
-          spacing={0.5}
-          alignItems="center"
-          sx={{
-            opacity: 0.6,
-            transition: "opacity 0.2s",
-            "&:hover": { opacity: 1 }
-          }}>
-          <Tooltip title={copied ? "已复制" : "复制引用"}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation()
-                const src = item.source?.url
-                  ? `\n\n— ${item.source.title || prettyUrl(item.source.url)}`
-                  : ""
-                navigator.clipboard.writeText(`> ${item.content}${src}`)
-                setCopied(true)
-                setTimeout(() => setCopied(false), 1200)
-              }}
-              sx={{ p: 0.75 }}>
-              <ContentCopyRoundedIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="导出为图片">
-            <IconButton
-              size="small"
-              onClick={handleExportClick}
-              disabled={isExporting}
-              sx={{ p: 0.75 }}>
-              <ImageOutlinedIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-          {onMoveToProject && (
-            <Tooltip title="移动到…">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onMoveToProject(item.id)
-                }}
-                sx={{ p: 0.75 }}>
-                <DriveFileMoveOutlinedIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-          )}
-          {onCopyToProject && (
-            <Tooltip title="复制到…">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onCopyToProject(item.id)
-                }}
-                sx={{ p: 0.75 }}>
-                <FileCopyOutlinedIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="删除">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete(item.id)
-              }}
-              sx={{ p: 0.75 }}>
-              <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-          {item.type === "link" && onToggleRead && (
-            <Tooltip title={item.read ? "标记未读" : "标记已读"}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onToggleRead(item.id)
-                }}
-                sx={{
-                  p: 0.75,
-                  color: item.read ? "success.main" : "text.disabled"
-                }}>
-                <CheckCircleOutlineRoundedIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Stack>
-        <ExportImageMenu
-          anchorEl={anchorEl}
-          open={menuOpen}
-          onClose={handleCloseMenu}
-          onExport={handleExportImage}
+        <ItemCardOperations
+          item={item}
+          onDelete={onDelete}
+          onMoveToProject={onMoveToProject}
+          onCopyToProject={onCopyToProject}
+          onToggleRead={onToggleRead}
         />
       </Stack>
 
@@ -257,16 +133,6 @@ export default function ItemCard({
             {item.source.title || prettyUrl(item.source.url)}
           </Link>
         </Box>)}
-
-      <Box
-        sx={{
-          position: "fixed",
-          top: -10000,
-          left: -10000,
-          zIndex: -1
-        }}>
-        <ShareCard ref={shareCardRef} item={item} theme={selectedTheme} />
-      </Box>
     </Paper>
   )
 }

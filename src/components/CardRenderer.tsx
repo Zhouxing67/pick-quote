@@ -14,7 +14,7 @@ import { prettyUrl, truncateText } from "../utils"
 
 interface CardRendererProps {
   item: Item
-  mode: "front" | "back" | "full" | "preview"
+  mode: "front" | "back" | "full" | "preview" | "export"
   truncateTo?: number
 }
 
@@ -156,6 +156,53 @@ export default function CardRenderer({ item, mode, truncateTo }: CardRendererPro
               </Box>
             </Typography>
           </Stack>
+        )}
+      </Box>
+    )
+  }
+
+  if (mode === "export") {
+    const maxLength = 280
+    return (
+      <Box sx={{ flex: 1, display: "flex", alignItems: "center" }}>
+        {item.type === "text" ? (
+          <Typography
+            sx={{
+              fontSize: "32px",
+              lineHeight: 2,
+              color: "text.primary",
+              letterSpacing: "0.05em",
+              textAlign: "justify",
+              wordBreak: "break-word",
+              whiteSpace: "pre-wrap",
+              fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
+            }}>
+            {truncateTo ? truncateText(item.content, truncateTo) : truncateText(item.content, maxLength)}
+          </Typography>
+        ) : item.type === "image" ? (
+          <Box sx={{ width: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <img
+              src={item.content}
+              alt="content"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "400px",
+                borderRadius: "12px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.15)"
+              }}
+            />
+          </Box>
+        ) : (
+          <Typography
+            sx={{
+              fontSize: "28px",
+              lineHeight: 1.8,
+              color: "text.primary",
+              letterSpacing: "0.05em",
+              fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
+            }}>
+            {truncateText(item.content, maxLength)}
+          </Typography>
         )}
       </Box>
     )
