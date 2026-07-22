@@ -619,7 +619,7 @@ export default function OptionsPage() {
             )}
 
             <Fade in key={sidebarTab} timeout={250}>
-              <Box>
+              <Box sx={{ pt: `${headerHeight}px` }}>
                 {sidebarTab === "review" && reviewDateFilter ? (
                   <Box>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
