@@ -235,24 +235,13 @@ export default function SidebarFilters({
         {sidebarTab === "review" ? (
           /* Review tab content */
           <Stack spacing={1.5} sx={{ p: 2, pt: 3 }}>
-            <Typography variant="h6" sx={{ fontSize: "0.9rem", fontWeight: 600, textAlign: "center", mb: 0.5 }}>
-              🔄 间隔复习
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
-                待复习 {dueCount} 张 · 掌握 {reviewStats.masteredCount} 张
-              </Typography>
-            </Box>
             {reviewStats.totalReviews > 0 && (
-              <Box sx={{ bgcolor: "action.hover", borderRadius: 1, p: 1.5 }}>
+              <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
                   📊 复习概况
                 </Typography>
                 <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                  累计 {reviewStats.totalReviews} 次 · 准确率 {Math.round(reviewStats.accuracyRate * 100)}%
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                  连续打卡 {reviewStats.streakDays} 天
+                  累计 {reviewStats.totalReviews} 次 · 准确率 {Math.round(reviewStats.accuracyRate * 100)}% · 连续 {reviewStats.streakDays} 天
                 </Typography>
               </Box>
             )}
