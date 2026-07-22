@@ -362,6 +362,7 @@ export default function OptionsPage() {
         return
       }
       setPreviewCount(count)
+      setReviewDateFilter(null)
       setSidebarTab("review")
       const all = await searchItems({})
       const due = getDueItems(all)

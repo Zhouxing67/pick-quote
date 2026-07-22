@@ -102,7 +102,7 @@ export default function CardRenderer({ item, mode }: CardRendererProps) {
             height: 20, fontSize: "0.65rem", fontWeight: 500, letterSpacing: "0.04em"
           }}
         />
-        <Box sx={{ flex: 1, overflow: "auto", minHeight: 0,
+        <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center",
           "&::-webkit-scrollbar": { width: 4 },
           "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 },
           "&::-webkit-scrollbar-track": { bgcolor: "transparent" }
