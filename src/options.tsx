@@ -867,6 +867,12 @@ export default function OptionsPage() {
                   title="没有找到匹配的卡片"
                   subtitle="试试其他关键词"
                 />
+              ) : dateRange ? (
+                <EmptyState
+                  icon={<SearchOffRoundedIcon className="empty-icon" sx={{ fontSize: 80, mb: 3 }} />}
+                  title="该时间段内无相关卡片"
+                  subtitle="请调整日期范围"
+                />
               ) : (
                 <EmptyState
                   icon={<NoteAddRoundedIcon className="empty-icon" sx={{ fontSize: 80, mb: 3 }} />}
