@@ -550,18 +550,17 @@ export default function OptionsPage() {
             borderLeft: "2px solid",
             borderColor: "primary.main"
           }}>
-          <Container sx={{ py: 4 }} maxWidth="xl">
-            <style>{`
-              @keyframes emptyFloat {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-8px); }
-              }
-              .empty-icon {
-                opacity: 0.12;
-                animation: emptyFloat 4s ease-in-out infinite;
-              }
-            `}</style>
-            <AppHeader
+          <style>{`
+            @keyframes emptyFloat {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-8px); }
+            }
+            .empty-icon {
+              opacity: 0.12;
+              animation: emptyFloat 4s ease-in-out infinite;
+            }
+          `}</style>
+          <AppHeader
               drawerOpen={drawerOpen}
               headerHeight={headerHeight}
               onToggleDrawer={handleToggleDrawer}
@@ -606,6 +605,8 @@ export default function OptionsPage() {
               headerHeight={headerHeight}
             />
 
+          <Container sx={{ py: 4 }} maxWidth="xl">
+
             {selectMode && (
               <BatchToolbar
                 selectedIds={selectedIds}
@@ -619,7 +620,7 @@ export default function OptionsPage() {
             )}
 
             <Fade in key={sidebarTab} timeout={250}>
-              <Box sx={{ pt: `${headerHeight}px` }}>
+              <Box>
                 {sidebarTab === "review" && reviewDateFilter ? (
                   <Box>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
