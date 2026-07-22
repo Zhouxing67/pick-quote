@@ -61,7 +61,7 @@ export default function ItemCard({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}>
-      <Box sx={{ position: "absolute", top: 0, left: 0, width: 48, height: 3, bgcolor: "primary.main", borderTopLeftRadius: 16 }} />
+      <Box sx={{ position: "absolute", top: 0, left: 0, width: 48, height: 3, bgcolor: "secondary.main", borderTopLeftRadius: 16 }} />
       <Stack
         direction="row"
         alignItems="center"

@@ -14,7 +14,7 @@ export const palettes: Record<PresetName, {
   },
   "indigo-crimson": {
     primary: { main: "#4f46e5", light: "#818cf8", dark: "#3730a3" },
-    secondary: { main: "#dc2626", light: "#fca5a5", dark: "#991b1b" },
+    secondary: { main: "#ef4444", light: "#f87171", dark: "#b91c1c" },
     error: { main: "#dc2626", light: "#fca5a5" }
   },
   forest: {
