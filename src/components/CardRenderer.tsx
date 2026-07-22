@@ -10,11 +10,12 @@ import {
 } from "@mui/material"
 
 import type { Item } from "../types"
-import { prettyUrl } from "../utils"
+import { prettyUrl, truncateText } from "../utils"
 
 interface CardRendererProps {
   item: Item
-  mode: "front" | "back" | "full"
+  mode: "front" | "back" | "full" | "preview"
+  truncateTo?: number
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -91,7 +92,75 @@ function NoteBlock({ note }: { note?: string }) {
   )
 }
 
-export default function CardRenderer({ item, mode }: CardRendererProps) {
+export default function CardRenderer({ item, mode, truncateTo }: CardRendererProps) {
+  if (mode === "preview") {
+    return (
+      <Box sx={{ mb: 2 }}>
+        {item.type === "text" && (
+          <Box sx={{ position: "relative" }}>
+            <Box
+              sx={{
+                position: "absolute",
+                top: -6,
+                left: -6,
+                fontSize: "2rem",
+                color: "text.disabled",
+                opacity: 0.3,
+                fontFamily: "Georgia, serif"
+              }}>
+              "
+            </Box>
+            <Typography
+              sx={{
+                whiteSpace: "pre-wrap",
+                lineHeight: 1.75,
+                color: "text.primary",
+                pl: 2,
+                pr: 1,
+                fontSize: "0.95rem",
+                fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", "STSong", serif'
+              }}>
+              {truncateTo ? truncateText(item.content, truncateTo) : item.content}
+            </Typography>
+          </Box>
+        )}
+        {item.type === "image" && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+            <img
+              src={item.content}
+              alt={item.source?.title || (item.source ? prettyUrl(item.source.url) : "")}
+              draggable={false}
+              style={{
+                maxWidth: "100%",
+                maxHeight: 200,
+                borderRadius: "10px"
+              }}
+            />
+          </Box>
+        )}
+        {item.type === "link" && (
+          <Stack spacing={0.5}>
+            <Typography variant="body2" sx={{ fontSize: "0.9rem" }}>
+              <Box
+                component="a"
+                href={item.content}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                sx={{
+                  color: "primary.main",
+                  textDecoration: "none",
+                  "&:hover": { textDecoration: "underline" }
+                }}>
+                {prettyUrl(item.content)}
+              </Box>
+            </Typography>
+          </Stack>
+        )}
+      </Box>
+    )
+  }
+
   if (mode === "front") {
     return (
       <>

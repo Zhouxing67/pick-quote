@@ -17,8 +17,9 @@ import {
 import { useState } from "react"
 
 import type { Item } from "../types"
-import { prettyUrl, truncateText } from "../utils"
+import { prettyUrl } from "../utils"
 import { useExportImage } from "../utils/useExportImage"
+import CardRenderer from "./CardRenderer"
 import ExportImageMenu from "./ExportImageMenu"
 import ShareCard from "./ShareCard"
 
@@ -225,63 +226,7 @@ export default function ItemCard({
       </Stack>
 
       <Box sx={{ mb: 2 }}>
-        {item.type === "text" && (
-          <Box sx={{ position: "relative" }}>
-            <Box
-              sx={{
-                position: "absolute",
-                top: -6,
-                left: -6,
-                fontSize: "2rem",
-                color: "text.disabled",
-                opacity: 0.3,
-                fontFamily: "Georgia, serif"
-              }}>
-              "
-            </Box>
-            <Typography
-              variant="body2"
-              sx={{
-                whiteSpace: "pre-wrap",
-                lineHeight: 1.75,
-                color: "text.primary",
-                pl: 2,
-                pr: 1,
-                fontSize: "0.95rem",
-                fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", "STSong", serif'
-              }}>
-              {truncateText(item.content, 160)}
-            </Typography>
-          </Box>
-        )}
-        {item.type === "image" && (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
-            <img
-              src={item.content}
-              alt={item.source?.title || (item.source ? prettyUrl(item.source.url) : "")}
-              draggable={false}
-              style={{
-                maxWidth: "100%",
-                maxHeight: 200,
-                borderRadius: 10
-              }}
-            />
-          </Box>
-        )}
-        {item.type === "link" && (
-          <Stack spacing={0.5}>
-            <Typography variant="body2" sx={{ fontSize: "0.9rem" }}>
-              <Link
-                href={item.content}
-                target="_blank"
-                rel="noreferrer"
-                underline="hover"
-                sx={{ color: "primary.main" }}>
-                {prettyUrl(item.content)}
-              </Link>
-            </Typography>
-          </Stack>
-        )}
+        <CardRenderer item={item} mode="preview" truncateTo={160} />
       </Box>
 
         {item.source && (
