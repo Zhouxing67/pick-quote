@@ -82,6 +82,7 @@ export default function BatchToolbar({
         alignItems: "center",
         justifyContent: "space-between",
         bgcolor: "background.paper",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
         borderRadius: 1,
         border: "1px solid",
         borderColor: "divider"

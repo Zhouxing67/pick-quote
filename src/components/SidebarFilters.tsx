@@ -234,6 +234,7 @@ export default function SidebarFilters({
 
         {sidebarTab === "review" ? (
           /* Review tab content */
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
           <Stack spacing={1.5} sx={{ p: 2, pt: 3 }}>
             {reviewStats.totalReviews > 0 && (
               <Box>
@@ -322,9 +323,10 @@ export default function SidebarFilters({
               </Box>
             )}
           </Stack>
+          </Box>
         ) : sidebarTab === "backup" ? (
           /* Backup & Sync tab content */
-          <Box sx={{ py: 1 }}>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider", overflow: "hidden", py: 1 }}>
             <Typography
               variant="caption"
               sx={{ px: 1, mb: 1, display: "block", fontSize: "0.7rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.04em" }}>
@@ -465,56 +467,55 @@ export default function SidebarFilters({
                 新建项目
               </Typography>
             </Stack>
-          </Box>
-        )}
 
-        {sidebarTab === "projects" && activeProjectId && tags.length > 0 && (
-          <Box sx={{ px: 1.5, mt: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.75 }}>
-              <LabelOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-              <Typography variant="caption" sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 }}>
-                标签
+            {activeProjectId && tags.length > 0 && (
+              <Box sx={{ px: 1.5, pt: 1.5, mt: 0.5, borderTop: "1px solid", borderColor: "divider" }}>
+                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.75 }}>
+                  <LabelOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
+                  <Typography variant="caption" sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 }}>
+                    标签
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                  {tags.map((t) => (
+                    <Chip
+                      key={t}
+                      label={t}
+                      size="small"
+                      variant={activeTag === t ? "filled" : "outlined"}
+                      color={activeTag === t ? "primary" : "default"}
+                      onClick={() => onTagSelect(activeTag === t ? "" : t)}
+                      sx={{ borderRadius: 1, height: 22, fontSize: "0.7rem" }}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{
+                px: 1.5,
+                py: 0.75,
+                borderTop: "1px solid",
+                borderColor: "divider",
+                cursor: "pointer",
+                bgcolor: readingFilter ? "action.selected" : "transparent",
+                "&:hover": { bgcolor: "action.hover" }
+              }}
+              onClick={onToggleReadingFilter}>
+              <BookmarkBorderRoundedIcon
+                sx={{ fontSize: 17, color: readingFilter ? "primary.main" : "text.secondary" }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ fontSize: "0.8rem", color: readingFilter ? "primary.main" : "text.secondary" }}>
+                稍后阅读
               </Typography>
             </Stack>
-            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-              {tags.map((t) => (
-                <Chip
-                  key={t}
-                  label={t}
-                  size="small"
-                  variant={activeTag === t ? "filled" : "outlined"}
-                  color={activeTag === t ? "primary" : "default"}
-                  onClick={() => onTagSelect(activeTag === t ? "" : t)}
-                  sx={{ borderRadius: 1, height: 22, fontSize: "0.7rem" }}
-                />
-              ))}
-            </Stack>
           </Box>
-        )}
-
-        {sidebarTab === "projects" && (
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1}
-            sx={{
-              px: 1.5,
-              py: 0.75,
-              borderRadius: 1,
-              cursor: "pointer",
-              bgcolor: readingFilter ? "action.selected" : "transparent",
-              "&:hover": { bgcolor: "action.hover" }
-            }}
-            onClick={onToggleReadingFilter}>
-            <BookmarkBorderRoundedIcon
-              sx={{ fontSize: 17, color: readingFilter ? "primary.main" : "text.secondary" }}
-            />
-            <Typography
-              variant="body2"
-              sx={{ fontSize: "0.8rem", color: readingFilter ? "primary.main" : "text.secondary" }}>
-              稍后阅读
-            </Typography>
-          </Stack>
         )}
       </Stack>
     </Drawer>

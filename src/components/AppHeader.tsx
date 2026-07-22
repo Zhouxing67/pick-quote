@@ -34,6 +34,7 @@ export default function AppHeader({
         borderBottom: "2px solid",
         borderColor: "primary.main",
         transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
         height: headerHeight,
         display: "flex",
         alignItems: "center"
