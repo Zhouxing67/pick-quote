@@ -50,7 +50,7 @@ import {
 import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
 import type { Item, PresetName, SearchQuery } from "./types"
-import { computeItemHash, truncateText } from "./utils"
+import { computeItemHash } from "./utils"
 
 const MIN_DRAWER_WIDTH = 200
 const MAX_DRAWER_WIDTH = 500
@@ -94,7 +94,6 @@ export default function OptionsPage() {
   const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [readingFilter, setReadingFilter] = useState(false)
-  const [showRandomReview, setShowRandomReview] = useState(true)
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [moveCardId, setMoveCardId] = useState<string | null>(null)
   const [copyCardId, setCopyCardId] = useState<string | null>(null)
@@ -162,6 +161,7 @@ export default function OptionsPage() {
     onActivate: (id) => {
       setActiveProjectId(id)
       onSearch(id)
+      chrome.runtime.sendMessage({ kind: "set-recent-project", projectId: id })
     },
     onDeactivate: () => {
       setActiveProjectId(null)
@@ -392,21 +392,6 @@ export default function OptionsPage() {
       .map(([site, count]) => ({ site, count }))
     return { totalItems: allItems.length, totalProjects: projects.length, recent7, topSites }
   }, [allItems, projects])
-
-  const [randomItem, setRandomItem] = useState<Item | null>(null)
-
-  const refreshRandomItem = useCallback(() => {
-    if (!activeProject || allItems.length === 0) {
-      setRandomItem(null)
-      return
-    }
-    setRandomItem(allItems[Math.floor(Math.random() * allItems.length)])
-  }, [activeProject, allItems])
-
-  // Refresh random item when project changes
-  useEffect(() => {
-    refreshRandomItem()
-  }, [refreshRandomItem])
 
   const handleToggleRead = async (id: string) => {
     const item = allItems.find((i) => i.id === id)
@@ -850,46 +835,6 @@ export default function OptionsPage() {
                   onCopyToProject={setCopyCardId}
                 />
               )
-            ) : activeProject && randomItem && showRandomReview ? (
-              <Box
-                sx={{
-                  mb: 2,
-                  p: 2.5,
-                  borderRadius: 2,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  bgcolor: "background.paper"
-                }}>
-                <Stack direction="row" alignItems="flex-start" spacing={2}>
-                  <Box
-                    sx={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: "1rem",
-                      lineHeight: 1.7,
-                      color: "text.primary",
-                      fontStyle: "italic"
-                    }}>
-                    <Box
-                      component="span"
-                      sx={{ fontSize: "1.5rem", color: "text.disabled", mr: 0.5 }}>
-                      "
-                    </Box>
-                    {truncateText(randomItem.content, 200)}
-                  </Box>
-                </Stack>
-                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1.5 }}>
-                  <Button size="small" onClick={() => setShowRandomReview(false)}>
-                    关闭
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={refreshRandomItem}>
-                    下一条
-                  </Button>
-                </Stack>
-              </Box>
             ) : null}
 
             {!readingFilter && activeProject && (
