@@ -319,7 +319,7 @@ export default function ReviewSession({
               bgcolor: (theme) => theme.palette.mode === "light" ? "#fcfcf9" : "#2a2a2a",
               border: "1px solid",
               borderColor: "divider",
-              borderRadius: 2,
+              borderRadius: 1,
               boxShadow: (theme) =>
                 theme.palette.mode === "light"
                   ? "0 8px 32px rgba(0,0,0,0.06)"
@@ -343,7 +343,7 @@ export default function ReviewSession({
               bgcolor: (theme) => theme.palette.mode === "light" ? "#fcfcf9" : "#2a2a2a",
               border: "1px solid",
               borderColor: "divider",
-              borderRadius: 2,
+              borderRadius: 1,
               boxShadow: (theme) =>
                 theme.palette.mode === "light"
                   ? "0 8px 32px rgba(0,0,0,0.06)"

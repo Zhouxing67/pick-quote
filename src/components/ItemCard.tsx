@@ -71,7 +71,7 @@ export default function ItemCard({
       sx={{
         position: "relative",
         overflow: "hidden",
-        borderRadius: 2,
+        borderRadius: 1,
         p: 2.5,
         mb: 2,
         minHeight: 100,

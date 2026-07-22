@@ -5,7 +5,6 @@ import LinkRoundedIcon from "@mui/icons-material/LinkRounded"
 import {
   Box,
   Chip,
-  Link,
   Stack,
   Typography
 } from "@mui/material"
@@ -40,7 +39,7 @@ function ContentBlock({ item }: { item: Item }) {
         <img
           src={item.content}
           alt={item.source?.title || ""}
-          style={{ maxWidth: "100%", maxHeight: 340, borderRadius: 10, objectFit: "contain" }}
+          style={{ maxWidth: "100%", maxHeight: 340, borderRadius: 8, objectFit: "contain" }}
         />
       </Box>
     )
@@ -65,10 +64,10 @@ function ContentBlock({ item }: { item: Item }) {
     <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
       <Typography
         sx={{
-          fontSize: "1.2rem", lineHeight: 1.9, whiteSpace: "pre-wrap",
+          fontSize: "1.1rem", lineHeight: 1.9, whiteSpace: "pre-wrap",
           wordBreak: "break-word",
           fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
-          color: "text.primary", fontStyle: "italic"
+          color: "text.primary"
         }}>
         {item.content}
       </Typography>
@@ -160,30 +159,7 @@ export default function CardRenderer({ item, mode }: CardRendererProps) {
   // mode === "full"
   return (
     <>
-      {item.type === "text" && (
-    <Box sx={{ pl: 2, borderLeft: "5px solid", borderLeftColor: "primary.main" }}>
-          <Typography sx={{
-            whiteSpace: "pre-wrap", lineHeight: 2, fontSize: "1.2rem",
-            color: "text.primary",
-            fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
-          }}>
-            {item.content}
-          </Typography>
-        </Box>
-      )}
-      {item.type === "image" && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-          <img src={item.content} alt={item.source?.title || prettyUrl(item.source?.url || "")}
-            style={{ maxWidth: "100%", borderRadius: 12 }} />
-        </Box>
-      )}
-      {item.type === "link" && (
-        <Typography variant="body1" sx={{ fontSize: "1rem" }}>
-          <Link href={item.content} target="_blank" rel="noreferrer" underline="hover" sx={{ color: "primary.main" }}>
-            {prettyUrl(item.content)}
-          </Link>
-        </Typography>
-      )}
+      <ContentBlock item={item} />
       <Box sx={{ mt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
           <Box sx={{ color: "text.secondary", opacity: 0.7 }}>{typeIcon(item.type)}</Box>
@@ -213,6 +189,14 @@ export default function CardRenderer({ item, mode }: CardRendererProps) {
         </Typography>
         <NoteBlock note={item.note} />
       </Box>
+      {item.source?.url && (
+        <>
+          <Box sx={{ mx: -5, borderTop: "1px solid", borderColor: "divider", mb: 1 }} />
+          <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.7rem", textAlign: "center", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            ↗ {item.source.title || prettyUrl(item.source.url)}
+          </Typography>
+        </>
+      )}
     </>
   )
 }

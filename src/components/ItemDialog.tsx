@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  Link,
   Stack,
   Tooltip
 } from "@mui/material"
@@ -160,35 +159,13 @@ export default function ItemDialog({
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           gap: 1,
           borderBottom: "1px solid",
           borderColor: "divider",
           py: 2.5,
           px: 3
         }}>
-        <Box
-          sx={{
-            flex: 1,
-            mr: 2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap"
-          }}>
-          {item.source && (
-            <Link
-              href={item.source.url}
-              target="_blank"
-              rel="noreferrer"
-              underline="hover"
-              sx={{
-                color: "primary.main",
-                fontSize: "0.8rem"
-              }}>
-              {item.source.title || prettyUrl(item.source.url)}
-            </Link>
-          )}
-        </Box>
         <Stack direction="row" spacing={0.5} alignItems="center">
           {editing ? (
             <>
