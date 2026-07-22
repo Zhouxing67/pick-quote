@@ -343,8 +343,6 @@ export default function OptionsPage() {
 
   const headerHeight = 52
 
-  const handleClearKeyword = () => setKeyword("")
-
   // ---- Card selection ----
   const onToggleSelectMode = useCallback(() => {
     setSelectedIds([])
@@ -604,8 +602,8 @@ export default function OptionsPage() {
 
             <FilterChips
               keyword={keyword}
+              onKeywordChange={setKeyword}
               headerHeight={headerHeight}
-              onClearKeyword={handleClearKeyword}
             />
 
             {selectMode && (
