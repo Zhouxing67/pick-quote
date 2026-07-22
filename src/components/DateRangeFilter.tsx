@@ -50,7 +50,7 @@ export default function DateRangeFilter({ value, onChange }: DateRangeFilterProp
       onChange(null)
     } else {
       const from = startDraft ? fromDateInput(startDraft) : undefined
-      let to = endDraft ? fromDateInput(endDraft) : undefined
+      let to = endDraft ? fromDateInput(endDraft) + 86400000 : undefined
       if (to && to > Date.now()) to = Date.now()
       onChange({ from, to })
     }
