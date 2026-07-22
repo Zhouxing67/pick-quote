@@ -25,13 +25,9 @@ export default function AppHeader({
   return (
       <Box
       sx={(theme) => ({
-        position: "sticky",
-        top: 0,
-        zIndex: 1100,
         bgcolor: alpha(theme.palette.primary.main, 0.05),
         borderBottom: "2px solid",
         borderColor: "primary.main",
-        transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
         boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
         height: headerHeight,
         display: "flex",

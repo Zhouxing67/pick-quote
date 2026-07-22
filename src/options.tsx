@@ -545,11 +545,16 @@ export default function OptionsPage() {
 
         <Box
           sx={{
-            flexGrow: 1,
+            flex: 1,
             minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            height: "100vh",
             borderLeft: "2px solid",
             borderColor: "primary.main"
           }}>
+          <Box sx={{ flexShrink: 0 }}>
           <style>{`
             @keyframes emptyFloat {
               0%, 100% { transform: translateY(0); }
@@ -602,9 +607,10 @@ export default function OptionsPage() {
             <FilterChips
               keyword={keyword}
               onKeywordChange={setKeyword}
-              headerHeight={headerHeight}
             />
+          </Box>
 
+          <Box sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>
           <Container sx={{ py: 4 }} maxWidth="xl">
 
             {selectMode && (
@@ -977,6 +983,7 @@ export default function OptionsPage() {
               onChange={handleImportBackupFile}
             />
           </Container>
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>

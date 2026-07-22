@@ -4,20 +4,15 @@ import { alpha, Box, Chip, Stack, TextField } from "@mui/material"
 interface FilterChipsProps {
   keyword: string
   onKeywordChange: (v: string) => void
-  headerHeight: number
 }
 
 export default function FilterChips({
   keyword,
-  onKeywordChange,
-  headerHeight
+  onKeywordChange
 }: FilterChipsProps) {
   return (
     <Box
       sx={(theme) => ({
-        position: "sticky",
-        top: headerHeight,
-        zIndex: 1050,
         py: 1,
         px: 2,
         bgcolor: alpha(theme.palette.primary.main, 0.03),
