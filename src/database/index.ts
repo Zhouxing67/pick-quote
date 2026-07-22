@@ -178,7 +178,7 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
           (!q.type || item.type === q.type) &&
           (!q.site || item.sourceSite === q.site) &&
           (!q.from || item.createdAt >= q.from) &&
-          (!q.to || item.createdAt <= q.to) &&
+          (!q.to || item.createdAt < q.to) &&
           (!q.projectId || item.projectId === q.projectId) &&
           (!q.dueBefore || !item.srs || item.srs.dueDate <= q.dueBefore) &&
           (!q.tag || item.tags?.includes(q.tag)) &&

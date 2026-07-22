@@ -152,9 +152,9 @@ describe('database', () => {
     })
 
     it('should filter by date range (to)', async () => {
-      const results = await searchItems({ to: 2000 })
+      const results = await searchItems({ to: 2001 })
       expect(results).toHaveLength(2)
-      expect(results.every(item => item.createdAt <= 2000)).toBe(true)
+      expect(results.every(item => item.createdAt < 2001)).toBe(true)
     })
 
     it('should filter by projectId', async () => {

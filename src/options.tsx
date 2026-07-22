@@ -210,7 +210,7 @@ export default function OptionsPage() {
   // Immediate search for non-keyword filter changes
   useEffect(() => {
     onSearch()
-  }, [tag, activeProjectId])
+  }, [tag, activeProjectId, dateRange])
 
   // Debounced search for keyword (avoids per-keystroke queries)
   useEffect(() => {
