@@ -69,7 +69,7 @@ export interface ReviewStats {
 
 const DAY_MS = 86400000
 
-function dayKey(ts: number): string {
+export function dayKey(ts: number): string {
   const d = new Date(ts)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
@@ -91,12 +91,14 @@ export function getReviewStats(items: Item[]): ReviewStats {
     if (!srs || srs.dueDate <= now) dueCount++
     if (srs && srs.interval >= 365) masteredCount++
     if (srs?.reviewHistory) {
+      let todayCounted = false
       for (const entry of srs.reviewHistory) {
         totalReviews++
         if (entry.rating >= 3) goodRatings++
         const key = dayKey(entry.date)
-        if (key === todayKey) {
+        if (key === todayKey && !todayCounted) {
           todayRatings[entry.rating - 1]++
+          todayCounted = true
         }
         const cur = dailyMap.get(key) ?? { count: 0, ratingSum: 0 }
         cur.count++

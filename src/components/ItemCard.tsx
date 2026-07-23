@@ -7,6 +7,7 @@ import ItemCardOperations from "./ItemCardOperations"
 
 export default function ItemCard({
   item,
+  firstRating,
   onDelete,
   onClick,
   onToggleRead,
@@ -19,6 +20,7 @@ export default function ItemCard({
   onDragEnd
 }: {
   item: Item
+  firstRating?: 1 | 2 | 3 | 4
   onDelete: (id: string) => void
   onClick?: () => void
   onToggleRead?: (id: string) => void
@@ -79,6 +81,9 @@ export default function ItemCard({
               letterSpacing: "0.04em"
             }}
           />
+          {firstRating && (
+            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: ["#ef4444", "#f97316", "#22c55e", "#3b82f6"][firstRating - 1] }} />
+          )}
           <Typography
             variant="caption"
             sx={{

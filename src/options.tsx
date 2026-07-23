@@ -40,6 +40,7 @@ import { useBackupSync } from "./hooks/useBackupSync"
 import { useNewCard } from "./hooks/useNewCard"
 import { useProjects } from "./hooks/useProjects"
 import { useReview } from "./hooks/useReview"
+import { dayKey } from "./hooks/useSrs"
 import {
   addItem,
   deleteItem,
@@ -195,6 +196,17 @@ export default function OptionsPage() {
     reviewDateFilter, setReviewDateFilter,
     reviewProgress, setReviewProgress
   })
+
+  const cardFirstRating = useMemo(() => {
+    const m = new Map<string, 1 | 2 | 3 | 4>()
+    if (!reviewDateFilter) return m
+    for (const item of allItemsUnfiltered) {
+      if (!item.srs?.reviewHistory) continue
+      const entry = item.srs.reviewHistory.find((e) => dayKey(e.date) === reviewDateFilter)
+      if (entry) m.set(item.id, entry.rating)
+    }
+    return m
+  }, [allItemsUnfiltered, reviewDateFilter])
 
   // Mount: initial load
   useEffect(() => {
@@ -647,6 +659,7 @@ export default function OptionsPage() {
                       onToggleRead={handleToggleRead}
                       onMoveToProject={setMoveCardId}
                       onCopyToProject={setCopyCardId}
+                      firstRating={cardFirstRating}
                     />
                   </Box>
                 ) : sidebarTab === "review" && previewCount > 0 ? (
