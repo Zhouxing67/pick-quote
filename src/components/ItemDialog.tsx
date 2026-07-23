@@ -26,13 +26,15 @@ export default function ItemDialog({
   open,
   onClose,
   onSave,
-  onNavigate
+  onNavigate,
+  readOnly
 }: {
   item: Item | null
   open: boolean
   onClose: () => void
   onSave?: (updated: Item) => void | Promise<void>
   onNavigate?: (direction: "prev" | "next") => void
+  readOnly?: boolean
 }) {
   if (!item) return null
 
@@ -153,7 +155,7 @@ export default function ItemDialog({
           px: 3
         }}>
         <Stack direction="row" spacing={0.5} alignItems="center">
-          {editing ? (
+          {!readOnly && (editing ? (
             <>
               <Tooltip title="保存">
                 <IconButton size="small" onClick={handleSave} color="primary">
@@ -172,7 +174,7 @@ export default function ItemDialog({
                 <EditRoundedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
+          ))}
           <ExportButton item={item} />
           <Tooltip title="复制引用">
             <IconButton

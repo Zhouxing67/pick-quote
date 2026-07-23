@@ -53,6 +53,7 @@ import { importFromZip } from "./import"
 import { createAppTheme } from "./theme"
 import type { Item, PresetName, SearchQuery } from "./types"
 import { computeItemHash } from "./utils"
+import { sendMessage } from "./types/messages"
 
 const MIN_DRAWER_WIDTH = 200
 const MAX_DRAWER_WIDTH = 500
@@ -166,7 +167,7 @@ export default function OptionsPage() {
     onActivate: (id) => {
       setActiveProjectId(id)
       onSearch(id)
-      chrome.runtime.sendMessage({ kind: "set-recent-project", projectId: id })
+      sendMessage({ kind: "set-recent-project", projectId: id }).catch(() => {})
     },
     onDeactivate: () => {
       setActiveProjectId(null)
@@ -240,7 +241,7 @@ export default function OptionsPage() {
     setActiveProjectId(id)
     setTag("")
     onSearch(id)
-    chrome.runtime.sendMessage({ kind: "set-recent-project", projectId: id })
+    sendMessage({ kind: "set-recent-project", projectId: id }).catch(() => {})
   }
 
   const {
@@ -622,7 +623,7 @@ export default function OptionsPage() {
             />
           </Box>
 
-          <Box sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+          <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, bgcolor: (t: any) => t.palette.mode === "light" ? "#fcf9f3" : undefined }}>
           <Container sx={{ py: 4 }} maxWidth="xl">
 
             {selectMode && (
@@ -653,6 +654,7 @@ export default function OptionsPage() {
                       items={reviewDateItems}
                       selectMode={false}
                       selectedIds={selectedIds}
+                      readOnly
                       onSelectItem={() => {}}
                       onDeleteItem={() => {}}
                       onOpenDialog={setDialogItem}
@@ -676,6 +678,7 @@ export default function OptionsPage() {
                       items={previewItems}
                       selectMode={false}
                       selectedIds={selectedIds}
+                      readOnly
                       onSelectItem={() => {}}
                       onDeleteItem={() => {}}
                       onOpenDialog={setDialogItem}
@@ -913,6 +916,7 @@ export default function OptionsPage() {
             <ItemDialog
               item={dialogItem}
               open={Boolean(dialogItem)}
+              readOnly={sidebarTab === "review"}
               onClose={() => setDialogItem(null)}
               onNavigate={handleNavigate}
               onSave={async (updated) => {

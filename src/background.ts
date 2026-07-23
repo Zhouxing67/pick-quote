@@ -6,6 +6,7 @@ import {
   rebuildRecentMenus
 } from "./background/menus"
 import type { Item, SourceMeta } from "./types"
+import type { ExtensionMessage } from "./types/messages"
 import { getDueItems } from "./hooks/useSrs"
 
 function notifyTab(
@@ -203,42 +204,47 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 })
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg?.kind === "webdav") {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 20000)
-    const headers: Record<string, string> = {
-      Authorization: `Basic ${msg.authBase64}`
+chrome.runtime.onMessage.addListener((raw: any, _sender, sendResponse) => {
+  const msg = raw as ExtensionMessage
+  if (!msg?.kind) return
+
+  switch (msg.kind) {
+    case "webdav": {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 20000)
+      const headers: Record<string, string> = {
+        Authorization: `Basic ${msg.authBase64}`
+      }
+      if (msg.contentType) headers["Content-Type"] = msg.contentType
+      fetch(msg.url, {
+        method: msg.method ?? "GET",
+        headers,
+        body: msg.body ?? null,
+        signal: controller.signal
+      })
+        .then(async (res) => {
+          clearTimeout(timer)
+          const body = await res.text()
+          sendResponse({ ok: res.ok, status: res.status, body })
+        })
+        .catch((e) => {
+          clearTimeout(timer)
+          sendResponse({ ok: false, status: 0, body: e.message })
+        })
+      return true
     }
-    if (msg.contentType) headers["Content-Type"] = msg.contentType
-    fetch(msg.url, {
-      method: msg.method ?? "GET",
-      headers,
-      body: msg.body ?? null,
-      signal: controller.signal
-    })
-      .then(async (res) => {
-        clearTimeout(timer)
-        const body = await res.text()
-        sendResponse({ ok: res.ok, status: res.status, body })
-      })
-      .catch((e) => {
-        clearTimeout(timer)
-        sendResponse({ ok: false, status: 0, body: e.message })
-      })
-    return true
-  }
-  if (msg?.kind === "save-feedback") {
-    notifyTab(msg.tabId, msg.saved, msg.type, msg.projectName)
-    return
-  }
-  if (msg?.kind === "set-recent-project" && msg?.projectId) {
-    touchProject(msg.projectId).catch(() => {})
-    return
-  }
-  if (msg?.kind === "capture" && msg?.payload) {
-    handleCapture(msg.payload, _sender?.tab, sendResponse)
-    return true
+    case "save-feedback": {
+      notifyTab(msg.tabId, msg.saved, msg.type, msg.projectName)
+      return
+    }
+    case "set-recent-project": {
+      touchProject(msg.projectId).catch(() => {})
+      return
+    }
+    case "capture": {
+      handleCapture(msg.payload, _sender?.tab, sendResponse)
+      return true
+    }
   }
 })
 

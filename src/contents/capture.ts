@@ -1,5 +1,7 @@
 import type { PlasmoCSConfig } from "plasmo"
 
+import { sendMessage } from "../types/messages"
+
 export const config: PlasmoCSConfig = {
   matches: ["https://*/*", "http://*/*"],
   all_frames: false
@@ -41,6 +43,6 @@ document.addEventListener("keydown", (e) => {
         site: window.location.hostname
       },
     }
-    chrome.runtime.sendMessage({ kind: "capture", payload })
+    sendMessage({ kind: "capture", payload }).catch(() => {})
   }
 })

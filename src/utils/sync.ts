@@ -1,5 +1,6 @@
 import { computeItemHash } from "./index"
 import type { Item, Project } from "../types"
+import { sendMessage } from "../types/messages"
 
 const SYNC_PATH = "/Apps/lime/lime-sync.json"
 const BASE_URL = "https://dav.jianguoyun.com/dav"
@@ -31,7 +32,7 @@ async function bgFetch(
   options: { method?: string; body?: string; contentType?: string } = {}
 ): Promise<{ ok: boolean; status: number; body: string }> {
   const authBase64 = btoa(`${cred.username}:${cred.appPassword}`)
-  return chrome.runtime.sendMessage({
+  return sendMessage<{ ok: boolean; status: number; body: string }>({
     kind: "webdav",
     url: `${BASE_URL}${path}`,
     method: options.method ?? "GET",

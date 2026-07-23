@@ -2,7 +2,6 @@ import { alpha } from "@mui/material/styles"
 import { useState } from "react"
 
 import BackupRoundedIcon from "@mui/icons-material/BackupRounded"
-import BookmarkBorderRoundedIcon from "@mui/icons-material/BookmarkBorderRounded"
 import CloudDownloadRoundedIcon from "@mui/icons-material/CloudDownloadRounded"
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded"
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
@@ -13,7 +12,6 @@ import FileUploadRoundedIcon from "@mui/icons-material/FileUploadRounded"
 import FolderOpenRoundedIcon from "@mui/icons-material/FolderOpenRounded"
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
-import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined"
 import {
   Badge,
   Box,
@@ -69,6 +67,17 @@ interface SidebarFiltersProps {
   onImportBackup: () => void
   onUploadSync: () => void
   onDownloadSync: () => void
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Stack direction="row" alignItems="center" spacing={0.75}>
+      <Box sx={{ width: 3, height: 14, borderRadius: 1, bgcolor: "primary.main", flexShrink: 0 }} />
+      <Typography variant="body2" sx={{ fontSize: "0.8rem", fontWeight: 600 }}>
+        {children}
+      </Typography>
+    </Stack>
+  )
 }
 
 export default function SidebarFilters({
@@ -238,18 +247,14 @@ export default function SidebarFilters({
           <Stack spacing={1.5} sx={{ p: 2, pt: 3 }}>
             {reviewStats.totalReviews > 0 && (
               <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
-                  📊 复习概况
-                </Typography>
+                <SectionLabel>复习概况</SectionLabel>
                 <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
                   累计 {reviewStats.totalReviews} 次 · 准确率 {Math.round(reviewStats.accuracyRate * 100)}% · 连续 {reviewStats.streakDays} 天
                 </Typography>
               </Box>
             )}
             <Box>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
-                📊 今日评分
-              </Typography>
+              <SectionLabel>今日评分</SectionLabel>
               <Stack spacing={0.5}>
                 {(
                   [
@@ -285,9 +290,7 @@ export default function SidebarFilters({
               </Stack>
             </Box>
             <Box>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
-                🔍 预习
-              </Typography>
+              <SectionLabel>预习</SectionLabel>
               <Stack direction="row" spacing={1}>
                 {[5, 10, 15].map((n) => (
                   <Button
@@ -304,9 +307,7 @@ export default function SidebarFilters({
             </Box>
             {recentDates.length > 0 && (
               <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, display: "block", mb: 0.5 }}>
-                  📖 近期回顾
-                </Typography>
+                <SectionLabel>近期回顾</SectionLabel>
                 <Stack spacing={0.5}>
                   {recentDates.map((item) => (
                     <Button
@@ -327,11 +328,9 @@ export default function SidebarFilters({
         ) : sidebarTab === "backup" ? (
           /* Backup & Sync tab content */
           <Box sx={{ bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider", overflow: "hidden", py: 1 }}>
-            <Typography
-              variant="caption"
-              sx={{ px: 1, mb: 1, display: "block", fontSize: "0.7rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.04em" }}>
-              本地备份
-            </Typography>
+            <Box sx={{ px: 1, mb: 1 }}>
+              <SectionLabel>本地备份</SectionLabel>
+            </Box>
             <FormControlLabel
               control={
                 <Checkbox
@@ -382,11 +381,9 @@ export default function SidebarFilters({
 
             <Divider sx={{ mx: 1 }} />
 
-            <Typography
-              variant="caption"
-              sx={{ px: 1, my: 1.5, display: "block", fontSize: "0.7rem", fontWeight: 600, color: "text.secondary", letterSpacing: "0.04em" }}>
-              坚果云同步
-            </Typography>
+            <Box sx={{ px: 1, my: 1.5 }}>
+              <SectionLabel>坚果云同步</SectionLabel>
+            </Box>
             <Typography variant="caption" sx={{ px: 1, display: "block", color: "text.secondary", mb: 1 }}>
               {syncStatus || "未同步"}
             </Typography>
@@ -419,6 +416,9 @@ export default function SidebarFilters({
               borderColor: "divider",
               overflow: "hidden"
             }}>
+            <Box sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
+              <SectionLabel>项目管理</SectionLabel>
+            </Box>
             {projects.map((p) => (
               <ProjectRow
                 key={p.id}
@@ -470,12 +470,7 @@ export default function SidebarFilters({
 
             {activeProjectId && tags.length > 0 && (
               <Box sx={{ px: 1.5, pt: 1.5, mt: 0.5, borderTop: "1px solid", borderColor: "divider" }}>
-                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.75 }}>
-                  <LabelOutlinedIcon sx={{ fontSize: 14, color: "text.secondary" }} />
-                  <Typography variant="caption" sx={{ fontSize: "0.7rem", color: "text.secondary", fontWeight: 500 }}>
-                    标签
-                  </Typography>
-                </Stack>
+                <SectionLabel>标签</SectionLabel>
                 <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                   {tags.map((t) => (
                     <Chip
@@ -506,12 +501,10 @@ export default function SidebarFilters({
                 "&:hover": { bgcolor: "action.hover" }
               }}
               onClick={onToggleReadingFilter}>
-              <BookmarkBorderRoundedIcon
-                sx={{ fontSize: 17, color: readingFilter ? "primary.main" : "text.secondary" }}
-              />
+              <Box sx={{ width: 3, height: 14, borderRadius: 1, bgcolor: readingFilter ? "primary.main" : "text.disabled", flexShrink: 0 }} />
               <Typography
                 variant="body2"
-                sx={{ fontSize: "0.8rem", color: readingFilter ? "primary.main" : "text.secondary" }}>
+                sx={{ fontSize: "0.8rem", fontWeight: 600, color: readingFilter ? "primary.main" : "text.secondary" }}>
                 稍后阅读
               </Typography>
             </Stack>

@@ -8,6 +8,7 @@ import ItemCardOperations from "./ItemCardOperations"
 export default function ItemCard({
   item,
   firstRating,
+  readOnly,
   onDelete,
   onClick,
   onToggleRead,
@@ -21,6 +22,7 @@ export default function ItemCard({
 }: {
   item: Item
   firstRating?: 1 | 2 | 3 | 4
+  readOnly?: boolean
   onDelete: (id: string) => void
   onClick?: () => void
   onToggleRead?: (id: string) => void
@@ -99,6 +101,7 @@ export default function ItemCard({
         </Stack>
         <ItemCardOperations
           item={item}
+          readOnly={readOnly}
           onDelete={onDelete}
           onMoveToProject={onMoveToProject}
           onCopyToProject={onCopyToProject}

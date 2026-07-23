@@ -7,6 +7,7 @@ interface CardGridProps {
   items: Item[]
   selectMode: boolean
   selectedIds: string[]
+  readOnly?: boolean
   firstRating?: Map<string, 1 | 2 | 3 | 4>
   onSelectItem: (id: string) => void
   onDeleteItem: (id: string) => void
@@ -26,6 +27,7 @@ export default function CardGrid({
   items,
   selectMode,
   selectedIds,
+  readOnly,
   firstRating,
   onSelectItem,
   onDeleteItem,
@@ -84,6 +86,7 @@ export default function CardGrid({
                   )}
                   <ItemCard
                     item={it}
+                    readOnly={readOnly}
                     firstRating={firstRating?.get(it.id)}
                     onDelete={onDeleteItem}
                     onClick={() => {

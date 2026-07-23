@@ -12,6 +12,7 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles"
 import { addItem, addProject, listProjects, getProjectByName } from "../database"
 import type { Item, Project } from "../types"
+import { sendMessage } from "../types/messages"
 
 interface PendingCapture {
   type: Item["type"]
@@ -63,13 +64,13 @@ export default function NewProjectPage() {
     })
 
     // Delegate toast to the background SW
-    chrome.runtime.sendMessage({
+    sendMessage({
       kind: "save-feedback",
       tabId,
       saved,
       type: pending.type,
       projectName
-    })
+    }).catch(() => {})
 
     chrome.storage.session.remove("pendingCapture")
     chrome.storage.session.remove("pendingTabId")

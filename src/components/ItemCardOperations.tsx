@@ -12,6 +12,7 @@ import ExportButton from "./ExportButton"
 
 interface ItemCardOperationsProps {
   item: Item
+  readOnly?: boolean
   onDelete: (id: string) => void
   onMoveToProject?: (id: string) => void
   onCopyToProject?: (id: string) => void
@@ -20,6 +21,7 @@ interface ItemCardOperationsProps {
 
 export default function ItemCardOperations({
   item,
+  readOnly,
   onDelete,
   onMoveToProject,
   onCopyToProject,
@@ -55,59 +57,63 @@ export default function ItemCardOperations({
         </IconButton>
       </Tooltip>
       <ExportButton item={item} />
-      {onMoveToProject && (
-        <Tooltip title="移动到…">
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation()
-              onMoveToProject(item.id)
-            }}
-            sx={{ p: 0.75 }}>
-            <DriveFileMoveOutlinedIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
-      )}
-      {onCopyToProject && (
-        <Tooltip title="复制到…">
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation()
-              onCopyToProject(item.id)
-            }}
-            sx={{ p: 0.75 }}>
-            <FileCopyOutlinedIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
-      )}
-      <Tooltip title="删除">
-        <IconButton
-          size="small"
-          color="error"
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(item.id)
-          }}
-          sx={{ p: 0.75 }}>
-          <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Tooltip>
-      {item.type === "link" && onToggleRead && (
-        <Tooltip title={item.read ? "标记未读" : "标记已读"}>
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleRead(item.id)
-            }}
-            sx={{
-              p: 0.75,
-              color: item.read ? "success.main" : "text.disabled"
-            }}>
-            <CheckCircleOutlineRoundedIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
+      {!readOnly && (
+        <>
+          {onMoveToProject && (
+            <Tooltip title="移动到…">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onMoveToProject(item.id)
+                }}
+                sx={{ p: 0.75 }}>
+                <DriveFileMoveOutlinedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onCopyToProject && (
+            <Tooltip title="复制到…">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCopyToProject(item.id)
+                }}
+                sx={{ p: 0.75 }}>
+                <FileCopyOutlinedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="删除">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(item.id)
+              }}
+              sx={{ p: 0.75 }}>
+              <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+          {item.type === "link" && onToggleRead && (
+            <Tooltip title={item.read ? "标记未读" : "标记已读"}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleRead(item.id)
+                }}
+                sx={{
+                  p: 0.75,
+                  color: item.read ? "success.main" : "text.disabled"
+                }}>
+                <CheckCircleOutlineRoundedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+        </>
       )}
     </Stack>
   )
