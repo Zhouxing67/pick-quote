@@ -1,6 +1,6 @@
 import { useRef } from "react"
 
-import { addItem, addProject, clearAllItems, clearAllProjects } from "../database"
+import { bulkReplace } from "../database"
 import { downloadRemote, runSync, type SyncCredentials } from "../utils/sync"
 import { toJsonZip } from "../utils/zip"
 import type { Item, Project } from "../types"
@@ -46,56 +46,61 @@ export function useBackupSync(options: {
   }
 
   const handleUploadSync = async () => {
-    setSyncStatus("正在上传…")
     try {
       const cred = await getSyncCredentials()
       if (!cred) { setSyncStatus("请先在设置中配置坚果云"); return }
-      const result = await runSync(cred, allItemsUnfiltered, projects)
+      const result = await runSync(cred, allItemsUnfiltered, projects, setSyncStatus)
       if (result.success) chrome.storage.local.set({ lastSyncTime: Date.now() })
       setSyncStatus(result.message)
+      console.debug("[lime:sync]", result.message)
     } catch (e) {
       setSnackbarMsg(`同步失败：${e}`)
       setSyncStatus("同步失败")
+      console.debug("[lime:sync] 同步失败:", e)
     }
   }
 
   const handleDownloadSync = async () => {
-    setSyncStatus("正在下载…")
     try {
       const cred = await getSyncCredentials()
       if (!cred) { setSyncStatus("请先在设置中配置坚果云"); return }
-      const remote = await downloadRemote(cred, allItemsUnfiltered, projects)
+
+      const remote = await downloadRemote(cred, allItemsUnfiltered, projects, setSyncStatus)
       if (!remote.success) {
         setSyncStatus(remote.message || "下载失败")
+        console.debug("[lime:sync]", remote.message || "下载失败")
         return
       }
       if (remote.direction === "noop") {
-        setSyncStatus("云端无变化")
+        setSyncStatus(remote.message || "数据无变化")
+        console.debug("[lime:sync]", remote.message || "数据无变化")
         return
       }
       if (remote.payload) {
-        await clearAllItems()
-        await clearAllProjects()
-        for (const p of remote.payload.projects) {
-          await addProject(p)
-        }
-        for (const item of remote.payload.items) {
-          await addItem(item)
-        }
+        setSyncStatus("正在应用数据…")
+        await bulkReplace(
+          remote.payload.items,
+          remote.payload.projects,
+          allItemsUnfiltered,
+          projects
+        )
         chrome.storage.local.set({ lastSyncTime: Date.now() })
-        setSyncStatus("下载完成")
+        const msg = remote.message || "从云端同步"
+        setSyncStatus(msg)
+        console.debug("[lime:sync]", msg)
         await refreshAllData()
       }
     } catch (e) {
       setSnackbarMsg(`下载失败：${e}`)
       setSyncStatus("下载失败")
+      console.debug("[lime:sync] 下载失败:", e)
     }
   }
 
   return {
     backupFileInputRef,
     handleExportBackup,
-    handleUploadSync,
-    handleDownloadSync
+    handleDownloadSync,
+    handleUploadSync
   }
 }

@@ -19,7 +19,7 @@ import {
   Typography,
   useMediaQuery
 } from "@mui/material"
-import { ThemeProvider } from "@mui/material/styles"
+import { ThemeProvider, alpha } from "@mui/material/styles"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import AppHeader from "./components/AppHeader"
@@ -66,18 +66,6 @@ export default function OptionsPage() {
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
 
   // Navigate prev/next within the currently displayed list
-  const handleNavigate = useCallback(
-    (direction: "prev" | "next") => {
-      if (!dialogItem) return
-      const idx = displayedItems.findIndex((i) => i.id === dialogItem.id)
-      if (idx === -1) return
-      const nextIdx = direction === "prev" ? idx - 1 : idx + 1
-      if (nextIdx < 0 || nextIdx >= displayedItems.length) return
-      setDialogItem(displayedItems[nextIdx])
-    },
-    [dialogItem, displayedItems]
-  )
-
   const [hasMore, setHasMore] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerWidth, setDrawerWidth] = useState(280)
@@ -93,6 +81,7 @@ export default function OptionsPage() {
   const [previewCount, setPreviewCount] = useState(0)
   const [previewItems, setPreviewItems] = useState<Item[]>([])
   const [reviewDateFilter, setReviewDateFilter] = useState<string | null>(null)
+  const [ratingFilter, setRatingFilter] = useState<1 | 2 | 3 | 4 | null>(null)
   const [reviewProgress, setReviewProgress] = useState({ current: 0, total: 0 })
   const [allItemsUnfiltered, setAllItemsUnfiltered] = useState<Item[]>([])
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
@@ -208,6 +197,38 @@ export default function OptionsPage() {
     }
     return m
   }, [allItemsUnfiltered, reviewDateFilter])
+
+  const filteredDateItems = useMemo(() => {
+    if (!ratingFilter) return reviewDateItems
+    return reviewDateItems.filter((item) => cardFirstRating.get(item.id) === ratingFilter)
+  }, [reviewDateItems, ratingFilter, cardFirstRating])
+
+  // Navigation within the current active list
+  const handleNavigate = useCallback(
+    (direction: "prev" | "next") => {
+      if (!dialogItem) return
+      const list = sidebarTab === "review" && reviewDateFilter
+        ? filteredDateItems
+        : sidebarTab === "review" && previewCount > 0
+        ? previewItems
+        : displayedItems
+      const idx = list.findIndex((i) => i.id === dialogItem.id)
+      if (idx === -1) return
+      const nextIdx = direction === "prev" ? idx - 1 : idx + 1
+      if (nextIdx < 0 || nextIdx >= list.length) return
+      setDialogItem(list[nextIdx])
+    },
+    [dialogItem, displayedItems, filteredDateItems, previewItems, sidebarTab, reviewDateFilter, previewCount]
+  )
+
+  const navList = sidebarTab === "review" && reviewDateFilter
+    ? filteredDateItems
+    : sidebarTab === "review" && previewCount > 0
+    ? previewItems
+    : displayedItems
+  const navIndex = dialogItem ? navList.findIndex((i) => i.id === dialogItem.id) : -1
+  const hasPrev = navIndex > 0
+  const hasNext = navIndex >= 0 && navIndex < navList.length - 1
 
   // Mount: initial load
   useEffect(() => {
@@ -494,6 +515,14 @@ export default function OptionsPage() {
     (i) => i.type === "link" && !i.read
   )
 
+  const sharedCardGridProps = {
+    selectedIds,
+    onOpenDialog: setDialogItem,
+    onToggleRead: handleToggleRead,
+    onMoveToProject: setMoveCardId,
+    onCopyToProject: setCopyCardId
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -548,7 +577,6 @@ export default function OptionsPage() {
           onImportBackup={() => backupFileInputRef.current?.click()}
           onUploadSync={handleUploadSync}
           onDownloadSync={handleDownloadSync}
-          reviewStats={reviewStats}
           previewCount={previewCount}
           onPreview={handlePreview}
           recentDates={recentDates}
@@ -617,11 +645,49 @@ export default function OptionsPage() {
               )}
             </AppHeader>
 
+            {sidebarTab !== "review" && (
             <FilterChips
               keyword={keyword}
               onKeywordChange={setKeyword}
             />
+            )}
           </Box>
+
+          {sidebarTab === "review" && reviewDateFilter && (
+            <Box sx={(theme: any) => ({ bgcolor: alpha(theme.palette.primary.main, 0.03), py: 1, px: 2 })}>
+              <Stack direction="row" alignItems="center" spacing={0.5} flexWrap="wrap">
+                <Typography variant="body2" sx={{ color: "text.secondary", mr: 1 }}>
+                  回顾：{recentDates.find((d) => d.key === reviewDateFilter)?.label ?? reviewDateFilter}
+                </Typography>
+                {([null, 1, 2, 3, 4] as const).map((r) => {
+                  const active = ratingFilter === r
+                  const COLORS = ["#ef4444", "#f97316", "#22c55e", "#3b82f6"]
+                  const LABELS = ["全部", "重来", "困难", "良好", "简单"]
+                  const i = r === null ? 0 : r
+                  const color = r === null ? "#94a3b8" : COLORS[r - 1]
+                  return (
+                    <Tooltip key={LABELS[i]} title={LABELS[i]}>
+                      <Box
+                        onClick={() => setRatingFilter(active ? null : r)}
+                        sx={{
+                          width: 14, height: 14, borderRadius: "50%", cursor: "pointer", flexShrink: 0,
+                          bgcolor: active ? color : "transparent",
+                          border: "2px solid",
+                          borderColor: active ? color : "divider",
+                          transition: "all 0.15s",
+                          "&:hover": { borderColor: color, bgcolor: active ? color : `${color}22` }
+                        }}
+                      />
+                    </Tooltip>
+                  )
+                })}
+                <Box sx={{ flex: 1 }} />
+                <Button size="small" onClick={() => { setReviewDateFilter(null); setRatingFilter(null) }} sx={{ borderRadius: 1 }}>
+                  退出
+                </Button>
+              </Stack>
+            </Box>
+          )}
 
           <Box sx={{ flex: 1, overflow: "auto", minHeight: 0, bgcolor: (t: any) => t.palette.mode === "light" ? "#fcf9f3" : undefined }}>
           <Container sx={{ py: 4 }} maxWidth="xl">
@@ -642,27 +708,21 @@ export default function OptionsPage() {
               <Box>
                 {sidebarTab === "review" && reviewDateFilter ? (
                   <Box>
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        回顾：{recentDates.find((d) => d.key === reviewDateFilter)?.label ?? reviewDateFilter}
+                    {ratingFilter && filteredDateItems.length === 0 ? (
+                      <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
+                        该评分下无卡片
                       </Typography>
-                      <Button size="small" onClick={() => setReviewDateFilter(null)} sx={{ borderRadius: 1 }}>
-                        退出
-                      </Button>
-                    </Stack>
+                    ) : (
                     <CardGrid
-                      items={reviewDateItems}
+                      items={filteredDateItems}
                       selectMode={false}
-                      selectedIds={selectedIds}
                       readOnly
                       onSelectItem={() => {}}
                       onDeleteItem={() => {}}
-                      onOpenDialog={setDialogItem}
-                      onToggleRead={handleToggleRead}
-                      onMoveToProject={setMoveCardId}
-                      onCopyToProject={setCopyCardId}
                       firstRating={cardFirstRating}
+                      {...sharedCardGridProps}
                     />
+                    )}
                   </Box>
                 ) : sidebarTab === "review" && previewCount > 0 ? (
                   <Box>
@@ -677,14 +737,10 @@ export default function OptionsPage() {
                     <CardGrid
                       items={previewItems}
                       selectMode={false}
-                      selectedIds={selectedIds}
                       readOnly
                       onSelectItem={() => {}}
                       onDeleteItem={() => {}}
-                      onOpenDialog={setDialogItem}
-                      onToggleRead={handleToggleRead}
-                      onMoveToProject={setMoveCardId}
-                      onCopyToProject={setCopyCardId}
+                      {...sharedCardGridProps}
                     />
                   </Box>
                 ) : sidebarTab === "review" ? (
@@ -694,6 +750,8 @@ export default function OptionsPage() {
                   (i) => (i.srs?.reviewCount ?? 0) >= 3 && (i.srs?.easeFactor ?? 0) >= 2.5
                 ).length}
                 onSave={async (item) => {
+                  const all = await searchItems({})
+                  if (!all.some((i) => i.id === item.id)) return
                   await updateItem(item)
                 }}
                 onExit={handleExitReview}
@@ -848,17 +906,13 @@ export default function OptionsPage() {
                 <CardGrid
                   items={readingFilteredItems}
                   selectMode={selectMode}
-                  selectedIds={selectedIds}
                   onSelectItem={(id) =>
                     setSelectedIds((prev) =>
                       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
                     )
                   }
                    onDeleteItem={onDelete}
-                   onOpenDialog={setDialogItem}
-                   onToggleRead={handleToggleRead}
-                  onMoveToProject={setMoveCardId}
-                  onCopyToProject={setCopyCardId}
+                   {...sharedCardGridProps}
                 />
               )
             ) : null}
@@ -867,17 +921,13 @@ export default function OptionsPage() {
               <CardGrid
                 items={displayedItems}
                 selectMode={selectMode}
-                selectedIds={selectedIds}
                 onSelectItem={(id) =>
                   setSelectedIds((prev) =>
                     prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
                   )
                 }
                 onDeleteItem={onDelete}
-                onOpenDialog={setDialogItem}
-                onToggleRead={handleToggleRead}
-                onMoveToProject={setMoveCardId}
-                onCopyToProject={setCopyCardId}
+                {...sharedCardGridProps}
               />
             )}
 
@@ -917,6 +967,8 @@ export default function OptionsPage() {
               item={dialogItem}
               open={Boolean(dialogItem)}
               readOnly={sidebarTab === "review"}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
               onClose={() => setDialogItem(null)}
               onNavigate={handleNavigate}
               onSave={async (updated) => {

@@ -40,7 +40,7 @@ function notifySystem(text: string) {
     const iconUrl = icons ? chrome.runtime.getURL(icons["128"] || icons["48"] || "") : undefined
     chrome.notifications.create({
       type: "basic",
-      iconUrl: iconUrl || chrome.runtime.getURL("icon128.plasmo.3c1ed2d2.png"),
+      iconUrl,
       title: "lime",
       message: text
     })
@@ -60,7 +60,7 @@ function createItem(data: { type: Item["type"]; content: string; source?: Source
   }
 }
 
-// Listen for database changes broadcast via storage
+  // Listen for database changes broadcast via storage
 chrome.storage.onChanged.addListener((changes) => {
   if (changes._dbp) {
     rebuildProjectMenus().catch(() => {})

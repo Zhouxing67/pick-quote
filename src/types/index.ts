@@ -37,6 +37,8 @@ export interface Item {
   tags?: string[]
   /** Spaced repetition scheduling data */
   srs?: SrsData
+  /** Last modification timestamp (for incremental sync) */
+  updatedAt?: number
 }
 
 export interface SearchQuery {

@@ -30,6 +30,7 @@ export function useReview(options: {
     previewCount,
     setPreviewCount,
     setPreviewItems,
+    reviewItems,
     reviewDateFilter,
     setReviewDateFilter,
     setReviewProgress,
@@ -64,22 +65,21 @@ export function useReview(options: {
   const handleStartReview = useCallback(async () => {
     setPreviewCount(0)
     setPreviewItems([])
-    const all = await searchItems({})
-    const due = getDueItems(all)
+    const due = getDueItems(allItemsUnfiltered)
     setReviewItems(due)
     setSidebarTab("review")
-  }, [searchItems, setSidebarTab, setPreviewCount, setPreviewItems, setReviewItems])
+  }, [allItemsUnfiltered, setSidebarTab, setPreviewCount, setPreviewItems, setReviewItems])
 
   useEffect(() => {
-    if (sidebarTab === "review" && !reviewDateFilter) {
+    if (sidebarTab === "review" && !reviewDateFilter && reviewItems.length === 0) {
       handleStartReview()
     }
-  }, [sidebarTab, reviewDateFilter, handleStartReview])
+  }, [sidebarTab, reviewDateFilter, handleStartReview, reviewItems])
 
-  const handleExitReview = useCallback(() => {
+  const handleExitReview = useCallback(async () => {
     setReviewItems([])
     setSidebarTab("projects")
-    onSearch()
+    await onSearch()
   }, [onSearch, setSidebarTab, setReviewItems])
 
   const handlePreview = useCallback(

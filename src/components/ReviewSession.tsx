@@ -26,32 +26,34 @@ export default function ReviewSession({
   onExit,
   onProgress
 }: ReviewSessionProps) {
-  const [queue, setQueue] = useState<Item[]>([])
+  const [reviewQueue, setReviewQueue] = useState<Item[]>([])
+  const [statsQueue, setStatsQueue] = useState<Item[]>([])
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [completed, setCompleted] = useState(false)
-  const [ratings, setRatings] = useState<number[]>([])
+  const [statsRatings, setStatsRatings] = useState<Map<string, number>>(new Map())
   const [slideDir, setSlideDir] = useState<1 | -1>(1)
 
   // Reset session state when items prop changes (new review set)
   useEffect(() => {
-    setQueue([...items])
+    setReviewQueue([...items])
+    setStatsQueue([...items])
     setIndex(0)
     setFlipped(false)
     setTransitioning(false)
     setCompleted(false)
-    setRatings([])
+    setStatsRatings(new Map())
   }, [items])
 
-  const dueCount = items.length
+  const totalCount = statsQueue.length
 
-  // Report progress to parent for AppHeader display
+  // Report progress to parent for AppHeader display (based on statsQueue snapshot)
   useEffect(() => {
-    onProgress?.(index + 1, dueCount)
-  }, [index, dueCount, onProgress])
+    onProgress?.(index + 1, totalCount)
+  }, [index, totalCount, onProgress])
 
-  const current = queue[index] ?? null
+  const current = reviewQueue[index] ?? null
 
   const handleFlip = useCallback(() => {
     if (!transitioning) {
@@ -65,14 +67,19 @@ export default function ReviewSession({
       setSlideDir(1)
       setTransitioning(true)
       const updated = rateCard(current, rating)
-      setRatings((prev) => [...prev, rating])
+      setStatsRatings((prev) => {
+        if (prev.has(current.id)) return prev
+        const next = new Map(prev)
+        next.set(current.id, rating)
+        return next
+      })
 
       await onSave(updated)
 
-      // Anki-like: rating < 3 re-queues the card for later in this session
-      if (rating < 3 && index + 1 < queue.length) {
+      // Anki-like: rating < 3 re-queues the card regardless of position
+      if (rating < 3) {
         setTimeout(() => {
-          setQueue((prev) => {
+          setReviewQueue((prev) => {
             const without = prev.filter((_, i) => i !== index)
             return [...without, updated]
           })
@@ -80,7 +87,7 @@ export default function ReviewSession({
           setTransitioning(false)
           // index stays — next card shifts into current position
         }, 350)
-      } else if (index + 1 >= queue.length) {
+      } else if (index + 1 >= reviewQueue.length) {
         setTimeout(() => {
           setCompleted(true)
           setTransitioning(false)
@@ -93,7 +100,7 @@ export default function ReviewSession({
         }, 350)
       }
     },
-    [current, transitioning, index, queue.length, onSave]
+    [current, transitioning, index, reviewQueue.length, onSave]
   )
 
   const handlePrev = useCallback(() => {
@@ -109,7 +116,7 @@ export default function ReviewSession({
   }, [index, transitioning])
 
   const handleNext = useCallback(() => {
-    if (index < queue.length - 1 && !transitioning) {
+    if (index < reviewQueue.length - 1 && !transitioning) {
       setSlideDir(1)
       setTransitioning(true)
       setFlipped(false)
@@ -118,7 +125,7 @@ export default function ReviewSession({
         setTransitioning(false)
       }, 350)
     }
-  }, [index, queue.length, transitioning])
+  }, [index, reviewQueue.length, transitioning])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -139,12 +146,13 @@ export default function ReviewSession({
   }, [flipped, completed, handleFlip, handleRate])
 
   if (completed) {
+    const firstRatings = Array.from(statsRatings.values())
     const avgRating =
-      ratings.length > 0
-        ? ratings.reduce((s, r) => s + r, 0) / ratings.length
+      firstRatings.length > 0
+        ? firstRatings.reduce((s, r) => s + r, 0) / firstRatings.length
         : 0
-    const goodCount = ratings.filter((r) => r >= 3).length
-    const accuracy = dueCount > 0 ? goodCount / dueCount : 0
+    const goodCount = firstRatings.filter((r) => r >= 3).length
+    const accuracy = totalCount > 0 ? goodCount / totalCount : 0
     return (
       <Box
         sx={{
@@ -181,7 +189,7 @@ export default function ReviewSession({
             </Box>
             <Box sx={{ textAlign: "center" }}>
               <Typography variant="h4" sx={{ fontWeight: 600, color: "primary.main" }}>
-                {dueCount}
+                {totalCount}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 复习卡片
@@ -199,7 +207,7 @@ export default function ReviewSession({
         </Box>
         <Stack spacing={0.5} sx={{ mb: 3, textAlign: "center" }}>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            熟悉率 {goodCount}/{dueCount} · 平均评分 {avgRating.toFixed(1)}
+            熟悉率 {goodCount}/{totalCount} · 平均评分 {avgRating.toFixed(1)}
           </Typography>
           {masteredCount > 0 && (
             <Typography variant="body2" sx={{ color: "success.main", fontWeight: 500 }}>
@@ -279,7 +287,7 @@ export default function ReviewSession({
           <ChevronLeftRoundedIcon sx={{ fontSize: 28 }} />
         </IconButton>
         <IconButton
-          disabled={index >= queue.length - 1}
+          disabled={index >= reviewQueue.length - 1}
           onClick={handleNext}
           sx={{
             position: "absolute",

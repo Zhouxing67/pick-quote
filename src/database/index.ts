@@ -138,6 +138,7 @@ export async function isDuplicate(
 export async function addItem(item: Item): Promise<boolean> {
   const normalized: Item = {
     ...item,
+    updatedAt: item.updatedAt ?? Date.now(),
     sourceSite:
       item.source?.site ??
       (item.source ? new URL(item.source.url).hostname : undefined),
@@ -212,7 +213,7 @@ export async function deleteItems(ids: string[]): Promise<void> {
 
 export async function updateItem(item: Item): Promise<void> {
   await withStore("items", "readwrite", (store) => {
-    store.put(item)
+    store.put({ ...item, updatedAt: Date.now() })
   })
 }
 
@@ -302,14 +303,50 @@ export async function getRecentProjects(limit = 3): Promise<Project[]> {
   return projects.sort((a, b) => (b.lastOpened ?? 0) - (a.lastOpened ?? 0)).slice(0, limit)
 }
 
+/**
+ * @deprecated Use bulkReplace for sync-safe bulk operations.
+ * Clears all items from the database.
+ */
 export async function clearAllItems(): Promise<void> {
   await withStore("items", "readwrite", (store) => {
     store.clear()
   })
 }
 
+/**
+ * @deprecated Use bulkReplace for sync-safe bulk operations.
+ * Clears all projects from the database.
+ */
 export async function clearAllProjects(): Promise<void> {
   await withStore("projects", "readwrite", (store) => {
     store.clear()
+  })
+}
+
+/**
+ * Diff-based bulk replacement for sync download.
+ * In a single transaction per store, upserts remote entities and
+ * deletes any local entity whose id is not present in the remote set.
+ */
+export async function bulkReplace(
+  remoteItems: Item[],
+  remoteProjects: Project[],
+  localItems: Item[],
+  localProjects: Project[]
+): Promise<void> {
+  const remoteItemIds = new Set(remoteItems.map((i) => i.id))
+  const remoteProjectIds = new Set(remoteProjects.map((p) => p.id))
+
+  await withStore("items", "readwrite", async (store) => {
+    for (const item of remoteItems) store.put(item)
+    for (const item of localItems) {
+      if (!remoteItemIds.has(item.id)) store.delete(item.id)
+    }
+  })
+  await withStore("projects", "readwrite", async (store) => {
+    for (const project of remoteProjects) store.put(project)
+    for (const project of localProjects) {
+      if (!remoteProjectIds.has(project.id)) store.delete(project.id)
+    }
   })
 }

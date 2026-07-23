@@ -27,7 +27,9 @@ export default function ItemDialog({
   onClose,
   onSave,
   onNavigate,
-  readOnly
+  readOnly,
+  hasPrev,
+  hasNext
 }: {
   item: Item | null
   open: boolean
@@ -35,6 +37,8 @@ export default function ItemDialog({
   onSave?: (updated: Item) => void | Promise<void>
   onNavigate?: (direction: "prev" | "next") => void
   readOnly?: boolean
+  hasPrev?: boolean
+  hasNext?: boolean
 }) {
   if (!item) return null
 
@@ -99,10 +103,12 @@ export default function ItemDialog({
         <>
           <IconButton
             onClick={() => handleNavigate("prev")}
+            disabled={!hasPrev}
             sx={{
               position: "fixed",
               left: 24,
               top: "50%",
+              "&.Mui-disabled": { opacity: 0.3 },
               transform: "translateY(-50%)",
               zIndex: (theme) => theme.zIndex.modal + 1,
               bgcolor: "background.paper",
@@ -115,10 +121,12 @@ export default function ItemDialog({
           </IconButton>
           <IconButton
             onClick={() => handleNavigate("next")}
+            disabled={!hasNext}
             sx={{
               position: "fixed",
               right: 24,
               top: "50%",
+              "&.Mui-disabled": { opacity: 0.3 },
               transform: "translateY(-50%)",
               zIndex: (theme) => theme.zIndex.modal + 1,
               bgcolor: "background.paper",

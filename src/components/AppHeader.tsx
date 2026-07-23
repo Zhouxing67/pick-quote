@@ -25,7 +25,7 @@ export default function AppHeader({
   return (
       <Box
       sx={(theme) => ({
-        bgcolor: alpha(theme.palette.primary.main, 0.05),
+        bgcolor: alpha(theme.palette.primary.main, 0.07),
         borderBottom: "2px solid",
         borderColor: "primary.main",
         boxShadow: "0 1px 4px rgba(0,0,0,0.04)",

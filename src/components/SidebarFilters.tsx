@@ -22,7 +22,6 @@ import {
   Drawer,
   FormControlLabel,
   IconButton,
-  LinearProgress,
   Stack,
   TextField,
   Tooltip,
@@ -30,7 +29,6 @@ import {
 } from "@mui/material"
 
 import type { Project } from "../types"
-import type { ReviewStats } from "../hooks/useSrs"
 
 interface SidebarFiltersProps {
   open: boolean
@@ -44,7 +42,6 @@ interface SidebarFiltersProps {
   activeTag: string
   backupSelectedIds: string[]
   syncStatus: string
-  reviewStats: ReviewStats
   previewCount: number
   onPreview: (count: number) => void
   recentDates: { key: string; label: string; count: number }[]
@@ -92,7 +89,6 @@ export default function SidebarFilters({
   activeTag,
   backupSelectedIds,
   syncStatus,
-  reviewStats,
   previewCount,
   onPreview,
   recentDates,
@@ -245,50 +241,6 @@ export default function SidebarFilters({
           /* Review tab content */
           <Box sx={{ bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
           <Stack spacing={1.5} sx={{ p: 2, pt: 3 }}>
-            {reviewStats.totalReviews > 0 && (
-              <Box>
-                <SectionLabel>复习概况</SectionLabel>
-                <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                  累计 {reviewStats.totalReviews} 次 · 准确率 {Math.round(reviewStats.accuracyRate * 100)}% · 连续 {reviewStats.streakDays} 天
-                </Typography>
-              </Box>
-            )}
-            <Box>
-              <SectionLabel>今日评分</SectionLabel>
-              <Stack spacing={0.5}>
-                {(
-                  [
-                    { label: "重来", color: "#ef4444" },
-                    { label: "困难", color: "#f97316" },
-                    { label: "良好", color: "#22c55e" },
-                    { label: "简单", color: "#3b82f6" }
-                  ] as const
-                ).map(({ label, color }, i) => {
-                  const count = reviewStats.todayRatingDistribution[i]
-                  const total = reviewStats.todayRatingDistribution.reduce((a, b) => a + b, 0)
-                  const pct = total > 0 ? (count / total) * 100 : 0
-                  return (
-                    <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <Typography variant="caption" sx={{ fontSize: "0.7rem", width: 28, flexShrink: 0 }}>
-                        {label}
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={pct}
-                        sx={{
-                          flex: 1, height: 6, borderRadius: 3,
-                          bgcolor: "divider",
-                          "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 3 }
-                        }}
-                      />
-                      <Typography variant="caption" sx={{ fontSize: "0.65rem", width: 20, textAlign: "right", color: "text.secondary" }}>
-                        {count}
-                      </Typography>
-                    </Box>
-                  )
-                })}
-              </Stack>
-            </Box>
             <Box>
               <SectionLabel>预习</SectionLabel>
               <Stack direction="row" spacing={1}>

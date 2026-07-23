@@ -42,6 +42,20 @@ async function bgFetch(
   })
 }
 
+// ---- Dirty-check helpers ----
+
+async function hasChangesSince(lastSync: number): Promise<boolean> {
+  const data = await chrome.storage.local.get(["_dbi", "_dbp"])
+  return (data._dbi ?? 0) > lastSync || (data._dbp ?? 0) > lastSync
+}
+
+async function getLastSyncTime(): Promise<number | null> {
+  const data = await chrome.storage.local.get("lastSyncTime")
+  return (data.lastSyncTime as number) ?? null
+}
+
+// ---- End dirty-check helpers ----
+
 export async function testConnection(
   cred: SyncCredentials
 ): Promise<{ ok: boolean; message: string }> {
@@ -75,7 +89,6 @@ async function uploadSyncFile(
   cred: SyncCredentials,
   payload: SyncPayload
 ): Promise<void> {
-  // Ensure /Apps/lime/ directory exists
   await bgFetch(cred, "/Apps/lime/", { method: "MKCOL" }).catch(() => {})
   const json = JSON.stringify(payload)
   const res = await bgFetch(cred, SYNC_PATH, {
@@ -105,26 +118,38 @@ async function buildPayload(
 export async function runSync(
   cred: SyncCredentials,
   items: Item[],
-  projects: Project[]
+  projects: Project[],
+  onStatus?: (status: string) => void
 ): Promise<SyncResult> {
   try {
+    // Step 1: skip if nothing changed since last sync (avoids serialization + network)
+    const lastSync = await getLastSyncTime()
+    if (lastSync && !(await hasChangesSince(lastSync))) {
+      return { success: true, direction: "noop", message: "数据无变化" }
+    }
+
+    onStatus?.("正在序列化数据…")
     const localPayload = await buildPayload(items, projects)
+
+    onStatus?.("正在检查云端…")
     const remote = await downloadSyncFile(cred)
 
     if (!remote) {
+      onStatus?.("首次同步，正在上传…")
       await uploadSyncFile(cred, localPayload)
-      return { success: true, direction: "upload", message: "首次同步完成" }
+      return { success: true, direction: "upload", message: "同步到云端" }
     }
 
     if (localPayload.contentHash === remote.contentHash) {
-      return { success: true, direction: "noop", message: "数据已一致，无需同步" }
+      return { success: true, direction: "noop", message: "数据无变化" }
     }
 
+    onStatus?.("正在上传…")
     await uploadSyncFile(cred, localPayload)
     return {
       success: true,
       direction: "upload",
-      message: `已上传覆盖云端版本（云端 ${new Date(remote.syncedAt).toLocaleString("zh-CN")}）`
+      message: "同步到云端"
     }
   } catch (e: any) {
     return {
@@ -138,23 +163,26 @@ export async function runSync(
 export async function downloadRemote(
   cred: SyncCredentials,
   items: Item[],
-  projects: Project[]
+  projects: Project[],
+  onStatus?: (status: string) => void
 ): Promise<SyncResult> {
   try {
+    onStatus?.("正在下载云端数据…")
     const remote = await downloadSyncFile(cred)
     if (!remote) {
-      return { success: false, direction: "error", message: "云端暂无数据" }
+      return { success: false, direction: "error", message: "云端无数据" }
     }
 
+    onStatus?.("正在对比数据…")
     const localPayload = await buildPayload(items, projects)
     if (localPayload.contentHash === remote.contentHash) {
-      return { success: true, direction: "noop", message: "数据已一致" }
+      return { success: true, direction: "noop", message: "数据无变化" }
     }
 
     return {
       success: true,
       direction: "download",
-      message: "",
+      message: "从云端同步",
       payload: remote
     }
   } catch (e: any) {
