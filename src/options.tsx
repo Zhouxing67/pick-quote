@@ -28,7 +28,7 @@ import DateRangeFilter from "./components/DateRangeFilter"
 import DeleteConfirmDialog from "./components/DeleteConfirmDialog"
 import EmptyState from "./components/EmptyState"
 import FilterChips from "./components/FilterChips"
-import FooterStats from "./components/FooterStats"
+import FooterBar from "./components/FooterBar"
 import ItemDialog from "./components/ItemDialog"
 import MoveCopyCards from "./components/MoveCopyCards"
 import NewCardDialog from "./components/NewCardDialog"
@@ -403,21 +403,6 @@ export default function OptionsPage() {
     () => projects.filter((p) => p.id !== activeProjectId),
     [projects, activeProjectId]
   )
-
-  const stats = useMemo(() => {
-    const now = Date.now()
-    const recent7 = allItemsUnfiltered.filter((i) => i.createdAt > now - 7 * 86400000).length
-    const sourceCounts = new Map<string, number>()
-    for (const item of allItemsUnfiltered) {
-      const site = item.source?.site
-      if (site) sourceCounts.set(site, (sourceCounts.get(site) ?? 0) + 1)
-    }
-    const topSites = [...sourceCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([site, count]) => ({ site, count }))
-    return { totalItems: allItemsUnfiltered.length, totalProjects: projects.length, recent7, topSites }
-  }, [allItemsUnfiltered, projects])
 
   const handleToggleRead = async (id: string) => {
     const item = allItems.find((i) => i.id === id)
@@ -911,16 +896,13 @@ export default function OptionsPage() {
               onChange={handleImportBackupFile}
             />
           </Container>
-          <FooterStats
-            totalItems={stats.totalItems}
-            totalProjects={stats.totalProjects}
-            recent7={stats.recent7}
-            topSites={stats.topSites}
-            streakDays={reviewStats.streakDays}
-            totalReviews={reviewStats.totalReviews}
-            accuracyRate={reviewStats.accuracyRate}
-          />
           </Box>
+          <FooterBar
+            totalItems={allItemsUnfiltered.length}
+            totalProjects={projects.length}
+            dueCount={dueCount}
+            syncStatus={syncStatus}
+          />
         </Box>
       </Box>
     </ThemeProvider>
