@@ -33,14 +33,6 @@ function openDb(version?: number): Promise<IDBDatabase> {
         store.createIndex("projectId", "projectId", { unique: false })
         store.createIndex("hash", "hash", { unique: false })
       } else {
-        // migrate: remove tags index if exists
-        try {
-          const tx = req.transaction as IDBTransaction
-          const store = tx.objectStore("items")
-          if (Array.from(store.indexNames).includes("tags")) {
-            store.deleteIndex("tags")
-          }
-        } catch {}
         // v3 migration: add projectId index if missing
         try {
           const tx = req.transaction as IDBTransaction
@@ -182,7 +174,6 @@ export async function searchItems(q: SearchQuery): Promise<Item[]> {
           (!q.to || item.createdAt < q.to) &&
           (!q.projectId || item.projectId === q.projectId) &&
           (!q.dueBefore || !item.srs || item.srs.dueDate <= q.dueBefore) &&
-          (!q.tag || item.tags?.includes(q.tag)) &&
           (!q.keyword ||
             item.content?.toLowerCase().includes(q.keyword.toLowerCase()) ||
             item.source?.title?.toLowerCase().includes(q.keyword.toLowerCase()))

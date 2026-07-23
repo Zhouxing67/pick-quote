@@ -7,7 +7,6 @@ import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded"
 import {
   Box,
   Button,
-  Chip,
   CircularProgress,
   Container,
   CssBaseline,
@@ -29,6 +28,7 @@ import DateRangeFilter from "./components/DateRangeFilter"
 import DeleteConfirmDialog from "./components/DeleteConfirmDialog"
 import EmptyState from "./components/EmptyState"
 import FilterChips from "./components/FilterChips"
+import FooterStats from "./components/FooterStats"
 import ItemDialog from "./components/ItemDialog"
 import MoveCopyCards from "./components/MoveCopyCards"
 import NewCardDialog from "./components/NewCardDialog"
@@ -62,7 +62,6 @@ export default function OptionsPage() {
   const [allItems, setAllItems] = useState<Item[]>([])
   const [displayedItems, setDisplayedItems] = useState<Item[]>([])
   const [keyword, setKeyword] = useState("")
-  const [tag, setTag] = useState<string>("")
   const [dialogItem, setDialogItem] = useState<Item | null>(null)
 
   // Navigate prev/next within the currently displayed list
@@ -104,13 +103,6 @@ export default function OptionsPage() {
     [prefersDarkMode, preset]
   )
 
-  const projectTags = useMemo(() => {
-    if (!activeProjectId) return []
-    const tagSet = new Set<string>()
-    allItems.forEach((i) => i.tags?.forEach((t) => tagSet.add(t)))
-    return Array.from(tagSet).sort()
-  }, [allItems, activeProjectId])
-
   useEffect(() => {
     chrome.storage.sync.get("preset", (data) => {
       if (data.preset) setPreset(data.preset as PresetName)
@@ -126,7 +118,6 @@ export default function OptionsPage() {
       const pid = projectId !== undefined ? projectId : activeProjectId
       const q: SearchQuery = {
         keyword,
-        tag: tag || undefined,
         projectId: pid ?? undefined,
         from: dateRange?.from,
         to: dateRange?.to
@@ -137,7 +128,7 @@ export default function OptionsPage() {
       setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
       setHasMore(list.length > ITEMS_PER_PAGE)
     },
-    [keyword, tag, activeProjectId, dateRange, ITEMS_PER_PAGE]
+    [keyword, activeProjectId, dateRange, ITEMS_PER_PAGE]
   )
 
   const {
@@ -244,7 +235,7 @@ export default function OptionsPage() {
   // Immediate search for non-keyword filter changes
   useEffect(() => {
     onSearch()
-  }, [tag, activeProjectId, dateRange])
+  }, [activeProjectId, dateRange])
 
   // Debounced search for keyword (avoids per-keystroke queries)
   useEffect(() => {
@@ -260,7 +251,6 @@ export default function OptionsPage() {
 
   const handleOpenProject = (id: string) => {
     setActiveProjectId(id)
-    setTag("")
     onSearch(id)
     sendMessage({ kind: "set-recent-project", projectId: id }).catch(() => {})
   }
@@ -416,9 +406,9 @@ export default function OptionsPage() {
 
   const stats = useMemo(() => {
     const now = Date.now()
-    const recent7 = allItems.filter((i) => i.createdAt > now - 7 * 86400000).length
+    const recent7 = allItemsUnfiltered.filter((i) => i.createdAt > now - 7 * 86400000).length
     const sourceCounts = new Map<string, number>()
-    for (const item of allItems) {
+    for (const item of allItemsUnfiltered) {
       const site = item.source?.site
       if (site) sourceCounts.set(site, (sourceCounts.get(site) ?? 0) + 1)
     }
@@ -426,8 +416,8 @@ export default function OptionsPage() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([site, count]) => ({ site, count }))
-    return { totalItems: allItems.length, totalProjects: projects.length, recent7, topSites }
-  }, [allItems, projects])
+    return { totalItems: allItemsUnfiltered.length, totalProjects: projects.length, recent7, topSites }
+  }, [allItemsUnfiltered, projects])
 
   const handleToggleRead = async (id: string) => {
     const item = allItems.find((i) => i.id === id)
@@ -544,11 +534,8 @@ export default function OptionsPage() {
           readingFilter={readingFilter}
           dueCount={dueCount}
           sidebarTab={sidebarTab}
-          tags={projectTags}
-          activeTag={tag}
           backupSelectedIds={backupSelectedIds}
           syncStatus={syncStatus}
-          onTagSelect={setTag}
           onToggleReadingFilter={handleToggleReadingFilter}
           onClose={handleToggleDrawer}
           onOpenProject={handleOpenProject}
@@ -760,139 +747,11 @@ export default function OptionsPage() {
             ) : (
               <>
             {!readingFilter && !activeProject && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  py: 12,
-                  color: "text.secondary",
-                  userSelect: "none"
-                }}>
-                <InboxRoundedIcon
-                  className="empty-icon"
-                  sx={{ fontSize: 96, mb: 3 }}
-                />
-                <Typography variant="h6" sx={{ fontWeight: 400, mb: 1 }}>
-                  选择一个项目
-                </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                  从左侧项目面板新建或打开项目，开始整理你的灵感卡片
-                </Typography>
-              </Box>
-            )}
-
-            {!readingFilter && !activeProject && stats.totalItems > 0 && (
-              <Box
-                sx={{
-                  mx: "auto",
-                  maxWidth: 500,
-                  textAlign: "center",
-                  mb: 6
-                }}>
-                <Stack
-                  direction="row"
-                  spacing={3}
-                  justifyContent="center"
-                  sx={{ mb: 2.5 }}>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
-                      {stats.totalItems}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      收藏总数
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
-                      {stats.totalProjects}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      项目数
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
-                      {stats.recent7}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      本周新增
-                    </Typography>
-                  </Box>
-                </Stack>
-                {stats.topSites.length > 0 && (
-                  <>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "text.disabled",
-                        display: "block",
-                        mb: 1,
-                        fontSize: "0.7rem"
-                      }}>
-                      来源网站 Top5
-                    </Typography>
-                    <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap" useFlexGap>
-                      {stats.topSites.map((s) => (
-                        <Chip
-                          key={s.site}
-                          label={`${s.site} (${s.count})`}
-                          size="small"
-                          variant="outlined"
-                          sx={{ borderRadius: 1.5, fontSize: "0.7rem" }}
-                        />
-                      ))}
-                    </Stack>
-                  </>
-                )}
-               </Box>
-             )}
-
-            {!readingFilter && !activeProject && reviewStats.totalReviews > 0 && (
-              <Box
-                sx={{
-                  mx: "auto",
-                  maxWidth: 500,
-                  textAlign: "center",
-                  mb: 6
-                }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ color: "text.secondary", mb: 2, fontSize: "0.85rem" }}>
-                  复习统计
-                </Typography>
-                <Stack
-                  direction="row"
-                  spacing={3}
-                  justifyContent="center"
-                  sx={{ mb: 2.5 }}>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: "success.main" }}>
-                      {reviewStats.streakDays}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      连续打卡
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
-                      {reviewStats.totalReviews}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      累计复习
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: "primary.main" }}>
-                      {Math.round(reviewStats.accuracyRate * 100)}%
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                      熟悉率
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
+              <EmptyState
+                icon={<InboxRoundedIcon className="empty-icon" sx={{ fontSize: 80, mb: 3 }} />}
+                title="选择一个项目"
+                subtitle="从左侧项目面板新建或打开项目，开始整理你的灵感卡片"
+              />
             )}
 
             {readingFilter ? (
@@ -1052,6 +911,15 @@ export default function OptionsPage() {
               onChange={handleImportBackupFile}
             />
           </Container>
+          <FooterStats
+            totalItems={stats.totalItems}
+            totalProjects={stats.totalProjects}
+            recent7={stats.recent7}
+            topSites={stats.topSites}
+            streakDays={reviewStats.streakDays}
+            totalReviews={reviewStats.totalReviews}
+            accuracyRate={reviewStats.accuracyRate}
+          />
           </Box>
         </Box>
       </Box>

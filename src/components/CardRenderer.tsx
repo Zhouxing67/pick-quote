@@ -250,14 +250,6 @@ export default function CardRenderer({ item, mode, truncateTo, contentAlign }: C
           笔记
         </Typography>
         <NoteBlock note={item.note} />
-        {item.tags && item.tags.length > 0 && (
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
-            {item.tags.map((t) => (
-              <Chip key={t} label={t} size="small" variant="outlined"
-                sx={{ borderRadius: 1, fontSize: "0.7rem", height: 22 }} />
-            ))}
-          </Stack>
-        )}
         {item.source?.url && (
           <Typography
             variant="body2" component="a" href={item.source.url} target="_blank"

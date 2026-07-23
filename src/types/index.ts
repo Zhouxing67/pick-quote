@@ -33,8 +33,6 @@ export interface Item {
   sourceSite?: string
   /** Manual ordering within a project (lower = earlier) */
   order?: number
-  /** Tags for within-project organization */
-  tags?: string[]
   /** Spaced repetition scheduling data */
   srs?: SrsData
   /** Last modification timestamp (for incremental sync) */
@@ -45,7 +43,6 @@ export interface SearchQuery {
   keyword?: string
   site?: string
   type?: ItemType
-  tag?: string
   from?: number
   to?: number
   projectId?: string

@@ -38,8 +38,6 @@ interface SidebarFiltersProps {
   readingFilter: boolean
   dueCount: number
   sidebarTab: "projects" | "review" | "backup"
-  tags: string[]
-  activeTag: string
   backupSelectedIds: string[]
   syncStatus: string
   previewCount: number
@@ -47,7 +45,6 @@ interface SidebarFiltersProps {
   recentDates: { key: string; label: string; count: number }[]
   reviewDateFilter: string | null
   onReviewDateClick: (dateKey: string | null) => void
-  onTagSelect: (tag: string) => void
   onClose: () => void
   onOpenProject: (id: string) => void
   onRenameProject: (id: string, name: string) => void
@@ -85,8 +82,6 @@ export default function SidebarFilters({
   readingFilter,
   dueCount,
   sidebarTab,
-  tags,
-  activeTag,
   backupSelectedIds,
   syncStatus,
   previewCount,
@@ -94,7 +89,6 @@ export default function SidebarFilters({
   recentDates,
   reviewDateFilter,
   onReviewDateClick,
-  onTagSelect,
   onClose,
   onOpenProject,
   onRenameProject,
@@ -416,28 +410,9 @@ export default function SidebarFilters({
                   color: "text.secondary",
                   flex: 1
                 }}>
-                新建项目
+                 新建项目
               </Typography>
             </Stack>
-
-            {activeProjectId && tags.length > 0 && (
-              <Box sx={{ px: 1.5, pt: 1.5, mt: 0.5, borderTop: "1px solid", borderColor: "divider" }}>
-                <SectionLabel>标签</SectionLabel>
-                <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                  {tags.map((t) => (
-                    <Chip
-                      key={t}
-                      label={t}
-                      size="small"
-                      variant={activeTag === t ? "filled" : "outlined"}
-                      color={activeTag === t ? "primary" : "default"}
-                      onClick={() => onTagSelect(activeTag === t ? "" : t)}
-                      sx={{ borderRadius: 1, height: 22, fontSize: "0.7rem" }}
-                    />
-                  ))}
-                </Stack>
-              </Box>
-            )}
 
             <Stack
               direction="row"
