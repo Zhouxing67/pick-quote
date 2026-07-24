@@ -62,7 +62,7 @@ export const createAppTheme = (mode: PaletteMode, preset: PresetName = "classic"
     shape: { borderRadius: 12 },
     typography: {
       fontFamily: [
-        "'LXGW WenKai'", "'Noto Serif SC'", "'Songti SC'", "'STSong'",
+        "'Times New Roman'", "'LXGW WenKai'", "'Noto Serif SC'", "'Songti SC'", "'STSong'",
         "Georgia", "serif", "-apple-system", "BlinkMacSystemFont"
       ].join(","),
       h5: { fontWeight: 400, letterSpacing: "0.02em" },

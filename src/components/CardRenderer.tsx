@@ -67,8 +67,9 @@ function ContentBlock({ item }: { item: Item }) {
       <Typography
         sx={{
           fontSize: "1.1rem", lineHeight: 1.9, whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
+          wordBreak: "break-word", textAlign: "justify", textJustify: "inter-word",
+          WebkitHyphens: "auto", hyphens: "auto",
+          fontFamily: '"Times New Roman", "LXGW WenKai", "Noto Serif SC", "Songti SC", serif',
           color: "text.primary"
         }}>
         {item.content}
@@ -114,12 +115,12 @@ export default function CardRenderer({ item, mode, truncateTo, contentAlign }: C
             <Typography
               sx={{
                 whiteSpace: "pre-wrap",
-                lineHeight: 1.75,
+                lineHeight: 1.75, textAlign: "justify", textJustify: "inter-word",
                 color: "text.primary",
                 pl: 2,
                 pr: 1,
                 fontSize: "0.95rem",
-                fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", "STSong", serif'
+                fontFamily: '"Times New Roman", "LXGW WenKai", "Noto Serif SC", "Songti SC", "STSong", serif'
               }}>
               {truncateTo ? truncateText(item.content, truncateTo) : item.content}
             </Typography>
@@ -173,10 +174,11 @@ export default function CardRenderer({ item, mode, truncateTo, contentAlign }: C
               lineHeight: 2,
               color: "text.primary",
               letterSpacing: "0.05em",
-              textAlign: "justify",
+              textAlign: "justify", textJustify: "inter-word",
+              WebkitHyphens: "auto", hyphens: "auto",
               wordBreak: "break-word",
               whiteSpace: "pre-wrap",
-              fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
+              fontFamily: '"Times New Roman", "LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
             }}>
             {truncateTo ? truncateText(item.content, truncateTo) : truncateText(item.content, maxLength)}
           </Typography>
@@ -200,7 +202,8 @@ export default function CardRenderer({ item, mode, truncateTo, contentAlign }: C
               lineHeight: 1.8,
               color: "text.primary",
               letterSpacing: "0.05em",
-              fontFamily: '"LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
+              textAlign: "justify", textJustify: "inter-word",
+              fontFamily: '"Times New Roman", "LXGW WenKai", "Noto Serif SC", "Songti SC", serif'
             }}>
             {truncateText(item.content, maxLength)}
           </Typography>
@@ -288,7 +291,7 @@ export default function CardRenderer({ item, mode, truncateTo, contentAlign }: C
             所在段落
           </Typography>
           <Box sx={{ pl: 1.5, borderLeft: "2px solid", borderColor: "divider" }}>
-            <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.9, color: "text.secondary", fontSize: "0.9rem" }}>
+            <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.9, textAlign: "justify", color: "text.secondary", fontSize: "0.9rem" }}>
               {item.context.paragraph}
             </Typography>
           </Box>

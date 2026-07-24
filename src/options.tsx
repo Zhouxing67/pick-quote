@@ -123,7 +123,7 @@ export default function OptionsPage() {
         to: dateRange?.to
       }
       const list = await searchItems(q)
-      list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || b.createdAt - a.createdAt)
+      list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.createdAt - b.createdAt)
       setAllItems(list)
       setDisplayedItems(list.slice(0, ITEMS_PER_PAGE))
       setHasMore(list.length > ITEMS_PER_PAGE)
