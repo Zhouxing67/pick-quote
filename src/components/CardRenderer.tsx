@@ -9,6 +9,7 @@ import {
   Typography
 } from "@mui/material"
 
+import MarkdownRenderer from "./MarkdownRenderer"
 import type { Item } from "../types"
 import { prettyUrl, truncateText } from "../utils"
 
@@ -112,18 +113,9 @@ export default function CardRenderer({ item, mode, truncateTo, contentAlign }: C
               }}>
               "
             </Box>
-            <Typography
-              sx={{
-                whiteSpace: "pre-wrap",
-                lineHeight: 1.75, textAlign: "justify", textJustify: "inter-word",
-                color: "text.primary",
-                pl: 2,
-                pr: 1,
-                fontSize: "0.95rem",
-                fontFamily: '"Times New Roman", "LXGW WenKai", "Noto Serif SC", "Songti SC", "STSong", serif'
-              }}>
-              {truncateTo ? truncateText(item.content, truncateTo) : item.content}
-            </Typography>
+            <Box sx={{ pl: 2, pr: 1 }}>
+              <MarkdownRenderer content={item.content} maxLines={6} />
+            </Box>
           </Box>
         )}
         {item.type === "image" && (
@@ -273,7 +265,13 @@ export default function CardRenderer({ item, mode, truncateTo, contentAlign }: C
   // mode === "full"
   return (
     <>
-      <ContentBlock item={item} />
+      {item.type === "text" ? (
+        <Box sx={{ pl: 2, borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
+          <MarkdownRenderer content={item.content} />
+        </Box>
+      ) : (
+        <ContentBlock item={item} />
+      )}
       <Box sx={{ mt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.8 }}>
           <Box sx={{ color: "text.secondary", opacity: 0.7 }}>{typeIcon(item.type)}</Box>

@@ -236,6 +236,11 @@ export default function ItemDialog({
             />
           ) : (
             <Box
+              onClick={(e) => {
+                if (readOnly) return
+                if ((e.target as HTMLElement).closest("a")) return
+                setEditing(true)
+              }}
               sx={{
                 flex: 1,
                 maxWidth: "680px",
@@ -243,7 +248,8 @@ export default function ItemDialog({
                 width: "100%",
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "center"
+                justifyContent: "center",
+                cursor: readOnly ? undefined : "pointer"
               }}>
               <CardRenderer item={item} mode="full" />
             </Box>
